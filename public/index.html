@@ -30,25 +30,17 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, Fragment } = React;
 
-        // --- COMPONENTE ICONE (Geometrie pure per evitare distorsioni) ---
+        // --- COMPONENTE ICONE (Ridisegnate per perfezione grafica) ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                // Trofeo ridisegnato: Coppa centrale + Manici laterali + Base
+                // Trofeo ridisegnato: Forme separate per coppa, manici e base
                 trophy: (
                     <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M8 21h8" />
-                        <path d="M12 17v4" />
-                        <path d="M7 4h10c0 5-2.5 9-5 9s-5-4-5-9" />
-                        <path d="M17 4v3a3 3 0 0 1-3 3" />
-                        <path d="M7 4v3a3 3 0 0 0 3 3" />
-                    </g>
-                ),
-                // Monete ridisegnate: Pila di cilindri (molto più chiaro come "Punteggio")
-                coins: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <ellipse cx="12" cy="5" rx="9" ry="3" />
-                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                        <path d="M4 22h16" />
+                        <path d="M12 15v7" />
+                        <path d="M17 4H7v5a5 5 0 0 0 10 0V4z" />
                     </g>
                 ),
                 users: (
@@ -78,10 +70,19 @@
                     </g>
                 ),
                 zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>,
+                coins: (
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M8 6c0 1.66-3.58 3-8 3s-8-1.34-8-3 3.58-3 8-3 8 1.34 8 3z" transform="translate(12, 4)"/>
+                        <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" transform="translate(0, 0)"/>
+                        <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" transform="translate(0, 0)"/>
+                    </g>
+                ),
                 smile: (
                     <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10"/>
                         <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                        <line x1="9" y1="9" x2="9.01" y2="9"/>
+                        <line x1="15" y1="9" x2="15.01" y2="9"/>
                     </g>
                 ),
                 qr: (
@@ -92,11 +93,7 @@
                         <path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
                     </g>
                 ),
-                loader2: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                    </g>
-                )
+                loader2: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></g>
             };
             return (
                 <svg viewBox="0 0 24 24" width={size} height={size} className={`${className} flex items-center justify-center shrink-0`}>
@@ -143,7 +140,7 @@
                         { text: "Amsterdam, 1998", rationale: "Amsterdam ha ospitato un'edizione molto famosa, ma non è stata la città d'esordio.", isCorrect: false },
                         { text: "San Francisco, 1982", rationale: "Fondati da Tom Waddell, l'obiettivo era promuovere lo spirito di inclusione e partecipazione attraverso lo sport.", isCorrect: true },
                         { text: "New York, 1969", rationale: "Il 1969 è l'anno dei moti di Stonewall, ma la prima manifestazione sportiva ufficiale arrivò oltre un decennio dopo.", isCorrect: false },
-                        { text: "Londra, 1975", rationale: "Sebbene Londra sia attiva nell'attivismo, i primi giochi nacquero sulla costa occidentale degli Stati Uniti.", isCorrect: false }
+                        { text: "Londra, 1975", rationale: "Sebbene Londra sia attiva nell'attivismo, i primi giochi nacquero sulla costa occidentale degli Uniti.", isCorrect: false }
                     ]
                 },
                 {
@@ -160,9 +157,9 @@
                     id: 3,
                     question: "L'atleta Laurel Hubbard ha segnato la storia delle Olimpiadi di Tokyo 2020 per quale motivo?",
                     options: [
+                        { text: "È stata la prima donna transgender a competere in una gara individuale", rationale: "La sua partecipazione nel sollevamento pesi ha aperto un importante dibattito globale sull'inclusività e le regole sportive.", isCorrect: true },
                         { text: "Ha vinto la prima medaglia d'oro per una persona non binaria", rationale: "Sebbene sia stata una pioniera, non ha raggiunto il podio durante quell'edizione dei Giochi.", isCorrect: false },
                         { text: "È stata la portabandiera della squadra dei rifugiati", rationale: "Questo ruolo è stato ricoperto da altri atleti; la Hubbard rappresentava la Nuova Zelanda.", isCorrect: false },
-                        { text: "È stata la prima donna transgender a competere in una gara individuale", rationale: "La sua partecipazione nel sollevamento pesi ha aperto un importante dibattito globale sull'inclusività e le regole sportive.", isCorrect: true },
                         { text: "Ha stabilito un record mondiale nel lancio del disco", rationale: "La Hubbard gareggiava nella categoria del sollevamento pesi, non nell'atletica leggera.", isCorrect: false }
                     ]
                 },
@@ -170,9 +167,9 @@
                     id: 4,
                     question: "Quale icona del tennis mondiale ha vinto 18 titoli del Grande Slam ed è stata una delle prime atlete d'élite a vivere apertamente la propria omosessualità?",
                     options: [
-                        { text: "Martina Navratilova", rationale: "Oltre ai successi in campo, è diventata una delle più influenti attiviste per i diritti LGBT+ nel mondo dello sport.", isCorrect: true },
                         { text: "Billie Jean King", rationale: "Anche lei è un'icona dei diritti, ma il suo coming out pubblico è avvenuto in circostanze diverse rispetto alla Navratilova.", isCorrect: false },
                         { text: "Chris Evert", rationale: "Storica rivale della Navratilova, la Evert non appartiene alla comunità LGBT+.", isCorrect: false },
+                        { text: "Martina Navratilova", rationale: "Oltre ai successi in campo, è diventata una delle più influenti attiviste per i diritti LGBT+ nel mondo dello sport.", isCorrect: true },
                         { text: "Steffi Graf", rationale: "La tennista tedesca ha dominato gli anni '90 ma non è nota per attivismo legato alla comunità LGBT+.", isCorrect: false }
                     ]
                 },
@@ -210,9 +207,9 @@
                     id: 8,
                     question: "Quale di questi è lo scopo principale degli 'EuroGames'?",
                     options: [
-                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Si tratta di un evento multisportivo europeo aperto a tutti, indipendentemente dall'orientamento sessuale.", isCorrect: true },
                         { text: "Selezionare gli atleti per le prossime Olimpiadi", rationale: "Gli EuroGames non sono un evento di qualificazione olimpica ufficiale.", isCorrect: false },
                         { text: "Gareggiare esclusivamente per vincere premi in denaro", rationale: "Lo spirito dell'evento è sociale e comunitario, non basato su grandi premi monetari.", isCorrect: false },
+                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Si tratta di un evento multisportivo europeo aperto a tutti, indipendentemente dall'orientamento sessuale.", isCorrect: true },
                         { text: "Permettere la partecipazione solo ad atleti professionisti", rationale: "L'evento è aperto ad atleti di ogni livello, dai dilettanti ai professionisti.", isCorrect: false }
                     ]
                 },
@@ -220,10 +217,10 @@
                     id: 9,
                     question: "Nel 2018, lo sciatore Gus Kenworthy ha attirato l'attenzione mondiale per un gesto alle Olimpiadi Invernali di Pyeongchang. Di cosa si trattava?",
                     options: [
-                        { text: "Un bacio in diretta TV al suo compagno", rationale: "È stato un momento storico di visibilità e spontaneità in un contesto sportivo globale molto seguito.", isCorrect: true },
                         { text: "Ha gareggiato indossando un tutù arcobaleno", rationale: "Gus ha gareggiato con la divisa ufficiale della sua nazionale.", isCorrect: false },
                         { text: "Ha rifiutato di ritirare la medaglia d'argento", rationale: "Non c'è stato alcun rifiuto della medaglia per motivi legati all'orientamento sessuale.", isCorrect: false },
-                        { text: "Ha portato un gatto randagio sul podio", rationale: "Gus è noto per aver salvato dei cani in Russia, ma il gesto simbolico del 2018 riguardava la sua vita affettiva.", isCorrect: false }
+                        { text: "Ha portato un gatto randagio sul podio", rationale: "Gus è noto per aver salvato dei cani in Russia, ma il gesto simbolico del 2018 riguardava la sua vita affettiva.", isCorrect: false },
+                        { text: "Un bacio in diretta TV al suo compagno", rationale: "È stato un momento storico di visibilità e spontaneità in un contesto sportivo globale molto seguito.", isCorrect: true }
                     ]
                 },
                 {
@@ -243,7 +240,6 @@
 
         function App() {
             const [user, setUser] = useState(null);
-            const [authLoading, setAuthLoading] = useState(true);
             const [role, setRole] = useState(() => sessionStorage.getItem('activeRole'));
             const [roomCode, setRoomCode] = useState(() => sessionStorage.getItem('activeRoom') || '');
             const [playerName, setName] = useState(() => sessionStorage.getItem('activePlayerName') || '');
@@ -255,10 +251,10 @@
             const [lastPointsEarned, setLastPointsEarned] = useState(0);
             const [errorMessage, setErrorMessage] = useState('');
             const [loadingAction, setLoadingAction] = useState(false);
-            const [copied, setCopied] = useState(false);
             const [localIp, setLocalIp] = useState('');
             const [showHelp, setShowHelp] = useState(false);
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
+            const [copied, setCopied] = useState(false);
             const [prevScore, setPrevScore] = useState(0);
 
             // Auto-fill e Auth
@@ -361,7 +357,6 @@
             const rankInfo = useMemo(() => {
                 const idx = displayedPlayers.findIndex(p => p.uid === user?.uid);
                 const me = displayedPlayers[idx];
-                // Mostra monete per punteggio 0
                 if (!me || me.score === 0) return { label: idx !== -1 ? (idx + 1).toString() : "-", color: "text-white", icon: "coins" };
                 
                 if (idx === 0) return { label: "1", color: "text-[#ffd700]", icon: "trophy" };
@@ -379,7 +374,6 @@
             }, [players, gameState, lastAnswerCorrect, user]);
 
             // --- UI ---
-
             if (!role) return (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
@@ -584,14 +578,14 @@
                                     ) : <div className="text-xl font-black font-black opacity-60 uppercase tracking-widest font-black font-black">0 PUNTI</div>}
                                     <div className="border-t border-white/20 pt-4 font-black font-black font-black">
                                         <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black font-black">Classifica:</p>
-                                        <p className={`text-6xl ${rankInfo.color} drop-shadow-sm font-black font-black font-black leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
+                                        <p className={`text-6xl ${rankInfo.color} drop-shadow-sm leading-none font-black font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {gameState.status === 'finished' && (
-                            <div className="text-center space-y-10 animate-fade-in max-w-[320px] font-black mx-auto font-black font-black text-center">
+                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto font-black font-black text-center">
                                 <div className="w-36 h-36 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 font-black font-black font-black mb-8">
                                     <Icon name={rankInfo.icon} size={80} className={`drop-shadow-xl ${rankInfo.color} font-black font-black`} />
                                 </div>
