@@ -29,25 +29,76 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, Fragment } = React;
 
-        // --- COMPONENTE ICONE ---
+        // --- COMPONENTE ICONE (Ridisegnate per chiarezza e centratura) ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                trophy: <g><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6V3h12v1h1.5a2.5 2.5 0 0 1 0 5H18v3c0 4.42-3.58 8-8 8H8a8 8 0 0 1-2-15.74V9z"/><path d="M12 18a6 6 0 0 0 6-6V4H6v8a6 6 0 0 0 6 6z"/></g>,
-                users: <g><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></g>,
+                trophy: (
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6V3h12v1h1.5a2.5 2.5 0 0 1 0 5H18v3c0 4.42-3.58 8-8 8H8a8 8 0 0 1-2-15.74V9z"/>
+                        <path d="M12 18a6 6 0 0 0 6-6V4H6v8a6 6 0 0 0 6 6z"/>
+                    </g>
+                ),
+                users: (
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </g>
+                ),
                 play: <path d="m7 4 12 8-12 8V4z" fill="currentColor"/>,
-                chevronRight: <path d="m9 18 6-6-6-6"/>,
-                checkCircle: <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3"/>,
-                xCircle: <g><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6m0-6 6 6"/></g>,
+                chevronRight: <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>,
+                checkCircle: (
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <path d="M22 4L12 14.01l-3-3"/>
+                    </g>
+                ),
+                xCircle: (
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="m15 9-6 6"/>
+                        <path d="m9 9 6 6"/>
+                    </g>
+                ),
                 crown: <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z" fill="currentColor"/>,
-                clock: <g><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></g>,
+                clock: (
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </g>
+                ),
                 zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>,
-                coins: <g><circle cx="12" cy="12" r="9"/><path d="M12 17v-10"/><path d="M15 10l-3-3-3 3"/></g>,
-                smile: <g><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></g>,
-                qr: <g><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/></g>,
-                loader2: <g><path d="M21 12a9 9 0 1 1-6.219-8.56"/></g>
+                coins: (
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="8" cy="8" r="6"/>
+                        <circle cx="16" cy="16" r="6"/>
+                    </g>
+                ),
+                smile: (
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                        <line x1="9" y1="9" x2="9.01" y2="9"/>
+                        <line x1="15" y1="9" x2="15.01" y2="9"/>
+                    </g>
+                ),
+                qr: (
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="5" height="5" x="3" y="3" rx="1"/>
+                        <rect width="5" height="5" x="16" y="3" rx="1"/>
+                        <rect width="5" height="5" x="3" y="16" rx="1"/>
+                        <path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
+                        <path d="M21 21h.01"/>
+                        <path d="M16 21h.01"/>
+                        <path d="M21 16h.01"/>
+                        <path d="M16 16h.01"/>
+                    </g>
+                ),
+                loader2: <path d="M21 12a9 9 0 1 1-6.219-8.56" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             };
             return (
-                <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <svg viewBox="0 0 24 24" width={size} height={size} className={className}>
                     {icons[name] || null}
                 </svg>
             );
@@ -88,7 +139,7 @@
                         { text: "Amsterdam, 1998", rationale: "Amsterdam ha ospitato un'edizione molto famosa, ma non è stata la città d'esordio.", isCorrect: false },
                         { text: "San Francisco, 1982", rationale: "Fondati da Tom Waddell, l'obiettivo era promuovere lo spirito di inclusione e partecipazione attraverso lo sport.", isCorrect: true },
                         { text: "New York, 1969", rationale: "Il 1969 è l'anno dei moti di Stonewall, ma la prima manifestazione sportiva ufficiale arrivò oltre un decennio dopo.", isCorrect: false },
-                        { text: "Londra, 1975", rationale: "Sebbene Londra sia attiva nell'attivismo, i primi giochi nacquero sulla costa occidentale degli Uniti.", isCorrect: false }
+                        { text: "Londra, 1975", rationale: "Sebbene Londra sia attiva nell'attivismo, i primi giochi nacquero sulla costa occidentale degli Stati Uniti.", isCorrect: false }
                     ]
                 },
                 {
@@ -199,7 +250,7 @@
             const [errorMessage, setErrorMessage] = useState('');
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
 
-            // 1. Auto-fill e Auth
+            // Logic QR Auto-fill
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
                 const r = params.get('room');
@@ -225,7 +276,7 @@
                 return () => unsub();
             }, [roomCode, playerName]);
 
-            // 2. Database Sync
+            // Database Sync
             useEffect(() => {
                 if (!user || !roomCode || !role) return;
                 const code = roomCode.trim().toUpperCase();
@@ -240,7 +291,7 @@
                 return () => { unsubRoom(); unsubPlayers(); };
             }, [user, roomCode, role]);
 
-            // 3. Timer
+            // Timer
             useEffect(() => {
                 if (gameState?.status === 'playing' && !gameState.showResults && gameState.questionStartTime) {
                     const timer = setInterval(() => {
@@ -256,7 +307,7 @@
                 }
             }, [gameState, role, hasAnswered]);
 
-            // 4. Reset
+            // Reset
             useEffect(() => {
                 if (gameState && !gameState.showResults) {
                     setHasAnswered(false);
@@ -302,15 +353,15 @@
                 return players.find(p => p.uid === user?.uid)?.lastAnsweredAt === minTime && lastAnswerCorrect;
             }, [players, gameState, lastAnswerCorrect, user]);
 
-            // --- RENDER ---
+            // --- UI ---
 
             if (!role) return (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
                         <LogoArcigay className="h-24 mx-auto mb-6" />
-                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Pride House Quiz</h1>
-                        <div className="space-y-5">
-                            <input type="text" placeholder="Nome Squadra" className="w-full border-2 p-4 rounded-2xl text-center text-xl" value={playerName} onChange={e => setName(e.target.value)} />
+                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight font-black">Pride House Quiz</h1>
+                        <div className="space-y-5 font-black">
+                            <input type="text" placeholder="Nome Squadra" className="w-full border-2 p-4 rounded-2xl text-center text-xl font-bold" value={playerName} onChange={e => setName(e.target.value)} />
                             <input type="text" placeholder="Codice Stanza" className="w-full border-2 p-4 rounded-2xl text-center uppercase text-2xl font-mono" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
                             <button onClick={async () => {
                                 const cleanName = playerName.trim();
@@ -326,7 +377,7 @@
                                     sessionStorage.setItem('activePlayerName', cleanName);
                                     setRole('player');
                                 }
-                            }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl">Partecipa</button>
+                            }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl font-black transition-all active:scale-95">Partecipa</button>
                             <button onClick={async () => {
                                 const code = Math.random().toString(36).substring(2,6).toUpperCase();
                                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
@@ -336,7 +387,7 @@
                                 sessionStorage.setItem('activeRole', 'host');
                                 setRoomCode(code);
                                 setRole('host');
-                            }} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-sm uppercase">Crea Stanza Host</button>
+                            }} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-sm uppercase font-black">Crea Stanza Host</button>
                         </div>
                     </div>
                 </div>
@@ -347,48 +398,48 @@
                 const answeredCount = players.filter(p=>p.lastQuestionIndexAnswered === gameState.currentQuestionIndex).length;
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden font-black">
-                        <header className="flex justify-between items-center bg-white p-4 border-b">
+                        <header className="flex justify-between items-center bg-white p-4 border-b font-black shadow-sm">
                             <LogoArcigay className="h-14" />
-                            <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center">
-                                <Icon name="users" size={20}/> <span className="text-xl">{players.length}</span>
+                            <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center font-black">
+                                <Icon name="users" size={20}/> <span className="text-xl font-black">{players.length}</span>
                             </div>
                         </header>
                         
                         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
-                            <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar">
+                            <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black">
                                 {gameState.status === 'lobby' ? (
-                                    <div className="flex flex-col items-center gap-8 w-full max-w-4xl">
-                                        <h2 className="text-6xl text-[#0054a6] uppercase">In attesa dei giocatori...</h2>
-                                        <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-md mx-auto">
+                                    <div className="flex flex-col items-center gap-8 w-full max-w-4xl font-black">
+                                        <h2 className="text-6xl text-[#0054a6] uppercase font-black tracking-tighter">In attesa dei campioni...</h2>
+                                        <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-md mx-auto shadow-inner">
                                             <div className="flex flex-col items-center">
                                                 <img src={getQrUrl()} alt="QR" className="w-80 h-80 rounded-2xl mb-4" />
-                                                <p className="text-4xl text-[#0054a6] font-mono tracking-widest leading-none">{roomCode}</p>
+                                                <p className="text-4xl text-[#0054a6] font-mono tracking-widest leading-none font-black">{roomCode}</p>
                                             </div>
                                         </div>
-                                        <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
-                                            {players.map(p => <div key={p.uid} className="bg-[#0054a6] text-white px-4 py-2 rounded-full text-sm animate-fade-in">{p.name}</div>)}
-                                            {players.length === 0 && <p className="text-gray-400">Nessun giocatore collegato...</p>}
+                                        <div className="flex flex-wrap gap-2 justify-center max-w-2xl font-black">
+                                            {players.map(p => <div key={p.uid} className="bg-[#0054a6] text-white px-5 py-2 rounded-full text-sm animate-fade-in font-black">{p.name}</div>)}
+                                            {players.length === 0 && <p className="text-gray-400 font-black italic">In attesa del primo partecipante...</p>}
                                         </div>
-                                        <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-12 py-5 rounded-2xl text-2xl uppercase">Inizia</button>
+                                        <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-12 py-5 rounded-2xl text-2xl uppercase font-black shadow-xl active:scale-95 transition-all">Inizia Quiz</button>
                                     </div>
                                 ) : (
-                                    <div className="w-full max-w-5xl space-y-8">
-                                        <div className="flex justify-between items-center">
-                                            <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm">Domanda {gameState.currentQuestionIndex+1} / 10</span>
-                                            {!gameState.showResults && <div className="text-4xl font-mono bg-gray-900 text-white px-6 py-2 rounded-xl">{timeLeft}s</div>}
+                                    <div className="w-full max-w-5xl space-y-8 font-black">
+                                        <div className="flex justify-between items-center font-black">
+                                            <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm font-black shadow-md">Domanda {gameState.currentQuestionIndex+1} / 10</span>
+                                            {!gameState.showResults && <div className="text-4xl font-mono bg-gray-900 text-white px-8 py-3 rounded-2xl font-black shadow-lg">{timeLeft}s</div>}
                                         </div>
-                                        <h2 className={`text-[#0054a6] leading-tight ${gameState.showResults ? 'text-4xl text-left' : 'text-7xl text-center'}`}>{q.question}</h2>
-                                        <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'}`}>
+                                        <h2 className={`text-[#0054a6] leading-tight font-black tracking-tight ${gameState.showResults ? 'text-4xl text-left' : 'text-7xl text-center mt-10 mb-20'}`}>{q.question}</h2>
+                                        <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'} font-black`}>
                                             {q.options.map((o, i) => (
-                                                <div key={i} className="flex flex-col gap-3">
-                                                    <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-4 ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-30 grayscale') : 'bg-gray-50'}`}>
-                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-2xl`}>{String.fromCharCode(65+i)}</div>
-                                                        <span className="text-[#0054a6] text-2xl text-left font-bold">{o.text}</span>
-                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto" />}
+                                                <div key={i} className="flex flex-col gap-3 font-black">
+                                                    <div className={`p-6 rounded-[2.5rem] border-4 flex items-center gap-5 transition-all ${gameState.showResults ? (o.isCorrect ? 'border-[#009640] bg-[#009640]/5 shadow-lg scale-102 font-black' : 'opacity-30 grayscale border-gray-100 font-black') : 'bg-gray-50 border-transparent shadow-inner font-black'}`}>
+                                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-3xl shadow-lg font-black`}>{String.fromCharCode(65+i)}</div>
+                                                        <span className="text-[#0054a6] text-2xl text-left font-black leading-tight flex-1">{o.text}</span>
+                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={40} className="text-[#009640] ml-auto font-black" />}
                                                     </div>
                                                     {gameState.showResults && (
-                                                        <div className={`px-8 py-5 rounded-3xl text-2xl text-left ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500'}`}>
-                                                            <p className="font-bold">{o.rationale}</p>
+                                                        <div className={`px-8 py-5 rounded-3xl text-xl text-left font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500'}`}>
+                                                            <p className="font-bold leading-tight">{o.rationale}</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -399,24 +450,28 @@
                                                 if (gameState.currentQuestionIndex === 9) db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
                                                 else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
                                             } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
-                                        }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase">{gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"}</button>
+                                        }} className="w-full bg-[#0054a6] text-white py-6 rounded-[2.5rem] text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all">
+                                            {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={32} />
+                                        </button>
                                     </div>
                                 )}
                             </div>
                             
-                            <div className="w-64 flex flex-col gap-4">
-                                <div className="bg-white p-4 rounded-[2rem] shadow border flex flex-col items-center">
-                                    <img src={getQrUrl()} alt="QR" className="w-full rounded-xl mb-2" />
-                                    <p className="text-xl font-mono text-[#0054a6] leading-none">{roomCode}</p>
+                            {/* Barra Laterale Host */}
+                            <div className="w-64 flex flex-col gap-4 font-black">
+                                <div className="bg-white p-5 rounded-[2.5rem] shadow-xl border flex flex-col items-center font-black">
+                                    <img src={getQrUrl()} alt="QR" className="w-full rounded-2xl mb-3 shadow-sm" />
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-1 font-black">Codice Accesso</p>
+                                    <p className="text-3xl font-mono text-[#0054a6] font-black leading-none">{roomCode}</p>
                                 </div>
-                                {gameState.showResults && (
-                                    <div className="bg-white p-6 rounded-[2rem] shadow border flex-1 overflow-hidden flex flex-col">
-                                        <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest">Classifica</h3>
-                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+                                {gameState.status !== 'lobby' && (
+                                    <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border flex-1 overflow-hidden flex flex-col font-black">
+                                        <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica Live</h3>
+                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 font-black">
                                             {players.map((p, i) => (
-                                                <div key={p.uid} className={`flex justify-between p-2 rounded-lg ${i<3 ? 'bg-blue-50 text-[#0054a6]' : ''}`}>
-                                                    <span className="truncate max-w-[100px] text-xs font-bold">{i+1}. {p.name}</span>
-                                                    <span className="font-mono font-bold text-xs">{p.score}</span>
+                                                <div key={p.uid} className={`flex justify-between items-center p-2 rounded-xl transition-all ${i<3 ? 'bg-blue-50 text-[#0054a6] scale-105' : 'text-gray-500'}`}>
+                                                    <span className="truncate max-w-[100px] text-xs font-black">{i+1}. {p.name}</span>
+                                                    <span className="font-mono font-black text-xs">{p.score}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -425,16 +480,17 @@
                             </div>
                         </div>
 
+                        {/* Podio Host */}
                         {gameState.status === 'finished' && (
-                            <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-fade-in text-center">
-                                <Icon name="crown" size={120} className="text-[#ffde00] mb-6 animate-bounce" />
-                                <h2 className="text-7xl text-[#0054a6] mb-12 uppercase italic">I Vincitori!</h2>
-                                <div className="flex items-end gap-6 w-full max-w-4xl h-72">
-                                    {players[1] && <div className="flex-1 flex flex-col items-center"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full">{players[1].name}</p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-lg">2</div></div>}
-                                    {players[0] && <div className="flex-1 flex flex-col items-center"><p className="text-3xl mb-4 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl">1</div></div>}
-                                    {players[2] && <div className="flex-1 flex flex-col items-center"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-5xl text-orange-300 border-t-8 border-orange-200 shadow-lg">3</div></div>}
+                            <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-fade-in text-center font-black">
+                                <Icon name="crown" size={150} className="text-[#ffde00] mb-8 animate-bounce font-black" />
+                                <h2 className="text-8xl text-[#0054a6] mb-16 uppercase italic font-black tracking-tighter">PODIO FINALE!</h2>
+                                <div className="flex items-end gap-10 w-full max-w-5xl h-80 font-black">
+                                    {players[1] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-3 text-[#0054a6] uppercase font-black truncate w-full">{players[1].name}</p><div className="w-full bg-gray-200 h-48 rounded-t-[3rem] flex items-center justify-center text-7xl text-gray-400 border-t-8 border-gray-300 shadow-xl font-black">2</div></div>}
+                                    {players[0] && <div className="flex-1 flex flex-col items-center"><p className="text-4xl mb-5 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-64 rounded-t-[4rem] flex items-center justify-center text-[10rem] text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
+                                    {players[2] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-3 text-[#0054a6] uppercase font-black truncate w-full">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-[3rem] flex items-center justify-center text-7xl text-orange-300 border-t-8 border-orange-200 shadow-xl font-black">3</div></div>}
                                 </div>
-                                <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-16 px-16 py-5 bg-gray-900 text-white rounded-full text-xl uppercase tracking-widest shadow-xl transition-all hover:bg-black">Nuova Partita</button>
+                                <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-20 px-24 py-6 bg-gray-900 text-white rounded-full text-2xl uppercase tracking-widest shadow-2xl transition-all hover:bg-black font-black">Nuova Partita</button>
                             </div>
                         )}
                     </div>
@@ -443,41 +499,41 @@
 
             if (role === 'player' && gameState) return (
                 <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
-                    <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md">
-                        <LogoArcigay className="h-10" />
-                        <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-2 text-white">
+                    <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black">
+                        <LogoArcigay className="h-12" />
+                        <div className="bg-[#0054a6] px-5 py-2 rounded-full flex items-center gap-3 text-white font-black shadow-sm">
                             <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
                                 <Icon name={rankInfo.icon} size={18} className={rankInfo.color} />
                             </div>
-                            <span className="text-xl font-mono leading-none">{players.find(p=>p.uid===user?.uid)?.score || 0}</span>
+                            <span className="text-xl font-mono leading-none font-black">{players.find(p=>p.uid===user?.uid)?.score || 0}</span>
                         </div>
                     </header>
 
-                    <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50">
+                    <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black">
                         {gameState.status === 'lobby' && (
-                            <div className="space-y-6 animate-fade-in max-w-xs">
-                                <div className="w-24 h-24 bg-[#0054a6]/10 rounded-full flex items-center justify-center mx-auto border-4 border-[#0054a6]/20 animate-pulse text-[#0054a6]"><Icon name="users" size={48} /></div>
+                            <div className="space-y-8 animate-fade-in max-w-xs font-black">
+                                <div className="w-28 h-28 bg-[#0054a6]/10 rounded-full flex items-center justify-center mx-auto border-4 border-[#0054a6]/20 animate-pulse text-[#0054a6] font-black shadow-inner"><Icon name="users" size={56} /></div>
                                 <h2 className="text-3xl uppercase tracking-tighter leading-tight font-black">Benvenuti alla Pride House!</h2>
-                                <p className="text-gray-500 text-sm italic tracking-widest">Player: {playerName}</p>
+                                <p className="text-gray-500 text-lg font-black tracking-widest italic opacity-70">Player: {playerName}</p>
                             </div>
                         )}
 
                         {gameState.status === 'playing' && !gameState.showResults && (
-                            <div className="w-full max-w-sm flex flex-col gap-6 h-full py-4">
-                                <div className="flex items-center justify-center gap-2">
-                                    <Icon name="clock" size={24} className={timeLeft < 10 ? 'text-red-500 animate-pulse' : ''} />
-                                    <span className={`text-4xl font-mono ${timeLeft < 10 ? 'text-red-500' : ''}`}>{timeLeft}s</span>
+                            <div className="w-full max-w-sm flex flex-col gap-6 h-full py-4 font-black">
+                                <div className="flex items-center justify-center gap-3 font-black">
+                                    <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-[#0054a6]'} />
+                                    <span className={`text-5xl font-mono font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
                                 </div>
                                 {hasAnswered ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-8">
-                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4" />
-                                        <h2 className="text-3xl uppercase text-[#0054a6]/60 leading-none font-black">Acquisita</h2>
-                                        <p className="text-gray-400 mt-4 text-xs tracking-widest uppercase">Guarda lo schermo</p>
+                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black">
+                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-6 font-black" />
+                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black">Acquisita</h2>
+                                        <p className="text-gray-400 mt-6 text-sm tracking-[0.2em] uppercase font-black">Guarda lo schermo principale</p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 gap-4 flex-1">
+                                    <div className="grid grid-cols-1 gap-5 flex-1 font-black">
                                         {COLORS.map((c, i) => (
-                                            <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black`}>
+                                            <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-2xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black`}>
                                                 {String.fromCharCode(65 + i)}
                                             </button>
                                         ))}
@@ -487,39 +543,41 @@
                         )}
 
                         {gameState.status === 'playing' && gameState.showResults && (
-                            <div className={`w-full max-w-[95%] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
-                                <div className="bg-white/20 w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-inner shrink-0">
-                                    <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={60} />
+                            <div className={`w-full max-w-[95%] p-8 rounded-[4rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                                <div className="bg-white/20 w-28 h-28 rounded-full flex items-center justify-center mb-8 shadow-inner text-white font-black shrink-0">
+                                    <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={72} />
                                 </div>
-                                <h2 className="text-4xl uppercase mb-6 leading-none font-black text-center">
-                                    {lastAnswerCorrect === true ? 'ESATTO!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO' : 'ERRATO')}
+                                <h2 className="text-5xl uppercase tracking-tighter mb-8 leading-none font-black">
+                                    {lastAnswerCorrect === true ? 'ESATTO!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'SCADUTO' : 'ERRATO')}
                                 </h2>
-                                <div className="w-full flex flex-col items-center justify-center">
+                                <div className="w-full space-y-8 font-black">
                                     {lastAnswerCorrect === true ? (
-                                        <div className="flex flex-col items-center gap-2 mb-6">
-                                            <div className="flex items-center gap-3">
-                                                {isFastestPlayer && <Icon name="zap" size={28} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}
-                                                <span className="text-3xl font-black">+{lastPointsEarned} PT</span>
+                                        <div className="flex flex-col items-center gap-3 font-black">
+                                            <div className="flex items-center gap-3 font-black">
+                                                {isFastestPlayer && <Icon name="zap" size={32} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}
+                                                <span className="text-4xl font-black">+{lastPointsEarned} PT</span>
                                             </div>
-                                            {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-widest">Velocità Massima!</p>}
+                                            {isFastestPlayer && <p className="text-xs text-[#ffde00] uppercase font-black animate-pulse tracking-[0.3em]">VELOCITÀ MASSIMA!</p>}
                                         </div>
-                                    ) : <div className="text-2xl font-black opacity-60 uppercase mb-6">0 PUNTI</div>}
-                                    <div className="border-t border-white/20 pt-6 w-full flex flex-col items-center">
+                                    ) : <div className="text-3xl font-black opacity-60 uppercase tracking-widest font-black">0 PUNTI</div>}
+                                    <div className="border-t border-white/20 pt-8 font-black">
                                         <p className="text-sm text-white/70 mb-2 uppercase tracking-widest font-black">Posizione attuale:</p>
-                                        <p className={`text-7xl ${rankInfo.color} drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
+                                        <p className={`text-8xl ${rankInfo.color} drop-shadow font-black leading-none`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {gameState.status === 'finished' && (
-                            <div className="text-center space-y-10 animate-fade-in max-w-[320px] mx-auto">
-                                <Icon name={rankInfo.icon} size={150} className={`mx-auto drop-shadow-2xl ${rankInfo.color}`} />
-                                <h2 className="text-6xl uppercase tracking-tighter leading-tight font-black">FINE!</h2>
-                                <div className="bg-white p-10 rounded-[3rem] border-2 border-gray-100 shadow-2xl w-full">
-                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-3 font-black">Punteggio Finale</p>
-                                    <p className="text-2xl text-[#0054a6] mb-2 font-black leading-none">{rankInfo.label}° Posto</p>
-                                    <p className="text-7xl font-mono text-[#0054a6] leading-none tracking-tighter font-black mt-4">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
+                            <div className="text-center space-y-12 animate-fade-in max-w-[340px] font-black mx-auto">
+                                <div className="w-40 h-40 flex items-center justify-center bg-white rounded-full shadow-2xl mx-auto border-4 border-[#0054a6]/10 font-black">
+                                    <Icon name={rankInfo.icon} size={100} className={`drop-shadow-2xl ${rankInfo.color}`} />
+                                </div>
+                                <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black">GARA FINITA!</h2>
+                                <div className="bg-white p-10 rounded-[3.5rem] border-2 border-gray-100 shadow-2xl w-full font-black">
+                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-4 font-black">Punteggio Finale</p>
+                                    <p className="text-3xl text-[#0054a6] mb-3 font-black">{rankInfo.label}° Posto</p>
+                                    <p className="text-8xl font-mono text-[#0054a6] leading-none tracking-tighter font-black mt-2">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
                                 </div>
                             </div>
                         )}
