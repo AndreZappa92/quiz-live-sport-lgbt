@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pride House Quiz - CIG Arcigay Milano</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 overflow-x-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, Fragment } = React;
+
+        // --- ICONE SVG (Sostituzione Lucide per stabilità totale) ---
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const icons = {
+                trophy: (
+                    <Fragment>
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6V3h12v1h1.5a2.5 2.5 0 0 1 0 5H18v3c0 4.42-3.58 8-8 8H8a8 8 0 0 1-2-15.74V9z"/>
+                        <path d="M18 9h1.5a.5.5 0 0 0 0-1H18v1z"/>
+                        <path d="M6 8V7H4.5a.5.5 0 0 0 0 1H6z"/>
+                        <path d="M12 18a6 6 0 0 0 6-6V4H6v8a6 6 0 0 0 6 6z"/>
+                        <path d="M13 20h-2v2h2v-2z"/>
+                    </Fragment>
+                ),
+                users: (
+                    <Fragment>
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </Fragment>
+                ),
+                play: <path d="m7 4 12 8-12 8V4z"/>,
+                chevronRight: <path d="m9 18 6-6-6-6"/>,
+                checkCircle: (
+                    <Fragment>
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </Fragment>
+                ),
+                xCircle: (
+                    <Fragment>
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </Fragment>
+                ),
+                crown: <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z"/>,
+                clock: (
+                    <Fragment>
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </Fragment>
+                ),
+                zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>,
+                coins: (
+                    <Fragment>
+                        <circle cx="8" cy="8" r="6"/>
+                        <path d="M18 8a6 6 0 0 0-7.73 9.41"/>
+                        <path d="M13 13a6 6 0 0 0 7.73-9.41"/>
+                    </Fragment>
+                ),
+                smile: (
+                    <Fragment>
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                        <line x1="9" y1="9" x2="9.01" y2="9"/>
+                        <line x1="15" y1="9" x2="15.01" y2="9"/>
+                    </Fragment>
+                ),
+                qr: (
+                    <Fragment>
+                        <rect width="5" height="5" x="3" y="3" rx="1"/>
+                        <rect width="5" height="5" x="16" y="3" rx="1"/>
+                        <rect width="5" height="5" x="3" y="16" rx="1"/>
+                        <path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
+                    </Fragment>
+                ),
+                loader2: (
+                    <Fragment>
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </Fragment>
+                )
+            };
+            return (
+                <svg 
+                    viewBox="0 0 24 24" 
+                    width={size} 
+                    height={size} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={className}
+                >
+                    {icons[name] || null}
+                </svg>
+            );
+        };
+
+        const LogoArcigay = ({ className }) => (
+            <img 
+                src="/logoCIG.png" 
+                alt="Logo CIG" 
+                className={className} 
+                onError={(e) => {
+                    e.target.onerror = null; 
+                    e.target.src = "https://www.arcigaymilano.org/wp-content/themes/arcigay-milano/assets/images/logo.png";
+                }} 
+            />
+        );
+
+        // --- CONFIGURAZIONE FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOWS0ZMGxhj6ATL6FFycR-DATvuYug3WM",
+            authDomain: "quiz-live-sport-lgbt.firebaseapp.com",
+            projectId: "quiz-live-sport-lgbt",
+            storageBucket: "quiz-live-sport-lgbt.firebasestorage.app",
+            messagingSenderId: "741735100972",
+            appId: "1:741735100972:web:6040adbb5b040257931789",
+            measurementId: "G-47N6SFEWZG"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const appId = 'quiz-lgbt-sport-2026';
+        const TIMER_SECONDS = 30;
+
+        const QUIZ_DATA = {
+            title: "Sport e Inclusione: LGBT+",
+            questions: [
+                {
+                    id: 1,
+                    question: "In quale città e in quale anno si sono tenuti i primi Gay Games?",
+                    options: [
+                        { text: "Amsterdam, 1998", rationale: "Amsterdam è stata una sede iconica, ma non la prima.", isCorrect: false },
+                        { text: "San Francisco, 1982", rationale: "Fondati da Tom Waddell per promuovere l'inclusione.", isCorrect: true },
+                        { text: "New York, 1969", rationale: "Anno dei moti di Stonewall, ma i giochi arrivarono dopo.", isCorrect: false },
+                        { text: "Londra, 1975", rationale: "Londra è molto attiva, ma non ospitò il debutto.", isCorrect: false }
+                    ]
+                },
+                {
+                    id: 2,
+                    question: "Chi è stato il primo calciatore in attività a fare coming out nel 1990?",
+                    options: [
+                        { text: "Thomas Hitzlsperger", rationale: "L'ex Lazio lo ha fatto solo dopo il ritiro.", isCorrect: false },
+                        { text: "Justin Fashanu", rationale: "Un pioniere coraggioso del calcio inglese.", isCorrect: true },
+                        { text: "Jakub Jankto", rationale: "Jankto lo ha fatto in attività, ma nel 2023.", isCorrect: false },
+                        { text: "Robbie Rogers", rationale: "Rogers lo ha fatto nel 2013.", isCorrect: false }
+                    ]
+                },
+                {
+                    id: 3,
+                    question: "Cosa ha rappresentato Laurel Hubbard alle Olimpiadi di Tokyo 2020?",
+                    options: [
+                        { text: "Prima donna transgender in gara individuale", rationale: "Ha segnato un punto di svolta nel sollevamento pesi.", isCorrect: true },
+                        { text: "Portabandiera dei rifugiati", rationale: "Ruolo ricoperto da altri atleti.", isCorrect: false },
+                        { text: "Prima medaglia d'oro non binaria", rationale: "Purtroppo non ha raggiunto il podio.", isCorrect: false },
+                        { text: "Record mondiale atletica", rationale: "Gareggiava nel sollevamento pesi.", isCorrect: false }
+                    ]
+                },
+                {
+                    id: 4,
+                    question: "Quale tennista da 18 Slam è icona dei diritti LGBT+?",
+                    options: [
+                        { text: "Billie Jean King", rationale: "Icona immensa, ma la Navratilova ha fatto del coming out un pilastro pubblico.", isCorrect: false },
+                        { text: "Martina Navratilova", rationale: "Una delle atlete più influenti della storia.", isCorrect: true },
+                        { text: "Steffi Graf", rationale: "Dominatrice anni '90, ma non legata all'attivismo LGBT+.", isCorrect: false },
+                        { text: "Chris Evert", rationale: "Storica rivale, ma non appartenente alla comunità.", isCorrect: false }
+                    ]
+                },
+                {
+                    id: 5,
+                    question: "Quale premio ha vinto Megan Rapinoe nel 2019?",
+                    options: [
+                        { text: "Pallone d'Oro femminile", rationale: "Dopo aver vinto il mondiale da protagonista.", isCorrect: true },
+                        { text: "Premio Oscar", rationale: "Sebbene sia apparsa in molti media, è un'atleta.", isCorrect: false },
+                        { text: "Oro nel Nuoto", rationale: "È esclusivamente una calciatrice.", isCorrect: false },
+                        { text: "Sindaco di Seattle", rationale: "È amata a Seattle, ma non ricopre cariche politiche.", isCorrect: false }
+                    ]
+                },
+                {
+                    id: 6,
+                    question: "Quale simbolo fu vietato in Qatar 2022 ai capitani?",
+                    options: [
+                        { text: "La fascia 'OneLove'", rationale: "La FIFA proibì l'arcobaleno sotto minaccia di sanzioni.", isCorrect: true },
+                        { text: "Scarpe arcobaleno", rationale: "Non ci furono polemiche specifiche sulle calzature.", isCorrect: false },
+                        { text: "Fumogeni colorati", rationale: "Vietati per sicurezza, non per il colore.", isCorrect: false },
+                        { text: "Cambio nome torneo", rationale: "Il nome è rimasto invariato.", isCorrect: false }
+                    ]
+                },
+                {
+                    id: 7,
+                    question: "Chi è l'oro olimpico dei tuffi celebre per l'uncinetto e l'attivismo?",
+                    options: [
+                        { text: "Tom Daley", rationale: "Icona di visibilità e normalizzazione del coming out.", isCorrect: true },
+                        { text: "Greg Louganis", rationale: "Leggenda degli anni '80.", isCorrect: false },
+                        { text: "Matthew Mitcham", rationale: "Oro nel 2008, ma non noto per l'uncinetto.", isCorrect: false },
+                        { text: "Ian Thorpe", rationale: "Nuotatore, non tuffatore.", isCorrect: false }
+                    ]
+                },
+                {
+                    id: 8,
+                    question: "Qual è lo scopo principale degli EuroGames?",
+                    options: [
+                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Evento multisportivo europeo aperto a tutti.", isCorrect: true },
+                        { text: "Selezionare gli atleti per le prossime Olimpiadi", rationale: "Non è un evento di qualificazione ufficiale.", isCorrect: false },
+                        { text: "Gareggiare esclusivamente per vincere premi in denaro", rationale: "Lo spirito è comunitario e sociale.", isCorrect: false },
+                        { text: "Permettere la partecipazione solo ad atleti professionisti", rationale: "Aperto a ogni livello di abilità.", isCorrect: false }
+                    ]
+                },
+                {
+                    id: 9,
+                    question: "Cosa fece Gus Kenworthy in TV a Pyeongchang 2018?",
+                    options: [
+                        { text: "Un bacio in diretta al compagno", rationale: "Un momento storico di visibilità globale.", isCorrect: true },
+                        { text: "Ha gareggiato indossando un tutù arcobaleno", rationale: "Gareggiò con la divisa ufficiale.", isCorrect: false },
+                        { text: "Ha rifiutato di ritirare la medaglia d'argento", rationale: "Accettò con orgoglio il suo argento.", isCorrect: false },
+                        { text: "Ha portato un gatto randagio sul podio", rationale: "È noto per salvarli, ma non sul podio.", isCorrect: false }
+                    ]
+                },
+                {
+                    id: 10,
+                    question: "Cosa sono i 'Rainbow Laces'?",
+                    options: [
+                        { text: "Campagna per l'inclusione nello sport", rationale: "Iniziativa nata nel Regno Unito.", isCorrect: true },
+                        { text: "Un nuovo standard obbligatorio per le scarpe da corsa", rationale: "Nessun obbligo tecnico arcobaleno.", isCorrect: false },
+                        { text: "Il simbolo di chi ha vinto più di dieci medaglie", rationale: "Non indicano il numero di vittorie.", isCorrect: false },
+                        { text: "Una decorazione usata solo durante il mese di dicembre", rationale: "Usati tutto l'anno per sensibilizzazione.", isCorrect: false }
+                    ]
+                }
+            ]
+        };
+
+        const COLORS = [
+            'bg-[#e30613] hover:bg-[#c40510]', 'bg-[#0054a6] hover:bg-[#00448a]', 
+            'bg-[#009640] hover:bg-[#008036]', 'bg-[#ffde00] hover:bg-[#e6c800]'  
+        ];
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [authLoading, setAuthLoading] = useState(true);
+            const [role, setRole] = useState(() => sessionStorage.getItem('activeRole'));
+            const [roomCode, setRoomCode] = useState(() => sessionStorage.getItem('activeRoom') || '');
+            const [playerName, setName] = useState(() => sessionStorage.getItem('activePlayerName') || '');
+            const [gameState, setGameState] = useState(null);
+            const [players, setPlayers] = useState([]);
+            const [hasAnswered, setHasAnswered] = useState(false);
+            const [lastAnswerCorrect, setLastAnswerCorrect] = useState(null);
+            const [lastPointsEarned, setLastPointsEarned] = useState(0);
+            const [errorMessage, setErrorMessage] = useState('');
+            const [loadingAction, setLoadingAction] = useState(false);
+            const [localIp, setLocalIp] = useState('');
+            const [showHelp, setShowHelp] = useState(false);
+            const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
+            const [copied, setCopied] = useState(false);
+
+            useEffect(() => {
+                const unsubscribe = auth.onAuthStateChanged(async (u) => {
+                    setUser(u);
+                    if (u && roomCode && !playerName) {
+                        try {
+                            const pSnap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${roomCode}_${u.uid}`).get();
+                            if (pSnap.exists()) {
+                                const d = pSnap.data();
+                                setRole('player');
+                                setName(d.name);
+                                sessionStorage.setItem('activeRole', 'player');
+                                sessionStorage.setItem('activePlayerName', d.name);
+                                sessionStorage.setItem('activeRoom', roomCode);
+                            }
+                        } catch (e) { console.error("Restore failed", e); }
+                    }
+                    setAuthLoading(false);
+                });
+                return () => unsubscribe();
+            }, [roomCode, playerName]);
+
+            useEffect(() => {
+                if (!user || !roomCode || !role) return;
+                const normalized = roomCode.trim().toUpperCase();
+                const unsubRoom = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(normalized).onSnapshot(s => {
+                    if (s.exists()) setGameState(s.data());
+                });
+                const unsubPlayers = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').onSnapshot(snap => {
+                    const all = snap.docs.map(d => d.data()).filter(p => p.roomCode === normalized).sort((a,b) => b.score - a.score);
+                    setPlayers(all);
+                });
+                return () => { unsubRoom(); unsubPlayers(); };
+            }, [user, roomCode, role]);
+
+            useEffect(() => {
+                if (gameState?.status === 'playing' && !gameState.showResults && gameState.questionStartTime) {
+                    const timer = setInterval(() => {
+                        const elapsed = Math.floor((Date.now() - gameState.questionStartTime) / 1000);
+                        const remaining = Math.max(0, TIMER_SECONDS - elapsed);
+                        setTimeLeft(remaining);
+                        if (remaining === 0) {
+                            clearInterval(timer);
+                            if (role === 'player' && !hasAnswered) setHasAnswered(true);
+                        }
+                    }, 500);
+                    return () => clearInterval(timer);
+                }
+            }, [gameState?.status, gameState?.showResults, gameState?.questionStartTime, role, hasAnswered]);
+
+            useEffect(() => {
+                if (gameState && !gameState.showResults) {
+                    setHasAnswered(false);
+                    setLastAnswerCorrect(null);
+                    setLastPointsEarned(0);
+                    setTimeLeft(TIMER_SECONDS);
+                }
+            }, [gameState?.currentQuestionIndex, gameState?.showResults]);
+
+            const submitAnswer = async (index) => {
+                if (hasAnswered || timeLeft === 0 || !gameState || gameState.showResults || !user) return;
+                const isCorrect = QUIZ_DATA.questions[gameState.currentQuestionIndex].options[index].isCorrect;
+                const timeTaken = (Date.now() - gameState.questionStartTime) / 1000;
+                const earned = isCorrect ? Math.floor(500 + (500 * (1 - Math.min(1, timeTaken/TIMER_SECONDS)))) : 0;
+                setHasAnswered(true);
+                setLastAnswerCorrect(isCorrect);
+                setLastPointsEarned(earned);
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${roomCode}_${user.uid}`).update({
+                    score: firebase.firestore.FieldValue.increment(earned),
+                    lastAnswerIndex: index,
+                    lastQuestionIndexAnswered: gameState.currentQuestionIndex,
+                    lastAnsweredAt: Date.now()
+                });
+            };
+
+            const joinRoom = async () => {
+                if (!playerName.trim() || !roomCode.trim()) { setErrorMessage("Inserisci nome e codice!"); return; }
+                setLoadingAction(true);
+                const code = roomCode.trim().toUpperCase();
+                try {
+                    const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).get();
+                    if (room.exists()) {
+                        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${code}_${user.uid}`).set({
+                            uid: user.uid, name: playerName, roomCode: code, score: 0, lastAnswerIndex: -1, lastQuestionIndexAnswered: -1, lastAnsweredAt: 0
+                        });
+                        sessionStorage.setItem('activeRoom', code);
+                        sessionStorage.setItem('activeRole', 'player');
+                        sessionStorage.setItem('activePlayerName', playerName);
+                        setRole('player');
+                    } else { setErrorMessage("Stanza non trovata."); }
+                } catch (e) { setErrorMessage("Errore di rete."); }
+                setLoadingAction(false);
+            };
+
+            const createRoom = async () => {
+                const code = Math.random().toString(36).substring(2,6).toUpperCase();
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
+                    code, status: 'lobby', currentQuestionIndex: 0, showResults: false, hostId: user.uid, createdAt: Date.now(), questionStartTime: 0
+                });
+                sessionStorage.setItem('activeRoom', code);
+                sessionStorage.setItem('activeRole', 'host');
+                setRoomCode(code);
+                setRole('host');
+            };
+
+            const getQrUrl = () => {
+                let base = window.location.origin + "/";
+                if (localIp.trim()) base = `http://${localIp.trim()}:3000/`;
+                return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(base + "?room=" + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`;
+            };
+
+            const rankData = useMemo(() => {
+                const r = players.findIndex(p => p.uid === user?.uid);
+                const p = players[r];
+                if (!p || p.score === 0) return { icon: "coins", label: r !== -1 ? (r + 1).toString() : "-", color: "text-white" };
+                if (r === 0) return { icon: "trophy", label: "1", color: "text-[#ffd700]" };
+                if (r === 1) return { icon: "trophy", label: "2", color: "text-[#c0c0c0]" };
+                if (r === 2) return { icon: "trophy", label: "3", color: "text-[#cd7f32]" };
+                return { icon: "coins", label: (r + 1).toString(), color: "text-white" };
+            }, [players, user]);
+
+            const isFastest = useMemo(() => {
+                if (!gameState?.showResults) return false;
+                const correct = players.filter(p => p.lastQuestionIndexAnswered === gameState.currentQuestionIndex && QUIZ_DATA.questions[gameState.currentQuestionIndex].options?.[p.lastAnswerIndex]?.isCorrect);
+                if (!correct.length) return false;
+                const min = Math.min(...correct.map(p => p.lastAnsweredAt));
+                return players.find(p => p.uid === user?.uid)?.lastAnsweredAt === min && lastAnswerCorrect;
+            }, [players, gameState, user, lastAnswerCorrect]);
+
+            if (authLoading) return <div className="min-h-screen flex items-center justify-center font-black text-[#0054a6]"><Icon name="loader2" size={32} className="animate-spin mr-2" /> Caricamento...</div>;
+
+            if (role && !gameState) return (
+                <div className="min-h-screen flex flex-col items-center justify-center font-black text-[#0054a6] p-6 text-center">
+                    <LogoArcigay className="h-20 mb-8 opacity-50 grayscale" />
+                    <Icon name="loader2" size={48} className="animate-spin mb-4" />
+                    <h2 className="text-2xl uppercase">Sincronizzazione...</h2>
+                </div>
+            );
+
+            if (!role) return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 font-black">
+                    <div className="max-w-md w-full bg-white p-10 rounded-3xl shadow-xl border border-gray-200 text-center">
+                        <LogoArcigay className="h-24 mx-auto mb-6 object-contain" />
+                        <h1 className="text-3xl font-black text-[#0054a6] uppercase mb-10 leading-tight">Pride House Quiz</h1>
+                        <div className="space-y-5">
+                            <input type="text" placeholder="Nome Squadra" className="w-full bg-gray-50 border p-4 rounded-xl outline-none focus:ring-2 focus:ring-[#0054a6]" value={playerName} onChange={e => setName(e.target.value)} />
+                            <input type="text" placeholder="Codice Stanza" className="w-full bg-gray-50 border p-4 rounded-xl uppercase font-mono text-center focus:ring-2 focus:ring-[#0054a6]" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
+                            <button onClick={joinRoom} disabled={loadingAction} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl shadow-lg active:scale-95 uppercase font-bold">{loadingAction ? "Entrata..." : "PARTECIPA"}</button>
+                            <button onClick={createRoom} className="w-full bg-white border-2 border-[#0054a6] text-[#0054a6] p-3 rounded-xl uppercase text-sm font-black flex items-center justify-center gap-2"><Icon name="users" size={16}/> Crea Stanza Host</button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            if (role === 'host') {
+                const q = QUIZ_DATA.questions[gameState.currentQuestionIndex];
+                const answeredCount = players.filter(p=>p.lastQuestionIndexAnswered === gameState.currentQuestionIndex).length;
+                return (
+                    <div className="h-screen flex flex-col bg-gray-50 font-black overflow-hidden">
+                        <header className="flex justify-between items-center p-4 bg-white border-b shadow-md">
+                            <div className="flex items-center gap-4">
+                                <LogoArcigay className="h-12" />
+                                <div className="h-8 w-px bg-gray-200" />
+                                <div><p className="text-xs text-gray-400 uppercase">Live Quiz</p><p className="text-[#0054a6] text-lg font-black">{QUIZ_DATA.title}</p></div>
+                            </div>
+                            <div className="bg-[#0054a6] text-white px-4 py-2 rounded-full flex items-center gap-2"><Icon name="users" size={18}/><span>{players.length}</span></div>
+                        </header>
+                        <div className="flex-1 flex p-6 gap-6 overflow-hidden">
+                            <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+                                {gameState.status === 'lobby' ? (
+                                    <div className="flex-1 grid lg:grid-cols-2 items-center max-w-6xl mx-auto w-full">
+                                        <div className="space-y-8">
+                                            <h2 className="text-8xl text-[#0054a6] uppercase tracking-tighter">Pronti?</h2>
+                                            <div className="bg-white p-8 rounded-[3rem] border shadow-2xl">
+                                                <p className="text-gray-400 uppercase text-sm mb-2 font-black">Codice d'accesso</p>
+                                                <p className="text-8xl font-mono text-[#0054a6] tracking-widest">{roomCode}</p>
+                                                <input type="text" placeholder="IP Locale (opzionale dev)" className="mt-4 w-full p-2 text-sm border rounded font-mono" value={localIp} onChange={e => setLocalIp(e.target.value)} />
+                                            </div>
+                                            <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-16 py-6 rounded-2xl text-3xl shadow-xl uppercase font-bold active:scale-95">INIZIA IL QUIZ</button>
+                                        </div>
+                                        <div className="flex flex-col items-center">
+                                            <div className="bg-white p-8 rounded-[4rem] border-4 border-[#0054a6]/10 shadow-2xl">
+                                                <img src={getQrUrl()} className="w-80 h-80" alt="QR" />
+                                                <p className="mt-4 text-[#0054a6] text-2xl uppercase text-center font-bold">Inquadra e Gioca</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex-1 flex flex-col overflow-hidden">
+                                        <div className="bg-white p-10 rounded-[3rem] shadow-2xl border flex-1 flex flex-col justify-start relative overflow-y-auto custom-scrollbar">
+                                            <div className="flex justify-between items-center mb-10">
+                                                <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm shadow-md">Domanda {gameState.currentQuestionIndex+1} / 10</span>
+                                                {!gameState.showResults && (
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="bg-blue-50 px-6 py-2 rounded-full border text-[#0054a6] text-xl">Risposte: {answeredCount} / {players.length}</div>
+                                                        <div className="bg-gray-900 text-white px-6 py-2 rounded-full text-3xl font-mono">{timeLeft}s</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <h2 className={`text-[#0054a6] leading-tight tracking-tight mb-12 ${gameState.showResults ? 'text-4xl mt-6 mb-10' : 'text-7xl text-center mt-20 mb-24'}`}>{q?.question}</h2>
+                                            <div className={`grid gap-5 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 max-w-6xl mx-auto w-full'}`}>
+                                                {q?.options?.map((o, i) => (
+                                                    <div key={i} className="flex flex-col gap-3">
+                                                        <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-6 transition-all ${gameState.showResults ? (o.isCorrect ? 'border-[#009640] bg-[#009640]/5 shadow-lg scale-102 font-bold' : 'opacity-30 grayscale') : 'bg-gray-50 shadow-inner'}`}>
+                                                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-4xl shadow-lg`}>{String.fromCharCode(65+i)}</div>
+                                                            <span className="text-[#0054a6] text-2xl flex-1">{o.text}</span>
+                                                            {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={40} className="text-[#009640]" />}
+                                                        </div>
+                                                        {gameState.showResults && (
+                                                            <div className={`px-8 py-5 rounded-3xl text-2xl ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640]' : 'bg-gray-100 text-gray-500'}`}>
+                                                                <p className="font-bold">{o.rationale}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button onClick={async () => {
+                                            if (gameState.showResults) {
+                                                if (gameState.currentQuestionIndex === 9) await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
+                                                else await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
+                                            } else await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
+                                        }} className="w-full mt-4 bg-[#0054a6] text-white py-6 rounded-[2.5rem] text-4xl shadow-2xl active:scale-95 uppercase tracking-tighter font-bold">
+                                            {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Scopri Risposta"} <Icon name="chevronRight" className="inline ml-2" size={40} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            {gameState.status !== 'lobby' && (
+                                <div className="w-64 flex flex-col gap-4 animate-in slide-in-from-right-10">
+                                    <div className="bg-white p-6 rounded-[2rem] shadow-xl border text-center">
+                                        <p className="text-xs text-gray-400 uppercase mb-1">Codice</p>
+                                        <p className="text-4xl font-mono text-[#0054a6]">{roomCode}</p>
+                                    </div>
+                                    <div className="bg-white p-4 rounded-[2rem] shadow-xl border text-center">
+                                        <img src={getQrUrl()} className="w-full h-auto mb-2" alt="QR Code" />
+                                        <p className="text-[10px] text-[#0054a6] uppercase tracking-tighter">SCAN TO JOIN</p>
+                                    </div>
+                                    {gameState.showResults && (
+                                        <div className="bg-white p-6 rounded-[2rem] shadow-xl border flex-1 overflow-hidden flex flex-col">
+                                            <p className="text-xs text-gray-400 uppercase mb-4 border-b pb-2">Classifica</p>
+                                            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar font-sans text-xs">
+                                                {players.map((p, i) => (
+                                                    <div key={i} className={`flex justify-between p-2 rounded-lg ${i<3 ? 'bg-blue-50 text-[#0054a6] font-bold' : ''}`}>
+                                                        <span>{i+1}. {p.name}</span>
+                                                        <span className="font-mono">{p.score}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        {gameState.status === 'finished' && (
+                            <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-in zoom-in">
+                                <Icon name="crown" size={150} className="text-[#ffde00] mb-8 animate-bounce" />
+                                <h2 className="text-8xl text-[#0054a6] mb-16 uppercase italic">I CAMPIONI!</h2>
+                                <div className="flex items-end gap-8 w-full max-w-5xl h-80">
+                                    {players[1] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6] uppercase">{players[1].name}</p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-7xl text-gray-400 shadow-xl border-t-8 border-gray-300 font-bold">2</div></div>}
+                                    {players[0] && <div className="flex-1 flex flex-col items-center"><p className="text-4xl mb-4 text-[#0054a6] drop-shadow-md uppercase font-black">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-[10rem] text-[#0054a6] shadow-2xl border-t-8 border-[#ffde00]">1</div></div>}
+                                    {players[2] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6]">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-7xl text-orange-300 shadow-xl border-t-8 border-orange-200 font-bold">3</div></div>}
+                                </div>
+                                <button onClick={() => window.location.reload()} className="mt-20 bg-gray-900 text-white px-20 py-5 rounded-full text-xl shadow-2xl uppercase font-bold">Nuova Partita</button>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+
+            if (role === 'player') {
+                const isAnswering = gameState?.status === 'playing' && !gameState?.showResults;
+                const myIdx = players.findIndex(p => p.uid === user?.uid);
+                const me = players[myIdx];
+
+                return (
+                    <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden">
+                        <header className="p-4 border-b-4 border-[#ffde00] flex justify-between items-center shadow-md bg-white">
+                            <LogoArcigay className="h-14 object-contain" />
+                            {!isAnswering && (
+                                <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex items-center gap-2">
+                                    <Icon name={rankData.icon} size={20} className={rankData.color} />
+                                    <span className="text-xl font-mono">{me?.score || 0}</span>
+                                </div>
+                            )}
+                        </header>
+                        <main className="flex-1 p-6 flex flex-col items-center justify-center relative bg-gray-50">
+                            {gameState?.status === 'lobby' && (
+                                <div className="text-center space-y-6 max-w-xs mx-auto">
+                                    <Icon name="users" size={48} className="mx-auto text-[#0054a6] animate-pulse" />
+                                    <h2 className="text-3xl uppercase leading-tight">Benvenuti alla Pride House!</h2>
+                                    <p className="text-gray-500 font-bold">In attesa dell'inizio...</p>
+                                    <p className="pt-8 text-[10px] text-gray-400 uppercase tracking-widest">Connesso come: {playerName}</p>
+                                </div>
+                            )}
+                            {isAnswering && (
+                                <div key={gameState.currentQuestionIndex} className="w-full max-w-sm flex flex-col h-full space-y-4 animate-in zoom-in">
+                                    <div className="text-center">
+                                        <p className="text-gray-400 text-[10px] uppercase mb-1">Domanda {(gameState.currentQuestionIndex || 0) + 1}</p>
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse' : ''} />
+                                            <p className={`text-5xl font-mono ${timeLeft < 10 ? 'text-red-500' : ''}`}>{timeLeft}s</p>
+                                        </div>
+                                    </div>
+                                    {hasAnswered ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] animate-pulse">
+                                            <Icon name="loader2" size={48} className="animate-spin text-[#0054a6] mb-6" />
+                                            <h2 className="text-3xl uppercase">Acquisita</h2>
+                                            <p className="text-gray-400 text-sm mt-4 uppercase font-bold text-center">Guarda lo schermo principale</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 gap-4 flex-1">
+                                            {COLORS.map((c, i) => (
+                                                <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black`}>{String.fromCharCode(65 + i)}</button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {gameState?.showResults && (
+                                <div className={`w-full max-w-[95%] p-10 rounded-[4rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                                    <div className="bg-white/20 w-28 h-28 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                                        <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={72} />
+                                    </div>
+                                    <h2 className="text-5xl uppercase leading-none mb-8 font-black">
+                                        {lastAnswerCorrect === true ? 'RISPOSTA ESATTA!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO' : 'RISPOSTA ERRATA')}
+                                    </h2>
+                                    <div className="w-full flex flex-col items-center justify-center">
+                                        {lastAnswerCorrect === true ? (
+                                            <div className="flex flex-col items-center justify-center gap-2 mb-6">
+                                                <div className="flex items-center gap-2">
+                                                    {isFastest && <Icon name="zap" size={28} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}
+                                                    <span className="text-3xl font-bold">+{lastPointsEarned} PT</span>
+                                                </div>
+                                                {isFastest && <p className="text-sm text-[#ffde00] uppercase animate-pulse font-bold">Velocità Massima!</p>}
+                                            </div>
+                                        ) : <div className="text-xl mb-6 uppercase font-bold">0 PUNTI</div>}
+                                        <div className="border-t border-white/20 pt-8 w-full flex flex-col items-center justify-center">
+                                            <p className="text-sm text-white/70 mb-2 uppercase font-bold">Posizione in classifica:</p>
+                                            <p className={`text-7xl ${rankData.color} drop-shadow-sm leading-none font-black`}>{rankData.label}{rankData.label !== "-" ? "°" : ""}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {gameState?.status === 'finished' && (
+                                <div className="text-center space-y-10 animate-in slide-in-from-bottom-10">
+                                    <Icon 
+                                        name={myIdx >= 0 && myIdx <= 2 && me?.score > 0 ? "trophy" : "smile"} 
+                                        size={120} 
+                                        className={`mx-auto drop-shadow-2xl ${myIdx === 0 ? 'text-[#ffd700]' : myIdx === 1 ? 'text-[#c0c0c0]' : myIdx === 2 ? 'text-[#cd7f32]' : 'text-[#0054a6] opacity-80'}`} 
+                                    />
+                                    <h2 className="text-5xl uppercase leading-tight font-black">FINE!</h2>
+                                    <div className="bg-white p-10 rounded-[3rem] border-2 border-gray-100 shadow-xl">
+                                        <p className="text-xs text-gray-400 uppercase mb-3 font-bold">Punteggio Finale</p>
+                                        <p className="text-2xl mb-4 text-[#0054a6] font-bold">Posizione {rankData.label}°</p>
+                                        <p className="text-7xl font-mono leading-none tracking-tighter text-[#0054a6] font-black">{me?.score || 0}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </main>
+                    </div>
+                );
+            }
+            return null;
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
