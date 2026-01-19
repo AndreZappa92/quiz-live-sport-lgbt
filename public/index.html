@@ -33,19 +33,19 @@
         // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                // Trofeo: via di mezzo per la U, stelo corto, base bilanciata
+                // Trofeo: U bilanciata (via di mezzo), stelo corto, base ok
                 trophy: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 3H7v10a5 5 0 0 0 10 0V3z" />
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                        <path d="M12 18v4" />
-                        <path d="M8 22h8" />
+                    <g fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 3H7v8a5 5 0 0 0 10 0V3z" />
+                        <path d="M6 8H4.5a2.5 2.5 0 0 1 0-5H6" />
+                        <path d="M18 8h1.5a2.5 2.5 0 0 0 0-5H18" />
+                        <path d="M12 16v5" />
+                        <path d="M8 21h8" />
                     </g>
                 ),
                 // Icona Punteggio: Medaglia con stella
                 coins: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <g fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10" />
                         <path d="M12 8l1.5 3h3.5l-2.5 2 1 3.5-3.5-2-3.5 2 1-3.5-2.5-2h3.5z" />
                     </g>
@@ -77,25 +77,12 @@
                     </g>
                 ),
                 zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>,
-                smile: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                    </g>
-                ),
                 qr: (
                     <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="5" height="5" x="3" y="3" rx="1"/>
-                        <rect width="5" height="5" x="16" y="3" rx="1"/>
-                        <rect width="5" height="5" x="3" y="16" rx="1"/>
-                        <path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
+                        <rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
                     </g>
                 ),
-                loader2: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                    </g>
-                )
+                loader2: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></g>
             };
             return (
                 <svg viewBox="0 0 24 24" width={size} height={size} className={`${className} flex items-center justify-center shrink-0`}>
@@ -105,7 +92,7 @@
         };
 
         const LogoArcigay = ({ className }) => (
-            <img src="/logoCIG.png" alt="Logo CIG" className={className} onError={(e) => {
+            <img src="/logoCIG.png" alt="Logo CIG" className={className} style={{ width: 'auto' }} onError={(e) => {
                 e.target.onerror = null; 
                 e.target.src = "https://www.arcigaymilano.org/wp-content/themes/arcigay-milano/assets/images/logo.png";
             }} />
@@ -132,7 +119,6 @@
         const appId = 'quiz-lgbt-sport-2026';
         const TIMER_SECONDS = 30;
 
-        // --- DATI QUIZ ---
         const QUIZ_DATA = {
             title: "Sport e Inclusione: LGBT+",
             questions: [
@@ -210,9 +196,9 @@
                     id: 8,
                     question: "Quale di questi è lo scopo principale degli 'EuroGames'?",
                     options: [
+                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Si tratta di un evento multisportivo europeo aperto a tutti, indipendentemente dall'orientamento sessuale.", isCorrect: true },
                         { text: "Selezionare gli atleti per le prossime Olimpiadi", rationale: "Gli EuroGames non sono un evento di qualificazione olimpica ufficiale.", isCorrect: false },
                         { text: "Gareggiare esclusivamente per vincere premi in denaro", rationale: "Lo spirito dell'evento è sociale e comunitario, non basato su grandi premi monetari.", isCorrect: false },
-                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Si tratta di un evento multisportivo europeo aperto a tutti, indipendentemente dall'orientamento sessuale.", isCorrect: true },
                         { text: "Permettere la partecipazione solo ad atleti professionisti", rationale: "L'evento è aperto ad atleti di ogni livello, dai dilettanti ai professionisti.", isCorrect: false }
                     ]
                 },
@@ -256,7 +242,7 @@
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
             const [prevScore, setPrevScore] = useState(0);
 
-            // Auto-fill e Auth
+            // Auth e Auto-fill
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
                 const r = params.get('room');
@@ -270,12 +256,8 @@
                             const snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${roomCode}_${u.uid}`).get();
                             if (snap.exists) {
                                 const d = snap.data();
-                                setRole('player');
-                                setName(d.name);
-                                setPrevScore(d.score);
-                                sessionStorage.setItem('activeRole', 'player');
-                                sessionStorage.setItem('activePlayerName', d.name);
-                                sessionStorage.setItem('activeRoom', roomCode);
+                                setRole('player'); setName(d.name); setPrevScore(d.score);
+                                sessionStorage.setItem('activeRole', 'player'); sessionStorage.setItem('activePlayerName', d.name); sessionStorage.setItem('activeRoom', roomCode);
                             }
                         }
                     }
@@ -298,7 +280,7 @@
                 return () => { unsubRoom(); unsubPlayers(); };
             }, [user, roomCode, role]);
 
-            // Aggiornamento differito Classifica e Score Header
+            // Aggiornamento differito Classifica (SOLO QUANDO showResults è true o in Lobby/Finish)
             useEffect(() => {
                 if (!gameState) return;
                 if (gameState.status === 'lobby' || gameState.showResults || gameState.status === 'finished') {
@@ -337,7 +319,7 @@
             const submitAnswer = async (i) => {
                 if (hasAnswered || timeLeft === 0 || !gameState || gameState.showResults) return;
                 const isCorrect = QUIZ_DATA.questions[gameState.currentQuestionIndex].options[i].isCorrect;
-                const timeTaken = (Date.now() - gameState.questionStartTime) / 1000;
+                const timeTaken = Math.max(0.1, (Date.now() - gameState.questionStartTime) / 1000);
                 const earned = isCorrect ? Math.floor(500 + (500 * (1 - Math.min(1, timeTaken/TIMER_SECONDS)))) : 0;
                 setHasAnswered(true);
                 setLastAnswerCorrect(isCorrect);
@@ -357,7 +339,6 @@
                 const idx = displayedPlayers.findIndex(p => p.uid === user?.uid);
                 const me = displayedPlayers[idx];
                 if (!me || me.score === 0) return { label: idx !== -1 ? (idx + 1).toString() : "-", color: "text-white", icon: "coins" };
-                
                 if (idx === 0) return { label: "1", color: "text-[#ffd700]", icon: "trophy" };
                 if (idx === 1) return { label: "2", color: "text-[#c0c0c0]", icon: "trophy" };
                 if (idx === 2) return { label: "3", color: "text-[#cd7f32]", icon: "trophy" };
@@ -376,35 +357,29 @@
             if (!role) return (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
-                        <LogoArcigay className="h-24 mx-auto mb-6" />
+                        <LogoArcigay className="h-24 mx-auto mb-6 object-contain" />
                         <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Pride House Quiz</h1>
                         <div className="space-y-5">
                             <input type="text" placeholder="Nome Squadra" className="w-full border-2 p-4 rounded-2xl text-center text-xl font-bold" value={playerName} onChange={e => setName(e.target.value)} />
                             <input type="text" placeholder="Codice Stanza" className="w-full border-2 p-4 rounded-2xl text-center uppercase text-2xl font-mono" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
                             <button onClick={async () => {
-                                const cleanName = playerName.trim();
-                                const cleanCode = roomCode.trim().toUpperCase();
+                                const cleanName = playerName.trim(); const cleanCode = roomCode.trim().toUpperCase();
                                 if (!cleanName || !cleanCode) return;
                                 const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(cleanCode).get();
                                 if (room.exists) {
                                     await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${cleanCode}_${user.uid}`).set({
                                         uid: user.uid, name: cleanName, roomCode: cleanCode, score: 0, lastAnswerIndex: -1, lastQuestionIndexAnswered: -1, lastAnsweredAt: 0
                                     });
-                                    sessionStorage.setItem('activeRoom', cleanCode);
-                                    sessionStorage.setItem('activeRole', 'player');
-                                    sessionStorage.setItem('activePlayerName', cleanName);
+                                    sessionStorage.setItem('activeRoom', cleanCode); sessionStorage.setItem('activeRole', 'player'); sessionStorage.setItem('activePlayerName', cleanName);
                                     setRole('player');
                                 }
-                            }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl transition-all active:scale-95 shadow-md">Partecipa</button>
+                            }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl active:scale-95 transition-all shadow-md">Partecipa</button>
                             <button onClick={async () => {
                                 const code = Math.random().toString(36).substring(2,6).toUpperCase();
                                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
                                     code, status: 'lobby', currentQuestionIndex: 0, showResults: false, hostId: user.uid, createdAt: Date.now(), questionStartTime: 0
                                 });
-                                sessionStorage.setItem('activeRoom', code);
-                                sessionStorage.setItem('activeRole', 'host');
-                                setRoomCode(code);
-                                setRole('host');
+                                sessionStorage.setItem('activeRoom', code); sessionStorage.setItem('activeRole', 'host'); setRoomCode(code); setRole('host');
                             }} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-sm uppercase">Crea Stanza Host</button>
                         </div>
                     </div>
@@ -413,20 +388,19 @@
 
             if (role === 'host' && gameState) {
                 const q = QUIZ_DATA.questions[gameState.currentQuestionIndex];
-                const answeredCount = players.filter(p=>p.lastQuestionIndexAnswered === gameState.currentQuestionIndex).length;
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden font-black">
                         <header className="flex justify-between items-center bg-white p-4 border-b">
-                            <LogoArcigay className="h-14" />
+                            <LogoArcigay className="h-14 object-contain" />
                             <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center">
                                 <Icon name="users" size={20}/> <span className="text-xl">{players.length}</span>
                             </div>
                         </header>
                         
-                        <div className="flex-1 flex gap-6 p-6 overflow-hidden font-black">
+                        <div className="flex-1 flex gap-6 p-6 overflow-hidden">
                             <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black">
                                 {gameState.status === 'lobby' ? (
-                                    <div className="flex flex-col items-center gap-8 w-full max-w-4xl font-black font-black">
+                                    <div className="flex flex-col items-center gap-8 w-full max-w-4xl">
                                         <h2 className="text-6xl text-[#0054a6] uppercase tracking-tighter">In attesa dei campioni...</h2>
                                         <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-md mx-auto shadow-inner">
                                             <div className="flex flex-col items-center">
@@ -434,14 +408,13 @@
                                                 <p className="text-4xl text-[#0054a6] font-mono tracking-widest leading-none">{roomCode}</p>
                                             </div>
                                         </div>
-                                        <div className="flex flex-wrap gap-2 justify-center max-w-2xl font-black font-black">
+                                        <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
                                             {players.map(p => <div key={p.uid} className="bg-[#0054a6] text-white px-4 py-2 rounded-full text-sm animate-fade-in">{p.name}</div>)}
-                                            {players.length === 0 && <p className="text-gray-400 italic">In attesa dei collegamenti...</p>}
                                         </div>
-                                        <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-12 py-5 rounded-2xl text-2xl uppercase transition-all active:scale-95 shadow-xl">Inizia Quiz</button>
+                                        <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-12 py-5 rounded-2xl text-2xl uppercase transition-all active:scale-95 shadow-xl font-black">Inizia Quiz</button>
                                     </div>
                                 ) : (
-                                    <div className="w-full max-w-5xl space-y-8 font-black font-black font-black font-black">
+                                    <div className="w-full max-w-5xl space-y-8 font-black">
                                         <div className="flex justify-between items-center">
                                             <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm shadow-md">Domanda {gameState.currentQuestionIndex+1} / 10</span>
                                             {!gameState.showResults && <div className="text-4xl font-mono bg-gray-900 text-white px-8 py-3 rounded-2xl shadow-lg">{timeLeft}s</div>}
@@ -449,11 +422,11 @@
                                         <h2 className={`text-[#0054a6] leading-tight tracking-tight text-justify ${gameState.showResults ? 'text-4xl' : 'text-7xl mt-10 mb-20'}`}>{q.question}</h2>
                                         <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'} font-black`}>
                                             {q.options.map((o, i) => (
-                                                <div key={i} className="flex flex-col gap-3 font-black font-black">
+                                                <div key={i} className="flex flex-col gap-3 font-black">
                                                     <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-4 transition-all ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-30 grayscale border-gray-100') : 'bg-gray-50 border-transparent shadow-inner font-black'}`}>
-                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-2xl shadow-lg`}>{String.fromCharCode(65+i)}</div>
+                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-2xl shadow-lg font-black`}>{String.fromCharCode(65+i)}</div>
                                                         <span className="text-[#0054a6] text-2xl text-left font-bold leading-tight font-black">{o.text}</span>
-                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto font-black" />}
+                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto" />}
                                                     </div>
                                                     {gameState.showResults && (
                                                         <div className={`px-8 py-5 rounded-3xl text-xl text-justify font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
@@ -468,39 +441,32 @@
                                                 if (gameState.currentQuestionIndex === 9) db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
                                                 else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
                                             } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
-                                        }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all font-black font-black">
+                                        }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all">
                                             {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={32} />
                                         </button>
                                     </div>
                                 )}
                             </div>
                             
-                            <div className="w-64 flex flex-col gap-4 font-black font-black font-black">
+                            <div className="w-64 flex flex-col gap-4 font-black">
                                 <div className="bg-white p-4 rounded-[2rem] shadow-xl border flex flex-col items-center">
                                     <img src={getQrUrl()} alt="QR" className="w-full rounded-xl mb-2" />
-                                    <p className="text-xl font-mono text-[#0054a6] leading-none font-black">{roomCode}</p>
+                                    <p className="text-xl font-mono text-[#0054a6] leading-none">{roomCode}</p>
                                 </div>
                                 {(gameState.status === 'lobby' || gameState.showResults) && (
-                                    <div className="bg-white p-6 rounded-[2rem] shadow border flex-1 overflow-hidden flex flex-col font-black">
-                                        <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica</h3>
-                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 font-black font-black">
+                                    <div className="bg-white p-6 rounded-[2rem] shadow border flex-1 overflow-hidden flex flex-col font-black font-black">
+                                        <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black font-black">Classifica</h3>
+                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
                                             {displayedPlayers.map((p, i) => {
-                                                let rowStyle = "bg-gray-50 border-gray-100";
-                                                let nameStyle = "text-xs";
-                                                if (i === 0) {
-                                                    rowStyle = "bg-[#ffd700]/20 border-[#ffd700] shadow-md";
-                                                    nameStyle = "text-xl text-[#b8860b]";
-                                                } else if (i === 1) {
-                                                    rowStyle = "bg-[#c0c0c0]/20 border-[#c0c0c0]";
-                                                    nameStyle = "text-lg text-[#707070]";
-                                                } else if (i === 2) {
-                                                    rowStyle = "bg-[#cd7f32]/20 border-[#cd7f32]";
-                                                    nameStyle = "text-lg text-[#8b4513]";
-                                                }
+                                                let rowStyle = "bg-gray-50 border-gray-100 font-black";
+                                                let nameStyle = "text-xs font-black";
+                                                if (i === 0) { rowStyle = "bg-[#ffd700]/20 border-[#ffd700] shadow-md"; nameStyle = "text-xl text-[#b8860b]"; }
+                                                else if (i === 1) { rowStyle = "bg-[#c0c0c0]/20 border-[#c0c0c0]"; nameStyle = "text-lg text-[#707070]"; }
+                                                else if (i === 2) { rowStyle = "bg-[#cd7f32]/20 border-[#cd7f32]"; nameStyle = "text-lg text-[#8b4513]"; }
                                                 return (
-                                                    <div key={p.uid} className={`flex justify-between items-center p-3 rounded-xl border transition-all ${rowStyle}`}>
-                                                        <span className={`truncate max-w-[110px] font-black uppercase ${nameStyle}`}>{i+1}. {p.name}</span>
-                                                        <span className="font-mono font-bold text-sm">{p.score}</span>
+                                                    <div key={p.uid} className={`flex justify-between items-center p-3 rounded-xl border transition-all font-black ${rowStyle}`}>
+                                                        <span className={`truncate max-w-[110px] font-black uppercase font-black ${nameStyle}`}>{i+1}. {p.name}</span>
+                                                        <span className="font-mono font-bold text-sm font-black">{p.score}</span>
                                                     </div>
                                                 );
                                             })}
@@ -514,8 +480,8 @@
                             <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-fade-in text-center font-black">
                                 <Icon name="crown" size={120} className="text-[#ffde00] mb-6 animate-bounce" />
                                 <h2 className="text-7xl text-[#0054a6] mb-12 uppercase italic tracking-tighter font-black">I Vincitori!</h2>
-                                <div className="flex items-end gap-10 w-full max-w-4xl h-72 font-black font-black font-black font-black">
-                                    {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl font-black">2</div></div>}
+                                <div className="flex items-end gap-10 w-full max-w-4xl h-72 font-black font-black">
+                                    {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl">2</div></div>}
                                     {displayedPlayers[0] && <div className="flex-1 flex flex-col items-center font-black font-black font-black"><p className="text-3xl mb-4 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md"> {displayedPlayers[0].name} </p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
                                     {displayedPlayers[2] && <div className="flex-1 flex flex-col items-center font-black font-black font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[2].name} </p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-5xl text-orange-300 border-t-8 border-orange-200 shadow-xl">3</div></div>}
                                 </div>
@@ -527,42 +493,42 @@
             }
 
             if (role === 'player' && gameState) return (
-                <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center font-black font-black font-black">
-                    <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black font-black font-black font-black font-black font-black font-black font-black">
-                        <LogoArcigay className="h-10 font-black font-black font-black" />
-                        <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm font-black font-black font-black font-black font-black font-black">
-                            <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0 font-black font-black font-black font-black font-black font-black font-black">
+                <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
+                    <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black">
+                        <LogoArcigay className="h-10 object-contain" />
+                        <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm">
+                            <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
                                 <Icon name={rankInfo.icon} size={18} className={rankInfo.color} />
                             </div>
-                            <span className="text-xl font-mono leading-none font-black font-black font-black font-black font-black font-black font-black font-black font-black">{prevScore}</span>
+                            <span className="text-xl font-mono leading-none font-black">{prevScore}</span>
                         </div>
                     </header>
 
-                    <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black font-black font-black font-black font-black font-black font-black font-black font-black">
+                    <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black">
                         {gameState.status === 'lobby' && (
-                            <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black">
-                                <LogoPrideHouse className="h-40 w-auto object-contain mx-auto mb-4 font-black font-black font-black font-black font-black font-black" />
-                                <h2 className="text-2xl uppercase tracking-tighter leading-tight font-black font-black font-black font-black font-black">IL QUIZ STA PER INIZIARE!</h2>
-                                <p className="text-gray-500 text-sm italic tracking-widest font-black font-black font-black font-black font-black font-black font-black font-black">Player: {playerName}</p>
+                            <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center font-black">
+                                <LogoPrideHouse className="h-40 w-auto object-contain mx-auto mb-4 font-black" />
+                                <h2 className="text-2xl uppercase tracking-tighter leading-tight font-black">IL QUIZ STA PER INIZIARE!</h2>
+                                <p className="text-gray-500 text-sm italic tracking-widest font-black">Player: {playerName}</p>
                             </div>
                         )}
 
                         {gameState.status === 'playing' && !gameState.showResults && (
-                            <div className="w-full max-w-sm flex flex-col gap-6 h-full py-4 font-black font-black font-black font-black font-black">
-                                <div className="flex items-center justify-center gap-3 font-black font-black font-black">
+                            <div className="w-full max-w-sm flex flex-col gap-6 h-full py-4 font-black">
+                                <div className="flex items-center justify-center gap-3 font-black">
                                     <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse font-black' : 'text-[#0054a6]'} />
-                                    <span className={`text-5xl font-mono font-black font-black font-black font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
+                                    <span className={`text-5xl font-mono font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
                                 </div>
                                 {hasAnswered ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black font-black font-black">
-                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4 font-black font-black font-black" />
-                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black font-black font-black">Acquisita</h2>
-                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black font-black font-black">Guarda lo schermo principale</p>
+                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black">
+                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4 font-black" />
+                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none">Acquisita</h2>
+                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase">Guarda lo schermo principale</p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 gap-5 flex-1 font-black font-black font-black">
+                                    <div className="grid grid-cols-1 gap-5 flex-1 font-black">
                                         {COLORS.map((c, i) => (
-                                            <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-2xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black font-black font-black`}>
+                                            <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-2xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all`}>
                                                 {String.fromCharCode(65 + i)}
                                             </button>
                                         ))}
@@ -572,41 +538,41 @@
                         )}
 
                         {gameState.status === 'playing' && gameState.showResults && (
-                            <div className={`w-full max-w-[320px] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 font-black font-black font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
-                                <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner text-white font-black shrink-0 font-black">
-                                    <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={48} />
+                            <div className={`w-full max-w-[320px] p-4 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                                <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-inner text-white shrink-0">
+                                    <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={40} />
                                 </div>
-                                <h2 className="text-3xl uppercase mb-4 leading-none font-black text-center font-black">
-                                    {lastAnswerCorrect === true ? 'ESATTO!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO' : 'ERRATO')}
+                                <h2 className="text-2xl uppercase mb-4 leading-none font-black text-center">
+                                    {lastAnswerCorrect === true ? 'ESATTO!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'SCADUTO' : 'ERRATO')}
                                 </h2>
-                                <div className="w-full space-y-4 font-black font-black font-black">
+                                <div className="w-full space-y-4 font-black">
                                     {lastAnswerCorrect === true ? (
-                                        <div className="flex flex-col items-center gap-1 font-black font-black font-black">
-                                            <div className="flex items-center gap-3 font-black font-black font-black">
-                                                {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce font-black font-black" />}
-                                                <span className="text-2xl font-black font-black font-black font-black">+{lastPointsEarned} PT</span>
+                                        <div className="flex flex-col items-center gap-1 font-black">
+                                            <div className="flex items-center gap-3">
+                                                {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce font-black" />}
+                                                <span className="text-2xl font-black">+{lastPointsEarned} PT</span>
                                             </div>
-                                            {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em] font-black">VELOCITÀ MASSIMA!</p>}
+                                            {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em]">VELOCITÀ MASSIMA!</p>}
                                         </div>
-                                    ) : <div className="text-xl font-black font-black opacity-60 uppercase tracking-widest font-black font-black">0 PUNTI</div>}
-                                    <div className="border-t border-white/20 pt-4 font-black font-black font-black">
-                                        <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black font-black">Classifica:</p>
-                                        <p className={`text-6xl ${rankInfo.color} drop-shadow-sm font-black font-black font-black leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
+                                    ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest">0 PUNTI</div>}
+                                    <div className="border-t border-white/20 pt-4">
+                                        <p className="text-xs text-white/70 mb-1 uppercase tracking-widest">Classifica:</p>
+                                        <p className={`text-6xl ${rankInfo.color} drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {gameState.status === 'finished' && (
-                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto font-black text-center">
-                                <div className="w-36 h-36 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 font-black mb-8">
-                                    <Icon name={rankInfo.icon} size={80} className={`drop-shadow-xl ${rankInfo.color} font-black font-black`} />
+                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto text-center">
+                                <div className="w-28 h-28 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-6">
+                                    <Icon name={rankInfo.icon} size={60} className={`drop-shadow-xl ${rankInfo.color}`} />
                                 </div>
-                                <h2 className="text-6xl uppercase tracking-tighter leading-tight font-black font-black font-black mb-10 font-black">GARA FINITA!</h2>
-                                <div className="bg-white p-8 rounded-[3.5rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center font-black">
-                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-3 font-black font-black font-black">Punteggio Finale</p>
-                                    <p className="text-2xl text-[#0054a6] mb-3 font-black font-black font-black font-black font-black leading-none">{rankInfo.label}° Posto</p>
-                                    <p className="text-7xl font-mono text-[#0054a6] leading-none tracking-tighter font-black font-black font-black font-black font-black mt-2">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
+                                <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black mb-6">GARA FINITA!</h2>
+                                <div className="bg-white p-6 rounded-[3rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center">
+                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-3">Punteggio Finale</p>
+                                    <p className="text-2xl text-[#0054a6] mb-3 font-black leading-none">{rankInfo.label}° Posto</p>
+                                    <p className="text-7xl font-mono text-[#0054a6] leading-none tracking-tighter font-black mt-2">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
                                 </div>
                             </div>
                         )}
