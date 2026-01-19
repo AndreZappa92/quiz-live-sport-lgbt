@@ -51,14 +51,14 @@
         // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                // Trofeo: U alzata, stelo abbassato, manici centrati
+                // Trofeo: U rialzata, stelo abbassato, base bilanciata
                 trophy: (
                     <g fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 2H7v6a5 5 0 0 0 10 0V2z" />
+                        <path d="M17 2.5H7v6.5a5 5 0 0 0 10 0V2.5z" />
                         <path d="M6 7H4.5a2.5 2.5 0 0 1 0-5H6" />
                         <path d="M18 7h1.5a2.5 2.5 0 0 0 0-5H18" />
                         <path d="M12 14v7" />
-                        <path d="M8 21h8" />
+                        <path d="M8 21.5h8" />
                     </g>
                 ),
                 coins: (
@@ -137,7 +137,6 @@
         const appId = 'quiz-lgbt-sport-2026';
         const TIMER_SECONDS = 30;
 
-        // --- DATI QUIZ RIEQUILIBRATI (3A, 3B, 2C, 2D) - ORDINE MIXATO ---
         const QUIZ_DATA = {
             title: "Sport e Inclusione: LGBT+",
             questions: [
@@ -244,9 +243,7 @@
             ]
         };
 
-        const COLORS = ['bg-[#e30613]', 'bg-[#0054a6]', 'bg-[#009640]', 'bg-[#ffde00]'];
-
-        function App() {
+        const App = () => {
             const [user, setUser] = useState(null);
             const [role, setRole] = useState(() => sessionStorage.getItem('activeRole'));
             const [roomCode, setRoomCode] = useState(() => sessionStorage.getItem('activeRoom') || '');
@@ -261,7 +258,6 @@
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
             const [prevScore, setPrevScore] = useState(0);
 
-            // Auth e Auto-fill
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
                 const r = params.get('room');
@@ -284,7 +280,6 @@
                 return () => unsub();
             }, [roomCode, playerName]);
 
-            // Database Sync
             useEffect(() => {
                 if (!user || !roomCode || !role) return;
                 const code = roomCode.trim().toUpperCase();
@@ -299,7 +294,6 @@
                 return () => { unsubRoom(); unsubPlayers(); };
             }, [user, roomCode, role]);
 
-            // Aggiornamento differito Classifica
             useEffect(() => {
                 if (!gameState) return;
                 if (gameState.status === 'lobby' || gameState.showResults || gameState.status === 'finished') {
@@ -309,7 +303,7 @@
                 }
             }, [players, gameState?.showResults, gameState?.status, user?.uid]);
 
-            // Timer fluido con protezione sincronizzazione
+            // Timer sincronizzato con requestAnimationFrame
             useEffect(() => {
                 if (gameState?.status === 'playing' && !gameState.showResults && gameState.questionStartTime) {
                     let frame;
@@ -317,7 +311,6 @@
                         const elapsed = Math.floor((Date.now() - gameState.questionStartTime) / 1000);
                         const remaining = Math.max(0, TIMER_SECONDS - elapsed);
                         setTimeLeft(remaining);
-                        
                         if (remaining === 0) {
                             if (role === 'player' && !hasAnswered) setHasAnswered(true);
                         } else {
@@ -329,7 +322,6 @@
                 }
             }, [gameState, role, hasAnswered]);
 
-            // Reset Round
             useEffect(() => {
                 if (gameState && !gameState.showResults) {
                     setHasAnswered(false);
@@ -353,25 +345,20 @@
                 });
             };
 
-            const getQrUrl = () => {
-                const joinUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
-                return `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(joinUrl)}&bgcolor=ffffff&color=0054a6&margin=10`;
-            };
-
             const rankInfo = useMemo(() => {
                 const idx = displayedPlayers.findIndex(p => p.uid === user?.uid);
                 const me = displayedPlayers[idx];
-                // Mostra monete BLU per punteggio 0
-                if (!me || me.score === 0) return { 
+                // Mostra monete BLU per punteggio 0 o posizioni oltre il podio
+                if (!me || me.score === 0 || idx > 2) return { 
                     label: idx !== -1 ? (idx + 1).toString() : "-", 
-                    color: "text-[#0054a6]", 
+                    color: "text-white", // Testo bianco fisso per feedback
                     icon: "coins", 
                     colorHex: "#0054a6" 
                 };
                 if (idx === 0) return { label: "1", color: "text-[#ffd700]", icon: "trophy", colorHex: "#ffd700" };
                 if (idx === 1) return { label: "2", color: "text-[#c0c0c0]", icon: "trophy", colorHex: "#c0c0c0" };
                 if (idx === 2) return { label: "3", color: "text-[#cd7f32]", icon: "trophy", colorHex: "#cd7f32" };
-                return { label: (idx + 1).toString(), color: "text-[#0054a6]", icon: "coins", colorHex: "#0054a6" };
+                return { label: (idx + 1).toString(), color: "text-white", icon: "coins", colorHex: "#0054a6" };
             }, [displayedPlayers, user]);
 
             const isFastestPlayer = useMemo(() => {
@@ -383,12 +370,9 @@
                 return players.find(p => p.uid === user?.uid)?.lastAnsweredAt === minTime && lastAnswerCorrect;
             }, [players, gameState, lastAnswerCorrect, user]);
 
-            const myRankIndex = useMemo(() => {
-                if (!user || displayedPlayers.length === 0) return -1;
-                return displayedPlayers.findIndex(p => p.uid === user.uid);
-            }, [displayedPlayers, user]);
+            const myRankIndex = useMemo(() => displayedPlayers.findIndex(p => p.uid === user?.uid), [displayedPlayers, user]);
 
-            // --- UI ---
+            // UI
             if (!role) return (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
@@ -408,7 +392,7 @@
                                     sessionStorage.setItem('activeRoom', cleanCode); sessionStorage.setItem('activeRole', 'player'); sessionStorage.setItem('activePlayerName', cleanName);
                                     setRole('player');
                                 }
-                            }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl transition-all active:scale-95 shadow-md">Partecipa</button>
+                            }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl active:scale-95 transition-all shadow-md">Partecipa</button>
                             <button onClick={async () => {
                                 const code = Math.random().toString(36).substring(2,6).toUpperCase();
                                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
@@ -425,10 +409,10 @@
                 const q = QUIZ_DATA.questions[gameState.currentQuestionIndex];
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden font-black">
-                        <header className="flex justify-between items-center bg-white p-4 border-b shadow-sm">
+                        <header className="flex justify-between items-center bg-white p-4 border-b">
                             <LogoArcigay className="h-14 object-contain" />
                             <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center">
-                                <Icon name="users" size={20}/> <span className="text-xl font-black">{players.length}</span>
+                                <Icon name="users" size={20}/> <span className="text-xl">{players.length}</span>
                             </div>
                         </header>
                         
@@ -438,13 +422,13 @@
                                     <div className="flex flex-col items-center gap-8 w-full max-w-4xl">
                                         <h2 className="text-6xl text-[#0054a6] uppercase tracking-tighter">In attesa dei campioni...</h2>
                                         <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-md mx-auto shadow-inner">
-                                            <div className="flex flex-col items-center">
-                                                <img src={getQrUrl()} alt="QR" className="w-80 h-80 rounded-2xl mb-4" />
+                                            <div className="flex flex-col items-center font-black">
+                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} alt="QR" className="w-80 h-80 rounded-2xl mb-4" />
                                                 <p className="text-4xl text-[#0054a6] font-mono tracking-widest leading-none">{roomCode}</p>
                                             </div>
                                         </div>
-                                        <div className="flex flex-wrap gap-2 justify-center max-w-2xl font-black">
-                                            {players.map(p => <div key={p.uid} className="bg-[#0054a6] text-white px-4 py-2 rounded-full text-sm animate-fade-in font-black">{p.name}</div>)}
+                                        <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
+                                            {players.map(p => <div key={p.uid} className="bg-[#0054a6] text-white px-4 py-2 rounded-full text-sm animate-fade-in">{p.name}</div>)}
                                         </div>
                                         <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-12 py-5 rounded-2xl text-2xl uppercase transition-all active:scale-95 shadow-xl font-black">Inizia Quiz</button>
                                     </div>
@@ -461,7 +445,7 @@
                                                     <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-4 transition-all font-black ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-30 grayscale border-gray-100') : 'bg-gray-50 border-transparent shadow-inner'}`}>
                                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-2xl shadow-lg font-black`}>{String.fromCharCode(65+i)}</div>
                                                         <span className="text-[#0054a6] text-2xl text-left font-bold leading-tight font-black">{o.text}</span>
-                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto" />}
+                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto font-black" />}
                                                     </div>
                                                     {gameState.showResults && (
                                                         <div className={`px-8 py-5 rounded-3xl text-xl text-justify font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
@@ -476,7 +460,7 @@
                                                 if (gameState.currentQuestionIndex === 9) db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
                                                 else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
                                             } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
-                                        }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all font-black">
+                                        }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all">
                                             {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={32} />
                                         </button>
                                     </div>
@@ -485,12 +469,12 @@
                             
                             <div className="w-64 flex flex-col gap-4 font-black">
                                 <div className="bg-white p-4 rounded-[2rem] shadow-xl border flex flex-col items-center">
-                                    <img src={getQrUrl()} alt="QR" className="w-full rounded-xl mb-2" />
-                                    <p className="text-xl font-mono text-[#0054a6] leading-none font-black">{roomCode}</p>
+                                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} alt="QR" className="w-full rounded-xl mb-2" />
+                                    <p className="text-xl font-mono text-[#0054a6] leading-none">{roomCode}</p>
                                 </div>
                                 {gameState.showResults && (
                                     <div className="bg-white p-6 rounded-[2rem] shadow border flex-1 overflow-hidden flex flex-col font-black">
-                                        <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica</h3>
+                                        <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black font-black">Classifica</h3>
                                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 font-black">
                                             {displayedPlayers.slice(0, 10).map((p, i) => {
                                                 let rowStyle = "bg-gray-50 border-gray-100 font-black";
@@ -515,10 +499,10 @@
                             <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-fade-in text-center font-black">
                                 <Icon name="crown" size={120} className="text-[#ffde00] mb-6 animate-bounce" />
                                 <h2 className="text-7xl text-[#0054a6] mb-12 uppercase italic tracking-tighter font-black">I Vincitori!</h2>
-                                <div className="flex items-end gap-10 w-full max-w-4xl h-72 font-black font-black">
+                                <div className="flex items-end gap-10 w-full max-w-4xl h-72">
                                     {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl">2</div></div>}
                                     {displayedPlayers[0] && <div className="flex-1 flex flex-col items-center font-black font-black"><p className="text-3xl mb-4 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md"> {displayedPlayers[0].name} </p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
-                                    {displayedPlayers[2] && <div className="flex-1 flex flex-col items-center font-black font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[2].name} </p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-5xl text-orange-300 border-t-8 border-orange-200 shadow-xl font-black">3</div></div>}
+                                    {displayedPlayers[2] && <div className="flex-1 flex flex-col items-center font-black font-black font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[2].name} </p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-5xl text-orange-300 border-t-8 border-orange-200 shadow-xl font-black">3</div></div>}
                                 </div>
                                 <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-16 px-16 py-5 bg-gray-900 text-white rounded-full text-xl uppercase tracking-widest shadow-xl transition-all hover:bg-black font-black">Nuova Partita</button>
                             </div>
@@ -535,7 +519,7 @@
                             <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
                                 <Icon name={rankInfo.icon} size={18} className={rankInfo.color} />
                             </div>
-                            <span className="text-xl font-mono leading-none font-black">{prevScore}</span>
+                            <span className="text-xl font-mono leading-none font-black font-black">{prevScore}</span>
                         </div>
                     </header>
 
@@ -543,10 +527,10 @@
                         {gameState.status === 'finished' && myRankIndex >= 0 && myRankIndex <= 2 && <Confetti />}
 
                         {gameState.status === 'lobby' && (
-                            <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center font-black">
+                            <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center font-black font-black">
                                 <LogoPrideHouse className="h-40 w-auto object-contain mx-auto mb-4 font-black font-black" />
-                                <h2 className="text-2xl uppercase tracking-tighter leading-tight font-black">IL QUIZ STA PER INIZIARE!</h2>
-                                <p className="text-gray-500 text-sm italic tracking-widest font-black">Player: {playerName}</p>
+                                <h2 className="text-2xl uppercase tracking-tighter leading-tight font-black font-black">IL QUIZ STA PER INIZIARE!</h2>
+                                <p className="text-gray-500 text-sm italic tracking-widest font-black font-black">Player: {playerName}</p>
                             </div>
                         )}
 
@@ -554,12 +538,12 @@
                             <div className="w-full max-w-sm flex flex-col gap-6 h-full py-4 font-black font-black">
                                 <div className="flex items-center justify-center gap-3 font-black">
                                     <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse font-black' : 'text-[#0054a6]'} />
-                                    <span className={`text-5xl font-mono font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
+                                    <span className={`text-5xl font-mono font-black font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
                                 </div>
                                 {hasAnswered ? (
                                     <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black font-black">
                                         <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4 font-black" />
-                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black">Acquisita</h2>
+                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black font-black">Acquisita</h2>
                                         <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black font-black">Guarda lo schermo principale</p>
                                     </div>
                                 ) : (
@@ -575,7 +559,7 @@
                         )}
 
                         {gameState.status === 'playing' && gameState.showResults && (
-                            <div className={`w-full max-w-[320px] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                            <div className={`w-full max-w-[320px] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 font-black font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
                                 <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner text-white font-black shrink-0">
                                     <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={48} />
                                 </div>
@@ -584,37 +568,37 @@
                                 </h2>
                                 <div className="w-full space-y-4 font-black">
                                     {lastAnswerCorrect === true ? (
-                                        <div className="flex flex-col items-center gap-1 font-black">
+                                        <div className="flex flex-col items-center gap-1 font-black font-black">
                                             <div className="flex items-center gap-3">
                                                 {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce font-black" />}
                                                 <span className="text-2xl font-black">+{lastPointsEarned} PT</span>
                                             </div>
                                             {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em] font-black">VELOCITÀ MASSIMA!</p>}
                                         </div>
-                                    ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black">0 PUNTI</div>}
+                                    ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black font-black">0 PUNTI</div>}
                                     <div className="border-t border-white/20 pt-4 font-black">
-                                        <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black">Classifica:</p>
-                                        <p className={`text-6xl ${rankInfo.color} drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
+                                        <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black font-black">Classifica:</p>
+                                        <p className={`text-6xl text-white drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {gameState.status === 'finished' && (
-                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto text-center z-10">
-                                <div className="w-28 h-28 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-6 font-black">
+                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto text-center z-10 font-black font-black">
+                                <div className="w-28 h-28 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-6 font-black font-black">
                                     <Icon name={rankInfo.icon} size={60} className={`drop-shadow-xl ${rankInfo.color}`} />
                                 </div>
                                 
                                 {myRankIndex >= 0 && myRankIndex <= 2 && (
-                                    <p className="text-[#0054a6] text-3xl uppercase tracking-widest font-black mb-2 drop-shadow-md animate-pulse">Complimenti!</p>
+                                    <p className={`text-3xl uppercase tracking-widest font-black mb-2 drop-shadow-md animate-pulse font-black`} style={{ color: rankInfo.colorHex }}>Complimenti!</p>
                                 )}
                                 
-                                <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black mb-6">GARA FINITA!</h2>
+                                <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black mb-6 font-black font-black font-black">GARA FINITA!</h2>
                                 
-                                <div className="bg-white p-6 rounded-[3rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center">
-                                    <div className="flex flex-col items-center justify-center gap-2 font-black">
-                                        <p className="text-sm text-gray-500 uppercase font-black">Posizione finale:</p>
+                                <div className="bg-white p-6 rounded-[3rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center font-black font-black font-black">
+                                    <div className="flex flex-col items-center justify-center gap-2 font-black font-black">
+                                        <p className="text-sm text-gray-500 uppercase font-black font-black font-black">Posizione finale:</p>
                                         <span className={`text-8xl font-black drop-shadow-sm`} style={{ color: rankInfo.colorHex }}>
                                             {rankInfo.label}°
                                         </span>
