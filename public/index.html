@@ -4,22 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pride House Quiz - CIG Arcigay Milano</title>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS per lo styling rapido e moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & Babel -->
+    <!-- React & Babel per far girare il codice JSX direttamente nel browser -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <!-- Firebase SDK v8 -->
+    <!-- Firebase SDK v8 (Compatibilità garantita) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <style>
+        /* Scrollbar personalizzata per un look premium */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Animazioni di ingresso per gli elementi UI */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        /* Prevenzione selezione testo per un'esperienza stile App */
+        body { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body class="bg-gray-50 overflow-x-hidden select-none font-sans">
@@ -28,7 +34,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, Fragment } = React;
 
-        // --- COMPONENTE ICONE (SVG integrati per stabilità totale) ---
+        // --- COMPONENTE ICONE (SVG integrati per evitare dipendenze esterne e caricamenti lenti) ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
                 trophy: (
@@ -52,7 +58,7 @@
                 zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>,
                 coins: <g><circle cx="8" cy="8" r="6"/><circle cx="16" cy="16" r="6"/></g>,
                 smile: <g><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></g>,
-                loader2: <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                loader2: <g><path d="M21 12a9 9 0 1 1-6.219-8.56"/></g>
             };
             return (
                 <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -165,8 +171,8 @@
               "answerOptions": [
                 { "text": "Un bacio in diretta TV al suo compagno", "rationale": "È stato un momento storico di visibilità e spontaneità in un contesto sportivo globale molto seguito.", "isCorrect": true },
                 { "text": "Ha gareggiato indossando un tutù arcobaleno", "rationale": "Gus ha gareggiato con la divisa ufficiale della sua nazionale.", "isCorrect": false },
-                { "text": "Ha rifiutato di ritirare la medaglia d'argento", "rationale": "Accettò con orgoglio il suo argento.", "isCorrect": false },
-                { "text": "Portò un gatto randagio sul podio", "rationale": "È noto per salvarli, ma non sul podio.", "isCorrect": false }
+                { "text": "Ha rifiutato di ritirare la medaglia d'argento", "rationale": "Non c'è stato alcun rifiuto della medaglia per motivi legati all'orientamento sessuale.", "isCorrect": false },
+                { "text": "Ha portato un gatto randagio sul podio", "rationale": "Gus è noto per aver salvato dei cani in Russia, ma il gesto simbolico del 2018 riguardava la sua vita affettiva.", "isCorrect": false }
               ]
             },
             {
@@ -180,6 +186,11 @@
             }
           ]
         };
+
+        const COLORS = [
+            'bg-[#e30613] hover:bg-[#c40510]', 'bg-[#0054a6] hover:bg-[#00448a]', 
+            'bg-[#009640] hover:bg-[#008036]', 'bg-[#ffde00] hover:bg-[#e6c800]'  
+        ];
 
         function App() {
             const [user, setUser] = useState(null);
@@ -197,18 +208,14 @@
             const [localIp, setLocalIp] = useState('');
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
 
-            // Inizializzazione Autenticazione e Ripristino Sessione
+            // 1. Inizializzazione Autenticazione e Ripristino Sessione Silenzioso
             useEffect(() => {
                 const unsubscribe = auth.onAuthStateChanged(async (u) => {
                     if (!u) {
-                        try { 
-                            await auth.signInAnonymously(); 
-                        } catch(e) { 
-                            setErrorMessage("Errore connessione server Firebase."); 
-                        }
+                        try { await auth.signInAnonymously(); } catch(e) { setErrorMessage("Errore connessione Firebase."); }
                     } else {
                         setUser(u);
-                        // Tentativo ripristino sessione silenzioso
+                        // Se l'utente è loggato e ha dati in sessione, prova a recuperare il player dal DB
                         if (roomCode && !playerName) {
                             try {
                                 const pSnap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${roomCode}_${u.uid}`).get();
@@ -228,7 +235,7 @@
                 return () => unsubscribe();
             }, [roomCode, playerName]);
 
-            // Sync Game State e Classifica
+            // 2. Sincronizzazione Game State e Classifica in Tempo Reale
             useEffect(() => {
                 if (!user || !roomCode || !role) return;
                 const normalized = roomCode.trim().toUpperCase();
@@ -242,7 +249,7 @@
                 return () => { unsubRoom(); unsubPlayers(); };
             }, [user, roomCode, role]);
 
-            // Timer Logic
+            // 3. Logica Timer lato Client (Host e Player)
             useEffect(() => {
                 if (gameState?.status === 'playing' && !gameState.showResults && gameState.questionStartTime) {
                     const timer = setInterval(() => {
@@ -258,7 +265,7 @@
                 }
             }, [gameState?.status, gameState?.showResults, gameState?.questionStartTime, role, hasAnswered]);
 
-            // Reset Round per Player
+            // 4. Reset stato risposta all'inizio di ogni domanda
             useEffect(() => {
                 if (gameState && !gameState.showResults) {
                     setHasAnswered(false);
@@ -291,9 +298,8 @@
                 const cleanName = playerName.trim();
                 const cleanCode = roomCode.trim().toUpperCase();
                 if (!cleanName || !cleanCode) { setErrorMessage("Inserisci nome e codice!"); return; }
-                if (!user) { setErrorMessage("Connessione in corso..."); return; }
+                if (!user) { setErrorMessage("Connessione..."); return; }
                 setLoadingAction(true);
-                setErrorMessage('');
                 try {
                     const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(cleanCode).get();
                     if (room.exists()) {
@@ -305,15 +311,15 @@
                         sessionStorage.setItem('activePlayerName', cleanName);
                         setRoomCode(cleanCode);
                         setRole('player');
-                    } else { setErrorMessage("Codice stanza non trovato."); }
-                } catch (e) { setErrorMessage("Errore di rete o permessi."); }
+                        setErrorMessage('');
+                    } else { setErrorMessage("Stanza non trovata."); }
+                } catch (e) { setErrorMessage("Errore di rete."); }
                 setLoadingAction(false);
             };
 
             const createRoom = async () => {
-                if (!user) { setErrorMessage("Connessione in corso..."); return; }
+                if (!user) { setErrorMessage("Connessione..."); return; }
                 setLoadingAction(true);
-                setErrorMessage('');
                 try {
                     const code = Math.random().toString(36).substring(2,6).toUpperCase();
                     await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
@@ -323,10 +329,7 @@
                     sessionStorage.setItem('activeRole', 'host');
                     setRoomCode(code);
                     setRole('host');
-                } catch (e) { 
-                    console.error("Create error:", e);
-                    setErrorMessage("Errore creazione stanza. Controlla le regole del DB."); 
-                }
+                } catch (e) { setErrorMessage("Errore creazione stanza."); }
                 setLoadingAction(false);
             };
 
@@ -354,7 +357,7 @@
                 return players.find(p => p.uid === user?.uid)?.lastAnsweredAt === min && lastAnswerCorrect;
             }, [players, gameState, user, lastAnswerCorrect]);
 
-            if (authLoading) return <div className="min-h-screen flex items-center justify-center font-black text-[#0054a6]"><Icon name="loader2" size={32} className="animate-spin mr-2" /> Caricamento...</div>;
+            if (authLoading) return <div className="min-h-screen flex items-center justify-center font-black text-[#0054a6] uppercase tracking-widest animate-pulse">Caricamento...</div>;
 
             if (role && !gameState) return (
                 <div className="min-h-screen flex flex-col items-center justify-center font-black text-[#0054a6] p-6 text-center animate-fade-in">
@@ -371,9 +374,9 @@
                         <h1 className="text-3xl font-black text-[#0054a6] uppercase mb-10 leading-tight">Pride House Quiz</h1>
                         {errorMessage && <div className="mb-4 text-red-500 text-sm font-bold bg-red-50 p-2 rounded">{errorMessage}</div>}
                         <div className="space-y-5">
-                            <input type="text" placeholder="Nome Squadra" className="w-full bg-gray-50 border p-4 rounded-xl outline-none focus:ring-2 focus:ring-[#0054a6]" value={playerName} onChange={e => setName(e.target.value)} />
+                            <input type="text" placeholder="Nome Squadra" className="w-full bg-gray-50 border p-4 rounded-xl outline-none focus:ring-2 focus:ring-[#0054a6] font-bold text-center" value={playerName} onChange={e => setName(e.target.value)} />
                             <input type="text" placeholder="Codice Stanza" className="w-full bg-gray-50 border p-4 rounded-xl uppercase font-mono text-center focus:ring-2 focus:ring-[#0054a6]" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
-                            <button onClick={joinRoom} disabled={loadingAction} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl shadow-lg active:scale-95 uppercase font-bold text-xl">{loadingAction ? "..." : "PARTECIPA"}</button>
+                            <button onClick={joinRoom} disabled={loadingAction} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl shadow-lg active:scale-95 uppercase font-bold text-xl transition-all">{loadingAction ? "..." : "PARTECIPA"}</button>
                             <div className="pt-4 border-t">
                                 <button onClick={createRoom} disabled={loadingAction} className="w-full bg-white border-2 border-[#0054a6] text-[#0054a6] p-3 rounded-xl uppercase text-sm font-black flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors">
                                     <Icon name="users" size={16}/> {loadingAction ? "Creazione..." : "Crea Stanza Host"}
@@ -393,7 +396,7 @@
                             <div className="flex items-center gap-4">
                                 <LogoArcigay className="h-12" />
                                 <div className="h-8 w-px bg-gray-200" />
-                                <div><p className="text-xs text-gray-400 uppercase">Live Quiz</p><p className="text-[#0054a6] text-lg font-black">{QUIZ_DATA.title}</p></div>
+                                <div><p className="text-xs text-gray-400 uppercase font-black">Live Quiz</p><p className="text-[#0054a6] text-lg font-black">{QUIZ_DATA.title}</p></div>
                             </div>
                             <div className="bg-[#0054a6] text-white px-4 py-2 rounded-full flex items-center gap-2 font-bold"><Icon name="users" size={18}/><span>{players.length}</span></div>
                         </header>
@@ -402,21 +405,21 @@
                                 {gameState.status === 'lobby' ? (
                                     <div className="flex-1 grid lg:grid-cols-2 items-center max-w-6xl mx-auto w-full">
                                         <div className="space-y-8">
-                                            <h2 className="text-8xl text-[#0054a6] uppercase tracking-tighter">Pronti?</h2>
+                                            <h2 className="text-8xl text-[#0054a6] uppercase tracking-tighter font-black">Pronti?</h2>
                                             <div className="bg-white p-8 rounded-[3rem] border shadow-2xl">
                                                 <p className="text-gray-400 uppercase text-sm mb-2 font-black">Codice d'accesso</p>
-                                                <p className="text-8xl font-mono text-[#0054a6] tracking-widest leading-none">{roomCode}</p>
+                                                <p className="text-8xl font-mono text-[#0054a6] tracking-widest leading-none font-black">{roomCode}</p>
                                                 <div className="mt-6 p-4 bg-gray-50 rounded-2xl">
-                                                    <p className="text-xs text-gray-500 uppercase mb-2">Opzioni Avanzate (Local IP)</p>
+                                                    <p className="text-xs text-gray-500 uppercase mb-2 font-black italic">Opzioni Host (Local IP)</p>
                                                     <input type="text" placeholder="es: 192.168.1.15" className="w-full p-2 text-sm border rounded font-mono" value={localIp} onChange={e => setLocalIp(e.target.value)} />
                                                 </div>
                                             </div>
-                                            <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-16 py-6 rounded-2xl text-3xl shadow-xl uppercase active:scale-95 font-bold tracking-widest">INIZIA IL QUIZ</button>
+                                            <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-16 py-6 rounded-2xl text-3xl shadow-xl uppercase active:scale-95 font-black tracking-widest transition-all">INIZIA IL QUIZ</button>
                                         </div>
                                         <div className="flex flex-col items-center">
                                             <div className="bg-white p-8 rounded-[4rem] border-4 border-[#0054a6]/10 shadow-2xl">
                                                 <img src={getQrUrl()} className="w-80 h-80" alt="QR" />
-                                                <p className="mt-4 text-[#0054a6] text-2xl uppercase text-center font-bold">Inquadra e Gioca</p>
+                                                <p className="mt-4 text-[#0054a6] text-2xl uppercase text-center font-black">Inquadra e Gioca</p>
                                             </div>
                                         </div>
                                     </div>
@@ -432,7 +435,7 @@
                                                     </div>
                                                 )}
                                             </div>
-                                            <h2 className={`text-[#0054a6] leading-tight tracking-tight mb-12 ${gameState.showResults ? 'text-4xl mt-6 mb-10' : 'text-7xl text-center mt-20 mb-24'}`}>{q?.question}</h2>
+                                            <h2 className={`text-[#0054a6] leading-tight tracking-tight mb-12 font-black ${gameState.showResults ? 'text-4xl mt-6 mb-10' : 'text-7xl text-center mt-20 mb-24'}`}>{q?.question}</h2>
                                             <div className={`grid gap-5 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 max-w-6xl mx-auto w-full'}`}>
                                                 {q?.answerOptions?.map((o, i) => (
                                                     <div key={i} className="flex flex-col gap-3">
@@ -455,7 +458,7 @@
                                                 if (gameState.currentQuestionIndex === 9) await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
                                                 else await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
                                             } else await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
-                                        }} className="w-full mt-4 bg-[#0054a6] text-white py-6 rounded-[2.5rem] text-4xl shadow-2xl active:scale-95 uppercase tracking-tighter font-bold flex items-center justify-center gap-4">
+                                        }} className="w-full mt-4 bg-[#0054a6] text-white py-6 rounded-[2.5rem] text-4xl shadow-2xl active:scale-95 uppercase tracking-tighter font-bold flex items-center justify-center gap-4 transition-all">
                                             {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima") : "Scopri Risposta"} <Icon name="chevronRight" size={40} />
                                         </button>
                                     </div>
@@ -473,7 +476,7 @@
                                     </div>
                                     {gameState.showResults && (
                                         <div className="bg-white p-6 rounded-[2rem] shadow-xl border flex-1 overflow-hidden flex flex-col">
-                                            <p className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 font-bold">Classifica</p>
+                                            <p className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 font-bold italic">Classifica Live</p>
                                             <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar font-sans text-xs">
                                                 {players.map((p, i) => (
                                                     <div key={i} className={`flex justify-between p-2 rounded-lg ${i<3 ? 'bg-blue-50 text-[#0054a6] font-bold' : ''}`}>
@@ -488,7 +491,7 @@
                             )}
                         </div>
                         {gameState.status === 'finished' && (
-                            <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-in zoom-in">
+                            <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-in zoom-in font-black">
                                 <Icon name="crown" size={150} className="text-[#ffde00] mb-8 animate-bounce" />
                                 <h2 className="text-8xl text-[#0054a6] mb-16 uppercase italic font-black text-center leading-none">PODIO FINALE!</h2>
                                 <div className="flex items-end gap-8 w-full max-w-5xl h-80">
@@ -525,7 +528,7 @@
                                     <Icon name="users" size={48} className="mx-auto text-[#0054a6] animate-pulse" />
                                     <h2 className="text-3xl uppercase leading-tight font-black">Benvenuti alla Pride House!</h2>
                                     <p className="text-gray-500 font-bold">In attesa dell'inizio...</p>
-                                    <p className="pt-8 text-[10px] text-gray-400 uppercase tracking-widest font-black leading-none">Connesso come: {playerName}</p>
+                                    <p className="pt-8 text-[10px] text-gray-400 uppercase tracking-widest font-black leading-none">Player: {playerName}</p>
                                 </div>
                             )}
                             {isAnswering && (
@@ -540,8 +543,8 @@
                                     {hasAnswered ? (
                                         <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] animate-pulse shadow-inner p-4">
                                             <Icon name="loader2" size={48} className="animate-spin text-[#0054a6] mb-6" />
-                                            <h2 className="text-3xl uppercase font-black text-center">Acquisita</h2>
-                                            <p className="text-gray-400 text-sm mt-4 uppercase font-bold text-center">Guarda lo schermo principale</p>
+                                            <h2 className="text-3xl uppercase font-black text-center leading-none">Acquisita</h2>
+                                            <p className="text-gray-400 text-sm mt-4 uppercase font-bold text-center italic">Guarda lo schermo principale</p>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 gap-4 flex-1">
@@ -569,9 +572,9 @@
                                                 </div>
                                                 {isFastest && <p className="text-sm text-[#ffde00] uppercase animate-pulse font-bold tracking-widest leading-none">Velocità Massima!</p>}
                                             </div>
-                                        ) : <div className="text-xl mb-6 uppercase font-bold leading-none">0 PUNTI</div>}
+                                        ) : <div className="text-xl mb-6 uppercase font-bold leading-none font-black italic">0 PUNTI</div>}
                                         <div className="border-t border-white/20 pt-8 w-full flex flex-col items-center justify-center">
-                                            <p className="text-sm text-white/70 mb-2 uppercase font-bold leading-none">Posizione in classifica:</p>
+                                            <p className="text-sm text-white/70 mb-2 uppercase font-bold leading-none">Posizione attuale:</p>
                                             <p className={`text-7xl ${rankData.color} drop-shadow-sm leading-none font-black`}>{rankData.label}{rankData.label !== "-" ? "°" : ""}</p>
                                         </div>
                                     </div>
@@ -584,7 +587,7 @@
                                         size={120} 
                                         className={`mx-auto drop-shadow-2xl ${myIdx === 0 ? 'text-[#ffd700]' : myIdx === 1 ? 'text-[#c0c0c0]' : myIdx === 2 ? 'text-[#cd7f32]' : 'text-[#0054a6] opacity-80'}`} 
                                     />
-                                    <h2 className="text-5xl uppercase leading-tight font-black">FINE!</h2>
+                                    <h2 className="text-5xl uppercase leading-tight font-black">FINE GIOCO!</h2>
                                     <div className="bg-white p-10 rounded-[3rem] border-2 border-gray-100 shadow-xl">
                                         <p className="text-xs text-gray-400 uppercase mb-3 font-bold">Punteggio Finale</p>
                                         <p className="text-2xl mb-4 text-[#0054a6] font-bold">Posizione {rankData.label}°</p>
