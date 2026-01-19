@@ -29,6 +29,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, Fragment } = React;
 
+        // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
                 trophy: <g><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6V3h12v1h1.5a2.5 2.5 0 0 1 0 5H18v3c0 4.42-3.58 8-8 8H8a8 8 0 0 1-2-15.74V9z"/><path d="M12 18a6 6 0 0 0 6-6V4H6v8a6 6 0 0 0 6 6z"/></g>,
@@ -59,6 +60,7 @@
             }} />
         );
 
+        // --- CONFIGURAZIONE FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDOWS0ZMGxhj6ATL6FFycR-DATvuYug3WM",
             authDomain: "quiz-live-sport-lgbt.firebaseapp.com",
@@ -75,97 +77,108 @@
         const appId = 'quiz-lgbt-sport-2026';
         const TIMER_SECONDS = 30;
 
+        // --- DATI QUIZ (RIPRISTINATI) ---
         const QUIZ_DATA = {
-            "title": "Sport e Inclusione: LGBT+",
-            "questions": [
+            title: "Sport e Inclusione: LGBT+",
+            questions: [
                 {
-                    question: "In quale città e in quale anno si sono tenuti i primi Gay Games?",
-                    answerOptions: [
-                        { text: "San Francisco, 1982", rationale: "Fondati da Tom Waddell per promuovere l'inclusione.", isCorrect: true },
-                        { text: "New York, 1969", rationale: "Anno dei moti di Stonewall, ma i giochi arrivarono dopo.", isCorrect: false },
-                        { text: "Amsterdam, 1998", rationale: "Sede storica, ma non il debutto.", isCorrect: false },
-                        { text: "Londra, 1975", rationale: "Pionieri in molti campi, ma non i primi giochi.", isCorrect: false }
+                    id: 1,
+                    question: "In quale città e in quale anno si sono tenuti i primi Gay Games, l'evento multisportivo internazionale dedicato alla comunità LGBT+?",
+                    options: [
+                        { text: "Amsterdam, 1998", rationale: "Amsterdam ha ospitato un'edizione molto famosa, ma non è stata la città d'esordio.", isCorrect: false },
+                        { text: "San Francisco, 1982", rationale: "Fondati da Tom Waddell, l'obiettivo era promuovere lo spirito di inclusione e partecipazione attraverso lo sport.", isCorrect: true },
+                        { text: "New York, 1969", rationale: "Il 1969 è l'anno dei moti di Stonewall, ma la prima manifestazione sportiva ufficiale arrivò oltre un decennio dopo.", isCorrect: false },
+                        { text: "Londra, 1975", rationale: "Sebbene Londra sia attiva nell'attivismo, i primi giochi nacquero sulla costa occidentale degli Uniti.", isCorrect: false }
                     ]
                 },
                 {
+                    id: 2,
                     question: "Chi è stato il primo calciatore professionista in attività a fare coming out nel 1990?",
-                    answerOptions: [
-                        { text: "Justin Fashanu", rationale: "Fu un pioniere assoluto nel calcio inglese.", isCorrect: true },
-                        { text: "Thomas Hitzlsperger", rationale: "Lo ha fatto solo dopo il ritiro.", isCorrect: false },
-                        { text: "Jakub Jankto", rationale: "Lo ha fatto in attività, ma nel 2023.", isCorrect: false },
-                        { text: "Robbie Rogers", rationale: "Lo ha fatto nel 2013.", isCorrect: false }
+                    options: [
+                        { text: "Thomas Hitzlsperger", rationale: "L'ex centrocampista della Lazio ha fatto coming out solo dopo il ritiro dall'attività agonistica.", isCorrect: false },
+                        { text: "Justin Fashanu", rationale: "Fu un pioniere assoluto nel calcio inglese, purtroppo affrontando enormi pregiudizi per la sua scelta.", isCorrect: true },
+                        { text: "Jakub Jankto", rationale: "Jankto è uno dei pochi calciatori moderni ad averlo fatto in attività, ma molti anni dopo il 1990.", isCorrect: false },
+                        { text: "Robbie Rogers", rationale: "Rogers fece coming out nel 2013, diventando un simbolo per la MLS americana.", isCorrect: false }
                     ]
                 },
                 {
-                    question: "L'atleta Laurel Hubbard ha segnato la storia di Tokyo 2020 per quale motivo?",
-                    answerOptions: [
-                        { text: "Prima donna transgender in gara individuale", rationale: "Ha aperto un dibattito globale sull'inclusività.", isCorrect: true },
-                        { text: "Prima medaglia d'oro non binaria", rationale: "Non ha raggiunto il podio in quell'edizione.", isCorrect: false },
-                        { text: "Portabandiera dei rifugiati", rationale: "Ruolo ricoperto da altri atleti.", isCorrect: false },
-                        { text: "Record mondiale atletica", rationale: "Gareggiava nel sollevamento pesi.", isCorrect: false }
+                    id: 3,
+                    question: "L'atleta Laurel Hubbard ha segnato la storia delle Olimpiadi di Tokyo 2020 per quale motivo?",
+                    options: [
+                        { text: "È stata la prima donna transgender a competere in una gara individuale", rationale: "La sua partecipazione nel sollevamento pesi ha aperto un importante dibattito globale sull'inclusività e le regole sportive.", isCorrect: true },
+                        { text: "Ha vinto la prima medaglia d'oro per una persona non binaria", rationale: "Sebbene sia stata una pioniera, non ha raggiunto il podio durante quell'edizione dei Giochi.", isCorrect: false },
+                        { text: "È stata la portabandiera della squadra dei rifugiati", rationale: "Questo ruolo è stato ricoperto da altri atleti; la Hubbard rappresentava la Nuova Zelanda.", isCorrect: false },
+                        { text: "Ha stabilito un record mondiale nel lancio del disco", rationale: "La Hubbard gareggiava nella categoria del sollevamento pesi, non nell'atletica leggera.", isCorrect: false }
                     ]
                 },
                 {
-                    question: "Quale icona del tennis ha vinto 18 titoli Slam e vive apertamente la propria omosessualità?",
-                    answerOptions: [
-                        { text: "Martina Navratilova", rationale: "Una delle più grandi attiviste LGBT+ nello sport.", isCorrect: true },
-                        { text: "Billie Jean King", rationale: "Icona immensa, ma il coming out pubblico avvenne dopo la Navratilova.", isCorrect: false },
-                        { text: "Chris Evert", rationale: "Storica rivale, ma non appartenente alla comunità.", isCorrect: false },
-                        { text: "Steffi Graf", rationale: "Dominatrice anni '90, non legata all'attivismo LGBT+.", isCorrect: false }
+                    id: 4,
+                    question: "Quale icona del tennis mondiale ha vinto 18 titoli del Grande Slam ed è stata una delle prime atlete d'élite a vivere apertamente la propria omosessualità?",
+                    options: [
+                        { text: "Billie Jean King", rationale: "Anche lei è un'icona dei diritti, ma il suo coming out pubblico è avvenuto in circostanze diverse rispetto alla Navratilova.", isCorrect: false },
+                        { text: "Chris Evert", rationale: "Storica rivale della Navratilova, la Evert non appartiene alla comunità LGBT+.", isCorrect: false },
+                        { text: "Martina Navratilova", rationale: "Oltre ai successi in campo, è diventata una delle più influenti attiviste per i diritti LGBT+ nel mondo dello sport.", isCorrect: true },
+                        { text: "Steffi Graf", rationale: "La tennista tedesca ha dominato gli anni '90 ma non è nota per attivismo legato alla comunità LGBT+.", isCorrect: false }
                     ]
                 },
                 {
-                    question: "La calciatrice Megan Rapinoe quale premio ha vinto nel 2019?",
-                    answerOptions: [
-                        { text: "Pallone d'Oro femminile", rationale: "Simbolo globale di lotta per l'uguaglianza.", isCorrect: true },
-                        { text: "Premio Oscar", rationale: "È un'atleta, non ha vinto premi cinematografici.", isCorrect: false },
-                        { text: "Oro nel Nuoto", rationale: "È esclusivamente una calciatrice.", isCorrect: false },
-                        { text: "Sindaco di Seattle", rationale: "Non ricopre cariche politiche.", isCorrect: false }
+                    id: 5,
+                    question: "La calciatrice Megan Rapinoe è famosa non solo per i suoi successi in campo, ma anche per il suo attivismo. Quale premio ha vinto nel 2019?",
+                    options: [
+                        { text: "Pallone d'Oro femminile", rationale: "In quell'anno ha trascinato gli USA alla vittoria del Mondiale, diventando un simbolo globale di lotta per l'uguaglianza.", isCorrect: true },
+                        { text: "Premio Oscar per il miglior documentario", rationale: "Sebbene sia apparsa in molti media, non ha mai vinto un premio dell'Academy cinematografica.", isCorrect: false },
+                        { text: "Medaglia d'oro nel nuoto sincronizzato", rationale: "La Rapinoe è esclusivamente una calciatrice professionista.", isCorrect: false },
+                        { text: "Sindaco della città di Seattle", rationale: "È molto amata a Seattle, ma non ha mai ricoperto cariche politiche elettive.", isCorrect: false }
                     ]
                 },
                 {
-                    "question": "Durante i Mondiali di calcio in Qatar 2022, quale simbolo è stato al centro di una disputa?",
-                    "answerOptions": [
-                        { "text": "La fascia da capitano 'OneLove'", "rationale": "La FIFA proibì l'uso dell'arcobaleno sotto sanzioni.", "isCorrect": true },
-                        { "text": "Scarpe glitterate", "rationale": "Nessuna polemica sulle calzature.", "isCorrect": false },
-                        { "text": "Fumogeni colorati", "rationale": "Vietati per sicurezza generale.", "isCorrect": false },
-                        { "text": "Cambio nome torneo", "rationale": "Il nome è rimasto invariato.", "isCorrect": false }
+                    id: 6,
+                    question: "Durante i Mondiali di calcio in Qatar 2022, quale simbolo di supporto alla comunità LGBT+ è stato al centro di una disputa tra FIFA e diverse nazionali europee?",
+                    options: [
+                        { text: "La fascia da capitano 'OneLove'", rationale: "La FIFA proibì l'uso della fascia arcobaleno minacciando sanzioni sportive ai capitani che l'avessero indossata.", isCorrect: true },
+                        { text: "Le scarpe con i tacchetti glitterati", rationale: "Non c'è stata alcuna polemica specifica riguardante le calzature dei giocatori in quel senso.", isCorrect: false },
+                        { text: "Il fumo colorato arcobaleno negli stadi", rationale: "L'uso di fumogeni è vietato per motivi di sicurezza, indipendentemente dal colore.", isCorrect: false },
+                        { text: "Il cambio del nome della competizione in 'Gay Cup'", rationale: "Il nome della competizione è rimasto FIFA World Cup senza alcuna proposta di modifica.", isCorrect: false }
                     ]
                 },
                 {
-                    "question": "Chi è il tuffatore britannico oro a Tokyo 2020 celebre per l'uncinetto?",
-                    "answerOptions": [
-                        { "text": "Tom Daley", "rationale": "Icona di visibilità e impegno sociale.", "isCorrect": true },
-                        { "text": "Matthew Mitcham", "rationale": "Campione australiano, non britannico.", "isCorrect": false },
-                        { "text": "Greg Louganis", "rationale": "Leggenda degli anni '80.", "isCorrect": false },
-                        { "text": "Ian Thorpe", "rationale": "È un nuotatore.", "isCorrect": false }
+                    id: 7,
+                    question: "Chi è il tuffatore britannico, oro olimpico a Tokyo 2020, che usa la sua visibilità per normalizzare il coming out e combattere l'omofobia?",
+                    options: [
+                        { text: "Tom Daley", rationale: "Oltre ai tuffi, è amatissimo per la sua passione per l'uncinetto e per il suo impegno costante nel sociale.", isCorrect: true },
+                        { text: "Matthew Mitcham", rationale: "Mitcham è stato un grande campione australiano, ma il riferimento al bronzo olimpico e alla passione per l'uncinetto è tipico di Daley.", isCorrect: false },
+                        { text: "Greg Louganis", rationale: "Louganis è una leggenda del passato (anni '80), mentre l'atleta in questione è contemporaneo.", isCorrect: false },
+                        { text: "Ian Thorpe", rationale: "Thorpe è un nuotatore (non un tuffatore) e ha fatto coming out dopo la fine della carriera.", isCorrect: false }
                     ]
                 },
                 {
-                    "question": "Qual è lo scopo principale degli EuroGames?",
-                    "answerOptions": [
-                        { "text": "Inclusione e lotta alla discriminazione", "rationale": "Evento aperto a tutti i livelli e orientamenti.", "isCorrect": true },
-                        { "text": "Qualificazioni Olimpiadi", "rationale": "Non è un evento di qualifica ufficiale.", "isCorrect": false },
-                        { "text": "Vincere premi in denaro", "rationale": "Lo spirito è sociale e comunitario.", "isCorrect": false },
-                        { "text": "Solo per professionisti", "rationale": "Aperto a ogni livello di abilità.", "isCorrect": false }
+                    id: 8,
+                    question: "Quale di questi è lo scopo principale degli 'EuroGames'?",
+                    options: [
+                        { text: "Selezionare gli atleti per le prossime Olimpiadi", rationale: "Gli EuroGames non sono un evento di qualificazione olimpica ufficiale.", isCorrect: false },
+                        { text: "Gareggiare esclusivamente per vincere premi in denaro", rationale: "Lo spirito dell'evento è sociale e comunitario, non basato su grandi premi monetari.", isCorrect: false },
+                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Si tratta di un evento multisportivo europeo aperto a tutti, indipendentemente dall'orientamento sessuale.", isCorrect: true },
+                        { text: "Permettere la partecipazione solo ad atleti professionisti", rationale: "L'evento è aperto ad atleti di ogni livello, dai dilettanti ai professionisti.", isCorrect: false }
                     ]
                 },
                 {
-                    "question": "Cosa fece Gus Kenworthy in TV a Pyeongchang 2018?",
-                    "answerOptions": [
-                        { "text": "Un bacio in diretta al compagno", "rationale": "Momento storico di visibilità globale.", "isCorrect": true },
-                        { "text": "Gareggiò in tutù", "rationale": "Gareggiò in divisa ufficiale.", "isCorrect": false },
-                        { "text": "Rifiutò la medaglia", "rationale": "La accettò con orgoglio.", "isCorrect": false },
-                        { "text": "Portò un randagio sul podio", "rationale": "Li salva, ma non sul podio.", "isCorrect": false }
+                    id: 9,
+                    question: "Nel 2018, lo sciatore Gus Kenworthy ha attirato l'attenzione mondiale per un gesto alle Olimpiadi Invernali di Pyeongchang. Di cosa si trattava?",
+                    options: [
+                        { text: "Un bacio in diretta TV al suo compagno", rationale: "È stato un momento storico di visibilità e spontaneità in un contesto sportivo globale molto seguito.", isCorrect: true },
+                        { text: "Ha gareggiato indossando un tutù arcobaleno", rationale: "Gus ha gareggiato con la divisa ufficiale della sua nazionale.", isCorrect: false },
+                        { text: "Ha rifiutato di ritirare la medaglia d'argento", rationale: "Non c'è stato alcun rifiuto della medaglia per motivi legati all'orientamento sessuale.", isCorrect: false },
+                        { text: "Ha portato un gatto randagio sul podio", rationale: "Gus è noto per aver salvato dei cani in Russia, ma il gesto simbolico del 2018 riguardava la sua vita affettiva.", isCorrect: false }
                     ]
                 },
                 {
-                    "question": "Cosa sono i 'Rainbow Laces'?",
-                    "answerOptions": [
-                        { "text": "Campagna per l'inclusione nello sport", "rationale": "Nata nel Regno Unito per mostrare solidarietà.", "isCorrect": true },
-                        { "text": "Standard scarpe corsa", "rationale": "Nessun obbligo tecnico arcobaleno.", "isCorrect": false },
-                        { "text": "Simbolo 10 medaglie", "rationale": "I lacci sono simboli di solidarietà.", "isCorrect": false },
-                        { "text": "Decorazione natalizia", "rationale": "Usati tutto l'anno per sensibilizzare.", "isCorrect": false }
+                    id: 10,
+                    question: "Cosa rappresentano i 'Rainbow Laces' (lacci arcobaleno) spesso indossati dagli atleti in varie discipline?",
+                    options: [
+                        { text: "Una campagna per l'inclusione della comunità LGBT+ nello sport", rationale: "Nata nel Regno Unito, l'iniziativa invita gli atleti a mostrare solidarietà attraverso questo piccolo ma visibile dettaglio.", isCorrect: true },
+                        { text: "Un nuovo standard obbligatorio per le scarpe da corsa", rationale: "Non esiste alcun obbligo tecnico che imponga i colori arcobaleno per i lacci.", isCorrect: false },
+                        { text: "Il simbolo di chi ha vinto più di dieci medaglie", rationale: "Le medaglie e i lacci sono simboli completamente distinti.", isCorrect: false },
+                        { text: "Una decorazione usata solo durante il mese di dicembre", rationale: "Sebbene siano più comuni durante i Pride Month, vengono usati tutto l'anno per diverse campagne di sensibilizzazione.", isCorrect: false }
                     ]
                 }
             ]
@@ -192,7 +205,6 @@
                 return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}&bgcolor=ffffff&color=0054a6&margin=10`;
             };
 
-            // Rank logic per icone e colori
             const rankInfo = useMemo(() => {
                 const idx = players.findIndex(p => p.uid === user?.uid);
                 if (idx === -1) return { label: "-", color: "text-white", icon: "coins" };
@@ -202,9 +214,9 @@
                 return { label: (idx + 1).toString(), color: "text-white", icon: "coins" };
             }, [players, user]);
 
-            const isFastest = useMemo(() => {
+            const isFastestPlayer = useMemo(() => {
                 if (!gameState?.showResults) return false;
-                const correct = players.filter(p => p.lastQuestionIndexAnswered === gameState.currentQuestionIndex && QUIZ_DATA.questions[gameState.currentQuestionIndex].answerOptions[p.lastAnswerIndex]?.isCorrect);
+                const correct = players.filter(p => p.lastQuestionIndexAnswered === gameState.currentQuestionIndex && QUIZ_DATA.questions[gameState.currentQuestionIndex].options[p.lastAnswerIndex]?.isCorrect);
                 if (correct.length === 0) return false;
                 const minTime = Math.min(...correct.map(p => p.lastAnsweredAt));
                 return players.find(p => p.uid === user?.uid)?.lastAnsweredAt === minTime && lastAnswerCorrect;
@@ -237,7 +249,8 @@
                 const code = roomCode.trim().toUpperCase();
                 const unsubRoom = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).onSnapshot(s => {
                     if (s.exists) setGameState(s.data());
-                }, err => setErrorMessage("Errore DB."));
+                    else if (role === 'player') setErrorMessage("Stanza chiusa.");
+                }, err => setErrorMessage("Errore database."));
                 const unsubPlayers = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').onSnapshot(snap => {
                     const all = snap.docs.map(d => d.data()).filter(p => p.roomCode === code).sort((a,b) => b.score - a.score);
                     setPlayers(all);
@@ -271,7 +284,7 @@
 
             const submitAnswer = async (i) => {
                 if (hasAnswered || timeLeft === 0 || !gameState || gameState.showResults) return;
-                const isCorrect = QUIZ_DATA.questions[gameState.currentQuestionIndex].answerOptions[i].isCorrect;
+                const isCorrect = QUIZ_DATA.questions[gameState.currentQuestionIndex].options[i].isCorrect;
                 const timeTaken = (Date.now() - gameState.questionStartTime) / 1000;
                 const earned = isCorrect ? Math.floor(500 + (500 * (1 - Math.min(1, timeTaken/TIMER_SECONDS)))) : 0;
                 setHasAnswered(true);
@@ -295,7 +308,7 @@
                     sessionStorage.setItem('activeRole', 'host');
                     setRoomCode(code);
                     setRole('host');
-                } catch (e) { setErrorMessage("Errore creazione stanza."); }
+                } catch (e) { setErrorMessage("Errore creazione."); }
                 setLoadingAction(false);
             };
 
@@ -319,15 +332,17 @@
                 setLoadingAction(false);
             };
 
+            // --- UI RENDER ---
+
             if (!role) return (
-                <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 font-black animate-fade-in">
-                    <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md text-center">
+                <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 font-black animate-fade-in text-center">
+                    <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
                         <LogoArcigay className="h-24 mx-auto mb-6" />
-                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Pride House Quiz</h1>
-                        {errorMessage && <p className="text-red-500 mb-4 text-xs font-bold uppercase">{errorMessage}</p>}
+                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight font-black">Pride House Quiz</h1>
+                        {errorMessage && <p className="text-red-500 mb-4 text-xs uppercase font-bold">{errorMessage}</p>}
                         <div className="space-y-5">
                             <input type="text" placeholder="Nome Squadra" className="w-full border-2 p-4 rounded-2xl text-center text-xl font-bold" value={playerName} onChange={e => setName(e.target.value)} />
-                            <input type="text" placeholder="Codice" className="w-full border-2 p-4 rounded-2xl text-center uppercase text-2xl font-mono" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
+                            <input type="text" placeholder="Codice Stanza" className="w-full border-2 p-4 rounded-2xl text-center uppercase text-2xl font-mono" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
                             <button onClick={joinRoom} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl shadow-lg active:scale-95 transition-all">Partecipa</button>
                             <div className="pt-4 border-t">
                                 <button onClick={createRoom} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-sm uppercase font-black flex items-center justify-center gap-2">
@@ -344,54 +359,54 @@
                 const answeredCount = players.filter(p=>p.lastQuestionIndexAnswered === gameState.currentQuestionIndex).length;
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 font-black overflow-hidden animate-fade-in">
-                        <header className="flex justify-between items-center bg-white p-4 border-b shadow-md">
+                        <header className="flex justify-between items-center bg-white p-4 border-b shadow-md font-black">
                             <div className="flex items-center gap-4">
                                 <LogoArcigay className="h-14" />
                                 <div className="h-8 w-px bg-gray-200" />
-                                <div><p className="text-[10px] text-gray-400 uppercase tracking-widest">Live Quiz</p><p className="text-[#0054a6] text-xl leading-none">Sport e Inclusione</p></div>
+                                <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Live Quiz</p><p className="text-[#0054a6] text-xl leading-none font-black">Sport e Inclusione</p></div>
                             </div>
                             <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center">
-                                <Icon name="users" size={20}/> <span className="text-xl">{players.length}</span>
+                                <Icon name="users" size={20}/> <span className="text-xl font-black">{players.length}</span>
                             </div>
                         </header>
                         
                         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
-                            <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-2xl border p-10 overflow-y-auto custom-scrollbar">
+                            <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-2xl border p-10 overflow-y-auto custom-scrollbar font-black">
                                 {gameState.status === 'lobby' ? (
                                     <div className="space-y-12 animate-fade-in">
-                                        <h2 className="text-7xl text-[#0054a6] uppercase tracking-tighter">In attesa dei campioni...</h2>
+                                        <h2 className="text-7xl text-[#0054a6] uppercase tracking-tighter font-black">In attesa dei campioni...</h2>
                                         <div className="bg-white p-10 rounded-[4rem] border-4 border-[#0054a6]/10 shadow-2xl inline-block">
                                             <img src={getQrUrl()} alt="QR" className="w-80 h-80" />
-                                            <div className="mt-4 flex items-center justify-center gap-3 text-[#0054a6]">
+                                            <div className="mt-4 flex items-center justify-center gap-3 text-[#0054a6] font-black">
                                                 <Icon name="qr" size={32} />
                                                 <span className="text-3xl font-black uppercase">Scansiona e Gioca</span>
                                             </div>
                                         </div>
-                                        <p className="text-5xl font-mono text-[#0054a6] tracking-widest">Codice: {roomCode}</p>
-                                        <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-20 py-6 rounded-[2.5rem] text-4xl uppercase shadow-2xl active:scale-95 transition-all">Inizia Quiz</button>
+                                        <p className="text-5xl font-mono text-[#0054a6] tracking-widest font-black uppercase">Codice: {roomCode}</p>
+                                        <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-20 py-6 rounded-[2.5rem] text-4xl uppercase shadow-2xl active:scale-95 font-black">Inizia Quiz</button>
                                     </div>
                                 ) : (
-                                    <div className="w-full max-w-5xl space-y-10 animate-fade-in">
+                                    <div className="w-full max-w-5xl space-y-10 animate-fade-in font-black text-center">
                                         <div className="flex justify-between items-center mb-4">
-                                            <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm">Domanda {gameState.currentQuestionIndex+1} / 10</span>
+                                            <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm font-black">Domanda {gameState.currentQuestionIndex+1} / 10</span>
                                             {!gameState.showResults && (
                                                 <div className="flex items-center gap-6">
-                                                    <div className="bg-blue-50 px-6 py-2 rounded-full text-[#0054a6] text-xl border">Risposte: {answeredCount} / {players.length}</div>
-                                                    <div className="bg-gray-900 text-white px-8 py-3 rounded-full text-4xl font-mono shadow-xl">{timeLeft}s</div>
+                                                    <div className="bg-blue-50 px-6 py-2 rounded-full text-[#0054a6] text-xl border font-black">Risposte: {answeredCount} / {players.length}</div>
+                                                    <div className="bg-gray-900 text-white px-8 py-3 rounded-full text-4xl font-mono shadow-xl font-black">{timeLeft}s</div>
                                                 </div>
                                             )}
                                         </div>
-                                        <h2 className={`text-[#0054a6] leading-tight tracking-tight ${gameState.showResults ? 'text-4xl text-left' : 'text-7xl text-center mt-10 mb-20'}`}>{q.question}</h2>
+                                        <h2 className={`text-[#0054a6] leading-tight tracking-tight font-black ${gameState.showResults ? 'text-4xl text-left' : 'text-7xl text-center mt-10 mb-20'}`}>{q.question}</h2>
                                         <div className={`grid gap-5 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'}`}>
-                                            {q.answerOptions.map((o, i) => (
+                                            {q.options.map((o, i) => (
                                                 <div key={i} className="flex flex-col gap-3">
-                                                    <div className={`p-6 rounded-[2.5rem] border-4 flex items-center gap-6 transition-all ${gameState.showResults ? (o.isCorrect ? 'border-[#009640] bg-[#009640]/5 shadow-lg scale-102' : 'opacity-30 grayscale') : 'bg-gray-50 shadow-inner'}`}>
-                                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-3xl shadow-lg`}>{String.fromCharCode(65+i)}</div>
-                                                        <span className="text-[#0054a6] text-2xl font-bold text-left">{o.text}</span>
-                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={40} className="text-[#009640] ml-auto" />}
+                                                    <div className={`p-6 rounded-[2.5rem] border-4 flex items-center gap-6 transition-all ${gameState.showResults ? (o.isCorrect ? 'border-[#009640] bg-[#009640]/5 shadow-lg scale-102 font-black' : 'opacity-30 grayscale') : 'bg-gray-50 shadow-inner font-black'}`}>
+                                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-3xl shadow-lg font-black`}>{String.fromCharCode(65+i)}</div>
+                                                        <span className="text-[#0054a6] text-2xl font-black text-left leading-tight">{o.text}</span>
+                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={40} className="text-[#009640] ml-auto font-black" />}
                                                     </div>
                                                     {gameState.showResults && (
-                                                        <div className={`px-8 py-5 rounded-3xl text-2xl text-left ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640]' : 'bg-gray-100 text-gray-500'}`}>
+                                                        <div className={`px-8 py-5 rounded-3xl text-2xl text-left font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640]' : 'bg-gray-100 text-gray-500'}`}>
                                                             <p className="font-bold">{o.rationale}</p>
                                                         </div>
                                                     )}
@@ -403,31 +418,31 @@
                                                 if (gameState.currentQuestionIndex === 9) db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
                                                 else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
                                             } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
-                                        }} className="w-full mt-6 bg-[#0054a6] text-white py-6 rounded-[2.5rem] text-4xl shadow-2xl active:scale-95 uppercase flex items-center justify-center gap-4">
+                                        }} className="w-full mt-6 bg-[#0054a6] text-white py-6 rounded-[2.5rem] text-4xl shadow-2xl active:scale-95 uppercase flex items-center justify-center gap-4 font-black">
                                             {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima") : "Scopri Risposta"} <Icon name="chevronRight" size={40} />
                                         </button>
                                     </div>
                                 )}
                             </div>
                             
-                            {/* Barra laterale host */}
+                            {/* Barra Laterale Host */}
                             {gameState.status !== 'lobby' && (
-                                <div className="w-64 flex flex-col gap-4">
+                                <div className="w-64 flex flex-col gap-4 font-black">
                                     <div className="bg-white p-6 rounded-[2rem] shadow-xl border text-center">
-                                        <p className="text-[10px] text-gray-400 uppercase mb-1">Codice</p>
-                                        <p className="text-4xl font-mono text-[#0054a6]">{roomCode}</p>
+                                        <p className="text-[10px] text-gray-400 uppercase mb-1 font-black">Codice</p>
+                                        <p className="text-4xl font-mono text-[#0054a6] font-black">{roomCode}</p>
                                     </div>
                                     <div className="bg-white p-4 rounded-[2rem] shadow-xl border text-center">
                                         <img src={getQrUrl()} alt="QR" className="w-full rounded-xl" />
-                                        <p className="text-[10px] text-[#0054a6] uppercase mt-2 tracking-widest">SCAN TO JOIN</p>
+                                        <p className="text-[10px] text-[#0054a6] uppercase mt-2 tracking-widest font-black">SCAN TO JOIN</p>
                                     </div>
                                     {gameState.showResults && (
                                         <div className="bg-white p-6 rounded-[2rem] shadow-xl border flex-1 flex flex-col overflow-hidden">
-                                            <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest">Classifica Live</h3>
-                                            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                                            <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica Live</h3>
+                                            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 font-black">
                                                 {players.map((p, i) => (
                                                     <div key={i} className={`flex justify-between p-2 rounded-lg ${i<3 ? 'bg-blue-50 text-[#0054a6]' : ''}`}>
-                                                        <span className="truncate max-w-[100px] text-sm">{i+1}. {p.name}</span>
+                                                        <span className="truncate max-w-[100px] text-sm font-black">{i+1}. {p.name}</span>
                                                         <span className="font-mono font-bold text-sm">{p.score}</span>
                                                     </div>
                                                 ))}
@@ -438,16 +453,17 @@
                             )}
                         </div>
 
+                        {/* Podio Host */}
                         {gameState.status === 'finished' && (
-                            <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-fade-in">
-                                <Icon name="crown" size={150} className="text-[#ffde00] mb-8 animate-bounce" />
-                                <h2 className="text-8xl text-[#0054a6] mb-16 uppercase italic">PODIO FINALE!</h2>
-                                <div className="flex items-end gap-8 w-full max-w-5xl h-80">
-                                    {players[1] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6] uppercase">{players[1].name}</p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-7xl text-gray-400 shadow-xl border-t-8 border-gray-300 font-bold">2</div></div>}
-                                    {players[0] && <div className="flex-1 flex flex-col items-center"><p className="text-4xl mb-4 text-[#0054a6] font-black uppercase tracking-widest">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-[10rem] text-[#0054a6] shadow-2xl border-t-8 border-[#ffde00] font-black">1</div></div>}
-                                    {players[2] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6] uppercase">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-7xl text-orange-300 shadow-xl border-t-8 border-orange-200 font-bold">3</div></div>}
+                            <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-fade-in font-black">
+                                <Icon name="crown" size={150} className="text-[#ffde00] mb-8 animate-bounce font-black" />
+                                <h2 className="text-8xl text-[#0054a6] mb-16 uppercase italic font-black">PODIO FINALE!</h2>
+                                <div className="flex items-end gap-8 w-full max-w-5xl h-80 font-black">
+                                    {players[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-2xl mb-2 text-[#0054a6] uppercase font-black">{players[1].name}</p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-7xl text-gray-400 shadow-xl border-t-8 border-gray-300 font-black">2</div></div>}
+                                    {players[0] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-4xl mb-4 text-[#0054a6] font-black uppercase tracking-widest font-black">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-[10rem] text-[#0054a6] shadow-2xl border-t-8 border-[#ffde00] font-black">1</div></div>}
+                                    {players[2] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-2xl mb-2 text-[#0054a6] uppercase font-black">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-7xl text-orange-300 shadow-xl border-t-8 border-orange-200 font-black">3</div></div>}
                                 </div>
-                                <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-20 bg-gray-900 text-white px-20 py-5 rounded-full text-xl shadow-2xl uppercase tracking-widest">Nuova Partita</button>
+                                <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-20 bg-gray-900 text-white px-20 py-5 rounded-full text-xl shadow-2xl uppercase tracking-widest font-black">Nuova Partita</button>
                             </div>
                         )}
                     </div>
@@ -455,42 +471,42 @@
             }
 
             if (role === 'player' && gameState) return (
-                <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in">
-                    <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md">
+                <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
+                    <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black">
                         <LogoArcigay className="h-12" />
                         {!gameState.showResults && gameState.status === 'playing' ? (
-                            <div className="flex items-center gap-2 text-3xl font-mono">
+                            <div className="flex items-center gap-2 text-3xl font-mono font-black">
                                 <Icon name="clock" size={24} className={timeLeft < 10 ? 'text-red-500 animate-pulse' : ''} />
                                 <span className={timeLeft < 10 ? 'text-red-500' : ''}>{timeLeft}s</span>
                             </div>
                         ) : (
-                            <div className="bg-[#0054a6] px-5 py-2 rounded-full flex items-center gap-2 text-white">
+                            <div className="bg-[#0054a6] px-5 py-2 rounded-full flex items-center gap-2 text-white font-black">
                                 <Icon name={rankInfo.icon} size={20} className={rankInfo.color} />
-                                <span className="text-xl font-mono">{players.find(p=>p.uid===user?.uid)?.score || 0}</span>
+                                <span className="text-xl font-mono font-black">{players.find(p=>p.uid===user?.uid)?.score || 0}</span>
                             </div>
                         )}
                     </header>
 
-                    <main className="flex-1 flex flex-col items-center justify-center p-6 bg-gray-50 relative">
+                    <main className="flex-1 p-6 flex flex-col items-center justify-center relative bg-gray-50 font-black">
                         {gameState.status === 'lobby' && (
-                            <div className="text-center space-y-8 animate-fade-in">
-                                <div className="w-24 h-24 bg-[#0054a6]/10 rounded-full flex items-center justify-center mx-auto mb-8 border-4 border-[#0054a6]/20 animate-pulse text-[#0054a6]"><Icon name="users" size={48} /></div>
+                            <div className="text-center space-y-8 animate-fade-in font-black">
+                                <div className="w-24 h-24 bg-[#0054a6]/10 rounded-full flex items-center justify-center mx-auto mb-8 border-4 border-[#0054a6]/20 animate-pulse text-[#0054a6] font-black"><Icon name="users" size={48} /></div>
                                 <h2 className="text-3xl uppercase tracking-tighter leading-tight font-black">Benvenuti alla Pride House!</h2>
-                                <p className="text-gray-500 text-lg">In attesa dell'host per iniziare...</p>
-                                <p className="pt-10 text-[10px] text-gray-400 uppercase tracking-[0.2em]">Connesso come: {playerName}</p>
+                                <p className="text-gray-500 text-lg font-black">In attesa dell'host per iniziare...</p>
+                                <p className="pt-10 text-[10px] text-gray-400 uppercase tracking-widest font-black italic">Player: {playerName}</p>
                             </div>
                         )}
 
                         {gameState.status === 'playing' && !gameState.showResults && (
-                            <div className="w-full max-w-sm flex flex-col gap-6 animate-fade-in h-full py-4">
+                            <div className="w-full max-w-sm flex flex-col gap-6 animate-fade-in h-full py-4 font-black">
                                 {hasAnswered ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse">
-                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-6" />
+                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse font-black p-8">
+                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-6 font-black" />
                                         <h2 className="text-4xl uppercase font-black text-[#0054a6]/60">Ricevuta!</h2>
-                                        <p className="text-gray-400 mt-4 uppercase text-xs tracking-widest">Guarda lo schermo principale</p>
+                                        <p className="text-gray-400 mt-4 uppercase text-xs tracking-widest font-black">Guarda lo schermo principale</p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 gap-4 flex-1">
+                                    <div className="grid grid-cols-1 gap-4 flex-1 font-black">
                                         {COLORS.map((c, i) => (
                                             <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-2xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black`}>
                                                 {String.fromCharCode(65 + i)}
@@ -502,25 +518,25 @@
                         )}
 
                         {gameState.status === 'playing' && gameState.showResults && (
-                            <div className={`w-full max-w-[95%] p-10 rounded-[4rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white transition-colors duration-500 ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
-                                <div className="bg-white/20 w-28 h-28 rounded-full flex items-center justify-center mb-6 shadow-inner text-white">
+                            <div className={`w-full max-w-[95%] p-10 rounded-[4rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                                <div className="bg-white/20 w-28 h-28 rounded-full flex items-center justify-center mb-6 shadow-inner text-white font-black">
                                     <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={72} />
                                 </div>
                                 <h2 className="text-5xl uppercase tracking-tighter leading-none mb-8 font-black">
                                     {lastAnswerCorrect === true ? 'RISPOSTA ESATTA!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO' : 'RISPOSTA ERRATA')}
                                 </h2>
-                                <div className="w-full space-y-6">
+                                <div className="w-full space-y-6 font-black">
                                     {lastAnswerCorrect === true ? (
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="flex items-center gap-2">
-                                                {isFastest && <Icon name="zap" size={28} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}
+                                        <div className="flex flex-col items-center gap-2 font-black">
+                                            <div className="flex items-center gap-2 font-black">
+                                                {isFastestPlayer && <Icon name="zap" size={28} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}
                                                 <span className="text-4xl font-black">+{lastPointsEarned} PT</span>
                                             </div>
-                                            {isFastest && <p className="text-sm text-[#ffde00] uppercase animate-pulse font-black tracking-widest">Velocità Massima!</p>}
+                                            {isFastestPlayer && <p className="text-sm text-[#ffde00] uppercase animate-pulse font-black tracking-widest uppercase">Velocità Massima!</p>}
                                         </div>
                                     ) : <div className="text-2xl font-black opacity-60">0 PUNTI</div>}
-                                    <div className="border-t border-white/20 pt-6">
-                                        <p className="text-sm text-white/70 mb-2 uppercase tracking-widest">Classifica attuale:</p>
+                                    <div className="border-t border-white/20 pt-6 font-black">
+                                        <p className="text-sm text-white/70 mb-2 uppercase tracking-widest font-black">Classifica attuale:</p>
                                         <p className={`text-7xl ${rankInfo.color} drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
                                     </div>
                                 </div>
@@ -528,13 +544,13 @@
                         )}
 
                         {gameState.status === 'finished' && (
-                            <div className="text-center space-y-10 animate-fade-in">
-                                <Icon name={rankInfo.icon} size={150} className={`mx-auto drop-shadow-2xl ${rankInfo.color}`} />
-                                <h2 className="text-6xl uppercase tracking-tighter leading-tight font-black">FINE!</h2>
-                                <div className="bg-white p-10 rounded-[3rem] border-2 border-gray-100 shadow-xl w-64">
-                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-3">Punteggio Finale</p>
+                            <div className="text-center space-y-10 animate-fade-in font-black">
+                                <Icon name={rankInfo.icon} size={150} className={`mx-auto drop-shadow-2xl ${rankInfo.color} font-black`} />
+                                <h2 className="text-6xl uppercase tracking-tighter leading-tight font-black">FINE GARA!</h2>
+                                <div className="bg-white p-10 rounded-[3rem] border-2 border-gray-100 shadow-xl w-64 mx-auto font-black">
+                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-3 font-black font-black">Punteggio Finale</p>
                                     <p className="text-2xl text-[#0054a6] mb-2 font-black">{rankInfo.label}° Posto</p>
-                                    <p className="text-7xl font-mono text-[#0054a6] leading-none tracking-tighter">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
+                                    <p className="text-7xl font-mono text-[#0054a6] leading-none tracking-tighter font-black">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
                                 </div>
                             </div>
                         )}
