@@ -42,6 +42,7 @@
                 zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>,
                 coins: <g><circle cx="8" cy="8" r="6"/><circle cx="16" cy="16" r="6"/></g>,
                 smile: <g><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></g>,
+                qr: <g><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21h.01"/><path d="M16 21h.01"/><path d="M21 16h.01"/><path d="M16 16h.01"/></g>,
                 loader2: <g><path d="M21 12a9 9 0 1 1-6.219-8.56"/></g>
             };
             return (
@@ -186,20 +187,20 @@
             const [loadingAction, setLoadingAction] = useState(false);
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
 
+            const getQrUrl = () => {
+                const joinUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
+                return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}&bgcolor=ffffff&color=0054a6&margin=10`;
+            };
+
             useEffect(() => {
                 const unsub = auth.onAuthStateChanged(async (u) => {
                     if (!u) {
-                        try {
-                            await auth.signInAnonymously();
-                        } catch (e) {
-                            setErrorMessage("Connessione Firebase fallita.");
-                        }
+                        try { await auth.signInAnonymously(); } catch (e) { setErrorMessage("Connessione Firebase fallita."); }
                     } else {
                         setUser(u);
                         if (roomCode && !playerName) {
                             try {
                                 const snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${roomCode}_${u.uid}`).get();
-                                // FIX: In Firebase v8 .exists è una proprietà, non una funzione
                                 if (snap.exists) {
                                     const d = snap.data();
                                     setRole('player');
@@ -219,12 +220,8 @@
                 const code = roomCode.trim().toUpperCase();
                 
                 const unsubRoom = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).onSnapshot(s => {
-                    // FIX: In Firebase v8 .exists è una proprietà
-                    if (s.exists) {
-                        setGameState(s.data());
-                    } else {
-                        if (role === 'player') setErrorMessage("Stanza non trovata.");
-                    }
+                    if (s.exists) { setGameState(s.data()); } 
+                    else { if (role === 'player') setErrorMessage("Stanza non trovata."); }
                 }, err => setErrorMessage("Errore DB: Verifica le regole di sicurezza."));
 
                 const unsubPlayers = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').onSnapshot(snap => {
@@ -279,7 +276,6 @@
                 setLoadingAction(true);
                 try {
                     const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(cleanCode).get();
-                    // FIX: In Firebase v8 .exists è una proprietà
                     if (room.exists) {
                         await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${cleanCode}_${user.uid}`).set({
                             uid: user.uid, name: cleanName, roomCode: cleanCode, score: 0, lastAnswerIndex: -1, lastQuestionIndexAnswered: -1, lastAnsweredAt: 0
@@ -325,62 +321,143 @@
             if (role === 'host' && gameState) {
                 const q = QUIZ_DATA.questions[gameState.currentQuestionIndex];
                 return (
-                    <div className="h-screen flex flex-col bg-gray-50 font-black p-4">
+                    <div className="h-screen flex flex-col bg-gray-50 font-black p-4 overflow-hidden">
                         <header className="flex justify-between items-center bg-white p-4 rounded-xl shadow mb-4">
                             <LogoArcigay className="h-10" />
-                            <div className="bg-[#0054a6] text-white px-4 py-2 rounded-full flex gap-2">
-                                <Icon name="users" size={18}/><span>{players.length}</span>
+                            <div className="flex items-center gap-4">
+                                <div className="text-gray-400 uppercase text-xs">Codice: <span className="text-[#0054a6] font-mono font-bold text-lg">{roomCode}</span></div>
+                                <div className="bg-[#0054a6] text-white px-4 py-2 rounded-full flex gap-2">
+                                    <Icon name="users" size={18}/><span>{players.length}</span>
+                                </div>
                             </div>
                         </header>
-                        <div className="flex-1 flex flex-col items-center justify-center text-center">
-                            {gameState.status === 'lobby' ? (
-                                <div className="space-y-6">
-                                    <h2 className="text-6xl text-[#0054a6] uppercase">In attesa...</h2>
-                                    <p className="text-8xl font-mono text-[#0054a6]">{roomCode}</p>
-                                    <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-10 py-4 rounded-xl text-2xl uppercase">Inizia</button>
+                        
+                        <div className="flex-1 flex gap-6 overflow-hidden">
+                            <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-3xl border shadow-inner p-8 overflow-y-auto custom-scrollbar">
+                                {gameState.status === 'lobby' ? (
+                                    <div className="space-y-10 animate-fade-in">
+                                        <div className="space-y-2">
+                                            <h2 className="text-6xl text-[#0054a6] uppercase tracking-tighter">In attesa dei giocatori...</h2>
+                                            <p className="text-gray-400 text-xl font-medium">Inquadra il QR Code per partecipare al quiz!</p>
+                                        </div>
+                                        <div className="bg-white p-8 rounded-[3rem] border-4 border-[#0054a6]/10 shadow-2xl inline-block mx-auto">
+                                            <img src={getQrUrl()} alt="Join QR Code" className="w-80 h-80 rounded-2xl" />
+                                            <div className="mt-4 flex items-center justify-center gap-2 text-[#0054a6]">
+                                                <Icon name="qr" size={24} />
+                                                <span className="text-2xl font-black uppercase">Scansiona e Gioca</span>
+                                            </div>
+                                        </div>
+                                        <div className="pt-4">
+                                            <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-16 py-6 rounded-[2rem] text-4xl uppercase shadow-xl hover:scale-105 transition-transform active:scale-95 disabled:opacity-50" disabled={players.length === 0}>
+                                                Inizia il Quiz
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="w-full max-w-4xl space-y-12 animate-fade-in">
+                                        <div className="space-y-2">
+                                            <p className="text-[#0054a6] uppercase text-sm tracking-widest">Domanda {gameState.currentQuestionIndex + 1} di 10</p>
+                                            <h2 className="text-5xl text-[#0054a6] leading-tight">{q.question}</h2>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            {q.answerOptions.map((o, i) => (
+                                                <div key={i} className={`p-8 rounded-[2rem] border-4 text-2xl flex items-center gap-4 transition-all ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50 text-green-700 shadow-lg scale-105' : 'border-gray-100 opacity-40 grayscale text-gray-400') : 'border-gray-100 bg-gray-50 text-[#0054a6]'}`}>
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0 ${COLORS[i]}`}>{String.fromCharCode(65+i)}</div>
+                                                    <span className="font-bold">{o.text}</span>
+                                                    {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="ml-auto" />}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {gameState.showResults && (
+                                            <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 text-[#0054a6] text-xl animate-fade-in">
+                                                <p className="font-bold uppercase text-xs opacity-60 mb-2">Perché questa risposta?</p>
+                                                {q.answerOptions.find(opt => opt.isCorrect).rationale}
+                                            </div>
+                                        )}
+                                        <button onClick={() => {
+                                            if (gameState.showResults) {
+                                                if (gameState.currentQuestionIndex === 9) db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
+                                                else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
+                                            } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
+                                        }} className="bg-[#0054a6] text-white px-12 py-5 rounded-3xl text-2xl uppercase shadow-xl hover:scale-105 transition-all">
+                                            {gameState.showResults ? "Prossima Domanda" : "Rivela Risposta"}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Sidebar Informativa */}
+                            <div className="w-64 flex flex-col gap-4">
+                                <div className="bg-white p-4 rounded-3xl border shadow-sm flex flex-col items-center gap-3">
+                                    <img src={getQrUrl()} alt="Join QR" className="w-full rounded-xl border" />
+                                    <p className="text-[10px] text-gray-400 uppercase font-black text-center tracking-widest">Aggiungiti in tempo reale</p>
                                 </div>
-                            ) : (
-                                <div className="w-full max-w-4xl space-y-8">
-                                    <h2 className="text-4xl text-[#0054a6]">{q.question}</h2>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {q.answerOptions.map((o, i) => (
-                                            <div key={i} className={`p-6 rounded-2xl border-4 text-xl ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-50') : 'bg-white'}`}>
-                                                {o.text}
+                                <div className="bg-white p-6 rounded-3xl border shadow-sm flex-1 overflow-hidden flex flex-col">
+                                    <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest">Classifica Live</h3>
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                                        {players.map((p, i) => (
+                                            <div key={p.uid} className={`flex justify-between items-center p-2 rounded-lg ${i < 3 ? 'bg-blue-50 text-[#0054a6]' : 'text-gray-500'}`}>
+                                                <span className="truncate max-w-[100px] text-sm">{i+1}. {p.name}</span>
+                                                <span className="font-mono font-bold">{p.score}</span>
                                             </div>
                                         ))}
+                                        {players.length === 0 && <p className="text-center text-gray-300 italic text-xs py-4">In attesa...</p>}
                                     </div>
-                                    <button onClick={() => {
-                                        if (gameState.showResults) {
-                                            if (gameState.currentQuestionIndex === 9) db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
-                                            else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
-                                        } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
-                                    }} className="bg-[#0054a6] text-white px-8 py-3 rounded-xl uppercase">
-                                        {gameState.showResults ? "Prossima" : "Risposta"}
-                                    </button>
                                 </div>
-                            )}
+                            </div>
                         </div>
+
+                        {gameState.status === 'finished' && (
+                            <div className="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-10 animate-fade-in">
+                                <Icon name="crown" size={120} className="text-[#ffde00] mb-6 animate-bounce" />
+                                <h2 className="text-8xl text-[#0054a6] mb-16 uppercase italic">Podio Finale</h2>
+                                <div className="flex items-end gap-10 w-full max-w-5xl h-80">
+                                    {players[1] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6] font-bold">{players[1].name}</p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-7xl text-gray-400 shadow-xl border-t-8 border-gray-300 font-bold">2</div></div>}
+                                    {players[0] && <div className="flex-1 flex flex-col items-center"><p className="text-4xl mb-4 text-[#0054a6] font-black drop-shadow-md">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-64 rounded-t-[3rem] flex items-center justify-center text-[10rem] text-[#0054a6] shadow-2xl border-t-8 border-[#ffde00] font-black">1</div></div>}
+                                    {players[2] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6] font-bold">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-7xl text-orange-300 shadow-xl border-t-8 border-orange-200 font-bold">3</div></div>}
+                                </div>
+                                <button onClick={() => { sessionStorage.clear(); window.location.reload(); }} className="mt-20 bg-gray-900 text-white px-20 py-6 rounded-full text-2xl uppercase tracking-widest hover:bg-black transition-all">Nuova Partita</button>
+                            </div>
+                        )}
                     </div>
                 );
             }
 
             if (role === 'player' && gameState) return (
                 <div className="min-h-screen bg-white flex flex-col font-black items-center justify-center p-6 text-center">
-                    <header className="fixed top-0 w-full p-4 border-b-4 border-[#ffde00] flex justify-between bg-white">
+                    <header className="fixed top-0 w-full p-4 border-b-4 border-[#ffde00] flex justify-between bg-white z-10">
                         <LogoArcigay className="h-10" />
-                        <span className="text-[#0054a6] font-mono text-xl">{players.find(p=>p.uid===user?.uid)?.score || 0}</span>
+                        <div className="bg-[#0054a6] text-white px-4 py-1 rounded-full text-lg font-mono">
+                            {players.find(p=>p.uid===user?.uid)?.score || 0}
+                        </div>
                     </header>
                     {gameState.status === 'playing' && !gameState.showResults ? (
-                        <div className="grid grid-cols-1 gap-4 w-full max-w-sm">
-                            <p className="text-4xl mb-4">{timeLeft}s</p>
-                            {COLORS.map((c, i) => (
-                                <button key={i} onClick={() => submitAnswer(i)} className={`p-10 rounded-3xl ${c} text-white text-4xl shadow-xl uppercase`}>{String.fromCharCode(65+i)}</button>
-                            ))}
+                        <div className="grid grid-cols-1 gap-4 w-full max-w-sm animate-fade-in mt-16">
+                            <div className="flex items-center justify-center gap-2 mb-4">
+                                <Icon name="clock" size={24} className={timeLeft < 10 ? "text-red-500 animate-pulse" : "text-[#0054a6]"} />
+                                <span className={`text-5xl font-mono ${timeLeft < 10 ? "text-red-500" : "text-[#0054a6]"}`}>{timeLeft}s</span>
+                            </div>
+                            {hasAnswered ? (
+                                <div className="space-y-6 py-20 bg-gray-50 rounded-[3rem] border-4 border-dashed border-[#0054a6]/20 animate-pulse">
+                                    <Icon name="loader2" size={64} className="animate-spin mx-auto text-[#0054a6]/40" />
+                                    <h2 className="text-3xl uppercase text-[#0054a6]/60">Risposta Ricevuta</h2>
+                                    <p className="text-gray-400 text-sm px-10">Controlla lo schermo principale per il risultato!</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4 h-[60vh]">
+                                    {COLORS.map((c, i) => (
+                                        <button key={i} onClick={() => submitAnswer(i)} className={`p-8 rounded-[2.5rem] ${c} text-white text-7xl shadow-xl active:translate-y-2 active:shadow-none transition-all border-b-8 border-black/20`}>
+                                            {String.fromCharCode(65+i)}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            <Icon name="loader2" size={48} className="animate-spin mx-auto text-[#0054a6]" />
-                            <h2 className="text-2xl uppercase">Attendi...</h2>
+                        <div className="space-y-8 animate-fade-in">
+                            <Icon name="loader2" size={80} className="animate-spin mx-auto text-[#0054a6]/20" />
+                            <h2 className="text-3xl uppercase text-[#0054a6] tracking-tighter">In attesa dell'host...</h2>
+                            <p className="text-gray-400 max-w-[200px] mx-auto text-sm">Resta concentrato, il quiz sta per iniziare!</p>
                         </div>
                     )}
                 </div>
