@@ -30,20 +30,20 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, Fragment } = React;
 
-        // --- COMPONENTE ICONE (Normalizzate e corrette secondo feedback) ---
+        // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                // Trofeo: U allungata, stelo corto, base ok
+                // Trofeo: via di mezzo per la U, stelo corto, base bilanciata
                 trophy: (
                     <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 2H7v11a5 5 0 0 0 10 0V2z" />
+                        <path d="M17 3H7v10a5 5 0 0 0 10 0V3z" />
                         <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
                         <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
                         <path d="M12 18v4" />
                         <path d="M8 22h8" />
                     </g>
                 ),
-                // Icona Punteggio: Medaglia/Moneta con stella (stile gioco)
+                // Icona Punteggio: Medaglia con stella
                 coins: (
                     <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10" />
@@ -132,6 +132,7 @@
         const appId = 'quiz-lgbt-sport-2026';
         const TIMER_SECONDS = 30;
 
+        // --- DATI QUIZ ---
         const QUIZ_DATA = {
             title: "Sport e Inclusione: LGBT+",
             questions: [
@@ -209,9 +210,9 @@
                     id: 8,
                     question: "Quale di questi è lo scopo principale degli 'EuroGames'?",
                     options: [
-                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Si tratta di un evento multisportivo europeo aperto a tutti, indipendentemente dall'orientamento sessuale.", isCorrect: true },
                         { text: "Selezionare gli atleti per le prossime Olimpiadi", rationale: "Gli EuroGames non sono un evento di qualificazione olimpica ufficiale.", isCorrect: false },
                         { text: "Gareggiare esclusivamente per vincere premi in denaro", rationale: "Lo spirito dell'evento è sociale e comunitario, non basato su grandi premi monetari.", isCorrect: false },
+                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Si tratta di un evento multisportivo europeo aperto a tutti, indipendentemente dall'orientamento sessuale.", isCorrect: true },
                         { text: "Permettere la partecipazione solo ad atleti professionisti", rationale: "L'evento è aperto ad atleti di ogni livello, dai dilettanti ai professionisti.", isCorrect: false }
                     ]
                 },
@@ -377,7 +378,7 @@
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
                         <LogoArcigay className="h-24 mx-auto mb-6" />
                         <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Pride House Quiz</h1>
-                        <div className="space-y-5 font-black">
+                        <div className="space-y-5">
                             <input type="text" placeholder="Nome Squadra" className="w-full border-2 p-4 rounded-2xl text-center text-xl font-bold" value={playerName} onChange={e => setName(e.target.value)} />
                             <input type="text" placeholder="Codice Stanza" className="w-full border-2 p-4 rounded-2xl text-center uppercase text-2xl font-mono" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
                             <button onClick={async () => {
@@ -404,7 +405,7 @@
                                 sessionStorage.setItem('activeRole', 'host');
                                 setRoomCode(code);
                                 setRole('host');
-                            }} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-sm uppercase font-black">Crea Stanza Host</button>
+                            }} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-sm uppercase">Crea Stanza Host</button>
                         </div>
                     </div>
                 </div>
@@ -426,7 +427,7 @@
                             <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black">
                                 {gameState.status === 'lobby' ? (
                                     <div className="flex flex-col items-center gap-8 w-full max-w-4xl font-black font-black">
-                                        <h2 className="text-6xl text-[#0054a6] uppercase font-black tracking-tighter">In attesa dei campioni...</h2>
+                                        <h2 className="text-6xl text-[#0054a6] uppercase tracking-tighter">In attesa dei campioni...</h2>
                                         <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-md mx-auto shadow-inner">
                                             <div className="flex flex-col items-center">
                                                 <img src={getQrUrl()} alt="QR" className="w-80 h-80 rounded-2xl mb-4" />
@@ -434,8 +435,8 @@
                                             </div>
                                         </div>
                                         <div className="flex flex-wrap gap-2 justify-center max-w-2xl font-black font-black">
-                                            {players.map(p => <div key={p.uid} className="bg-[#0054a6] text-white px-4 py-2 rounded-full text-sm animate-fade-in font-black">{p.name}</div>)}
-                                            {players.length === 0 && <p className="text-gray-400 italic font-black">In attesa dei collegamenti...</p>}
+                                            {players.map(p => <div key={p.uid} className="bg-[#0054a6] text-white px-4 py-2 rounded-full text-sm animate-fade-in">{p.name}</div>)}
+                                            {players.length === 0 && <p className="text-gray-400 italic">In attesa dei collegamenti...</p>}
                                         </div>
                                         <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-12 py-5 rounded-2xl text-2xl uppercase transition-all active:scale-95 shadow-xl">Inizia Quiz</button>
                                     </div>
@@ -482,13 +483,27 @@
                                 {(gameState.status === 'lobby' || gameState.showResults) && (
                                     <div className="bg-white p-6 rounded-[2rem] shadow border flex-1 overflow-hidden flex flex-col font-black">
                                         <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica</h3>
-                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 font-black font-black">
-                                            {displayedPlayers.map((p, i) => (
-                                                <div key={p.uid} className={`flex justify-between p-2 rounded-lg ${i<3 ? 'bg-blue-50 text-[#0054a6]' : ''}`}>
-                                                    <span className="truncate max-w-[100px] text-xs font-bold font-black">{i+1}. {p.name}</span>
-                                                    <span className="font-mono font-bold text-xs font-black">{p.score}</span>
-                                                </div>
-                                            ))}
+                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 font-black font-black">
+                                            {displayedPlayers.map((p, i) => {
+                                                let rowStyle = "bg-gray-50 border-gray-100";
+                                                let nameStyle = "text-xs";
+                                                if (i === 0) {
+                                                    rowStyle = "bg-[#ffd700]/20 border-[#ffd700] shadow-md";
+                                                    nameStyle = "text-xl text-[#b8860b]";
+                                                } else if (i === 1) {
+                                                    rowStyle = "bg-[#c0c0c0]/20 border-[#c0c0c0]";
+                                                    nameStyle = "text-lg text-[#707070]";
+                                                } else if (i === 2) {
+                                                    rowStyle = "bg-[#cd7f32]/20 border-[#cd7f32]";
+                                                    nameStyle = "text-lg text-[#8b4513]";
+                                                }
+                                                return (
+                                                    <div key={p.uid} className={`flex justify-between items-center p-3 rounded-xl border transition-all ${rowStyle}`}>
+                                                        <span className={`truncate max-w-[110px] font-black uppercase ${nameStyle}`}>{i+1}. {p.name}</span>
+                                                        <span className="font-mono font-bold text-sm">{p.score}</span>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -500,11 +515,11 @@
                                 <Icon name="crown" size={120} className="text-[#ffde00] mb-6 animate-bounce" />
                                 <h2 className="text-7xl text-[#0054a6] mb-12 uppercase italic tracking-tighter font-black">I Vincitori!</h2>
                                 <div className="flex items-end gap-10 w-full max-w-4xl h-72 font-black font-black font-black font-black">
-                                    {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl">2</div></div>}
+                                    {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl font-black">2</div></div>}
                                     {displayedPlayers[0] && <div className="flex-1 flex flex-col items-center font-black font-black font-black"><p className="text-3xl mb-4 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md"> {displayedPlayers[0].name} </p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
                                     {displayedPlayers[2] && <div className="flex-1 flex flex-col items-center font-black font-black font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[2].name} </p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-5xl text-orange-300 border-t-8 border-orange-200 shadow-xl">3</div></div>}
                                 </div>
-                                <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-16 px-16 py-5 bg-gray-900 text-white rounded-full text-xl uppercase tracking-widest shadow-xl transition-all hover:bg-black font-black">Nuova Partita</button>
+                                <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-16 px-16 py-5 bg-gray-900 text-white rounded-full text-xl uppercase tracking-widest shadow-xl transition-all hover:bg-black font-black font-black">Nuova Partita</button>
                             </div>
                         )}
                     </div>
@@ -512,42 +527,42 @@
             }
 
             if (role === 'player' && gameState) return (
-                <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center font-black">
-                    <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black">
-                        <LogoArcigay className="h-10 font-black" />
-                        <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm font-black">
-                            <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0 font-black">
+                <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center font-black font-black font-black">
+                    <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black font-black font-black font-black font-black font-black font-black font-black">
+                        <LogoArcigay className="h-10 font-black font-black font-black" />
+                        <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm font-black font-black font-black font-black font-black font-black">
+                            <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0 font-black font-black font-black font-black font-black font-black font-black">
                                 <Icon name={rankInfo.icon} size={18} className={rankInfo.color} />
                             </div>
-                            <span className="text-xl font-mono leading-none font-black">{prevScore}</span>
+                            <span className="text-xl font-mono leading-none font-black font-black font-black font-black font-black font-black font-black font-black font-black">{prevScore}</span>
                         </div>
                     </header>
 
-                    <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black">
+                    <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black font-black font-black font-black font-black font-black font-black font-black font-black">
                         {gameState.status === 'lobby' && (
-                            <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center font-black font-black">
-                                <LogoPrideHouse className="h-40 w-auto object-contain mx-auto mb-4 font-black" />
-                                <h2 className="text-2xl uppercase tracking-tighter leading-tight font-black">IL QUIZ STA PER INIZIARE!</h2>
-                                <p className="text-gray-500 text-sm italic tracking-widest font-black">Player: {playerName}</p>
+                            <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black">
+                                <LogoPrideHouse className="h-40 w-auto object-contain mx-auto mb-4 font-black font-black font-black font-black font-black font-black" />
+                                <h2 className="text-2xl uppercase tracking-tighter leading-tight font-black font-black font-black font-black font-black">IL QUIZ STA PER INIZIARE!</h2>
+                                <p className="text-gray-500 text-sm italic tracking-widest font-black font-black font-black font-black font-black font-black font-black font-black">Player: {playerName}</p>
                             </div>
                         )}
 
                         {gameState.status === 'playing' && !gameState.showResults && (
-                            <div className="w-full max-w-sm flex flex-col gap-6 h-full py-4 font-black font-black font-black">
-                                <div className="flex items-center justify-center gap-3 font-black">
+                            <div className="w-full max-w-sm flex flex-col gap-6 h-full py-4 font-black font-black font-black font-black font-black">
+                                <div className="flex items-center justify-center gap-3 font-black font-black font-black">
                                     <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse font-black' : 'text-[#0054a6]'} />
-                                    <span className={`text-5xl font-mono font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
+                                    <span className={`text-5xl font-mono font-black font-black font-black font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
                                 </div>
                                 {hasAnswered ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black font-black">
-                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4 font-black" />
-                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black font-black">Acquisita</h2>
-                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black">Guarda lo schermo principale</p>
+                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black font-black font-black">
+                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4 font-black font-black font-black" />
+                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black font-black font-black">Acquisita</h2>
+                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black font-black font-black">Guarda lo schermo principale</p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 gap-5 flex-1 font-black">
+                                    <div className="grid grid-cols-1 gap-5 flex-1 font-black font-black font-black">
                                         {COLORS.map((c, i) => (
-                                            <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-2xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black`}>
+                                            <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-2xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black font-black font-black`}>
                                                 {String.fromCharCode(65 + i)}
                                             </button>
                                         ))}
@@ -557,26 +572,26 @@
                         )}
 
                         {gameState.status === 'playing' && gameState.showResults && (
-                            <div className={`w-full max-w-[320px] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                            <div className={`w-full max-w-[320px] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 font-black font-black font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
                                 <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner text-white font-black shrink-0 font-black">
                                     <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={48} />
                                 </div>
                                 <h2 className="text-3xl uppercase mb-4 leading-none font-black text-center font-black">
                                     {lastAnswerCorrect === true ? 'ESATTO!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO' : 'ERRATO')}
                                 </h2>
-                                <div className="w-full space-y-4 font-black">
+                                <div className="w-full space-y-4 font-black font-black font-black">
                                     {lastAnswerCorrect === true ? (
-                                        <div className="flex flex-col items-center gap-1 font-black font-black">
-                                            <div className="flex items-center gap-3 font-black">
-                                                {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce font-black" />}
-                                                <span className="text-2xl font-black font-black">+{lastPointsEarned} PT</span>
+                                        <div className="flex flex-col items-center gap-1 font-black font-black font-black">
+                                            <div className="flex items-center gap-3 font-black font-black font-black">
+                                                {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce font-black font-black" />}
+                                                <span className="text-2xl font-black font-black font-black font-black">+{lastPointsEarned} PT</span>
                                             </div>
                                             {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em] font-black">VELOCITÀ MASSIMA!</p>}
                                         </div>
-                                    ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black">0 PUNTI</div>}
-                                    <div className="border-t border-white/20 pt-4 font-black">
+                                    ) : <div className="text-xl font-black font-black opacity-60 uppercase tracking-widest font-black font-black">0 PUNTI</div>}
+                                    <div className="border-t border-white/20 pt-4 font-black font-black font-black">
                                         <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black font-black">Classifica:</p>
-                                        <p className={`text-6xl ${rankInfo.color} drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
+                                        <p className={`text-6xl ${rankInfo.color} drop-shadow-sm font-black font-black font-black leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
                                     </div>
                                 </div>
                             </div>
@@ -585,13 +600,13 @@
                         {gameState.status === 'finished' && (
                             <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto font-black text-center">
                                 <div className="w-36 h-36 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 font-black mb-8">
-                                    <Icon name={rankInfo.icon} size={80} className={`drop-shadow-xl ${rankInfo.color} font-black`} />
+                                    <Icon name={rankInfo.icon} size={80} className={`drop-shadow-xl ${rankInfo.color} font-black font-black`} />
                                 </div>
-                                <h2 className="text-6xl uppercase tracking-tighter leading-tight font-black mb-10 font-black">GARA FINITA!</h2>
+                                <h2 className="text-6xl uppercase tracking-tighter leading-tight font-black font-black font-black mb-10 font-black">GARA FINITA!</h2>
                                 <div className="bg-white p-8 rounded-[3.5rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center font-black">
-                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-3 font-black">Punteggio Finale</p>
-                                    <p className="text-2xl text-[#0054a6] mb-3 font-black leading-none font-black">{rankInfo.label}° Posto</p>
-                                    <p className="text-7xl font-mono text-[#0054a6] leading-none tracking-tighter font-black mt-2">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
+                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-3 font-black font-black font-black">Punteggio Finale</p>
+                                    <p className="text-2xl text-[#0054a6] mb-3 font-black font-black font-black font-black font-black leading-none">{rankInfo.label}° Posto</p>
+                                    <p className="text-7xl font-mono text-[#0054a6] leading-none tracking-tighter font-black font-black font-black font-black font-black mt-2">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
                                 </div>
                             </div>
                         )}
