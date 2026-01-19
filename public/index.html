@@ -29,73 +29,22 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, Fragment } = React;
 
-        // --- COMPONENTE ICONE (Ridisegnate per chiarezza e centratura) ---
+        // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                trophy: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6V3h12v1h1.5a2.5 2.5 0 0 1 0 5H18v3c0 4.42-3.58 8-8 8H8a8 8 0 0 1-2-15.74V9z"/>
-                        <path d="M12 18a6 6 0 0 0 6-6V4H6v8a6 6 0 0 0 6 6z"/>
-                    </g>
-                ),
-                users: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </g>
-                ),
+                trophy: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6V3h12v1h1.5a2.5 2.5 0 0 1 0 5H18v3c0 4.42-3.58 8-8 8H8a8 8 0 0 1-2-15.74V9z"/><path d="M12 18a6 6 0 0 0 6-6V4H6v8a6 6 0 0 0 6 6z"/></g>,
+                users: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></g>,
                 play: <path d="m7 4 12 8-12 8V4z" fill="currentColor"/>,
                 chevronRight: <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>,
-                checkCircle: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <path d="M22 4L12 14.01l-3-3"/>
-                    </g>
-                ),
-                xCircle: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="m15 9-6 6"/>
-                        <path d="m9 9 6 6"/>
-                    </g>
-                ),
+                checkCircle: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></g>,
+                xCircle: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></g>,
                 crown: <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z" fill="currentColor"/>,
-                clock: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 6v6l4 2"/>
-                    </g>
-                ),
+                clock: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></g>,
                 zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>,
-                coins: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="8" cy="8" r="6"/>
-                        <circle cx="16" cy="16" r="6"/>
-                    </g>
-                ),
-                smile: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                        <line x1="9" y1="9" x2="9.01" y2="9"/>
-                        <line x1="15" y1="9" x2="15.01" y2="9"/>
-                    </g>
-                ),
-                qr: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="5" height="5" x="3" y="3" rx="1"/>
-                        <rect width="5" height="5" x="16" y="3" rx="1"/>
-                        <rect width="5" height="5" x="3" y="16" rx="1"/>
-                        <path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
-                        <path d="M21 21h.01"/>
-                        <path d="M16 21h.01"/>
-                        <path d="M21 16h.01"/>
-                        <path d="M16 16h.01"/>
-                    </g>
-                ),
-                loader2: <path d="M21 12a9 9 0 1 1-6.219-8.56" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                coins: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 17v-10"/><path d="M15 10l-3-3-3 3"/></g>,
+                smile: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></g>,
+                qr: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/></g>,
+                loader2: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></g>
             };
             return (
                 <svg viewBox="0 0 24 24" width={size} height={size} className={className}>
@@ -109,6 +58,10 @@
                 e.target.onerror = null; 
                 e.target.src = "https://www.arcigaymilano.org/wp-content/themes/arcigay-milano/assets/images/logo.png";
             }} />
+        );
+
+        const LogoPrideHouse = ({ className }) => (
+            <img src="/logo_ph.png" alt="Logo Pride House" className={className} />
         );
 
         // --- CONFIGURAZIONE FIREBASE ---
@@ -128,7 +81,6 @@
         const appId = 'quiz-lgbt-sport-2026';
         const TIMER_SECONDS = 30;
 
-        // --- DATI QUIZ ---
         const QUIZ_DATA = {
             title: "Sport e Inclusione: LGBT+",
             questions: [
@@ -139,7 +91,7 @@
                         { text: "Amsterdam, 1998", rationale: "Amsterdam ha ospitato un'edizione molto famosa, ma non è stata la città d'esordio.", isCorrect: false },
                         { text: "San Francisco, 1982", rationale: "Fondati da Tom Waddell, l'obiettivo era promuovere lo spirito di inclusione e partecipazione attraverso lo sport.", isCorrect: true },
                         { text: "New York, 1969", rationale: "Il 1969 è l'anno dei moti di Stonewall, ma la prima manifestazione sportiva ufficiale arrivò oltre un decennio dopo.", isCorrect: false },
-                        { text: "Londra, 1975", rationale: "Sebbene Londra sia attiva nell'attivismo, i primi giochi nacquero sulla costa occidentale degli Stati Uniti.", isCorrect: false }
+                        { text: "Londra, 1975", rationale: "Sebbene Londra sia attiva nell'attivismo, i primi giochi nacquero sulla costa occidentale degli Uniti.", isCorrect: false }
                     ]
                 },
                 {
@@ -249,6 +201,7 @@
             const [lastPointsEarned, setLastPointsEarned] = useState(0);
             const [errorMessage, setErrorMessage] = useState('');
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
+            const [prevScore, setPrevScore] = useState(0);
 
             // Logic QR Auto-fill
             useEffect(() => {
@@ -266,6 +219,7 @@
                                 const d = snap.data();
                                 setRole('player');
                                 setName(d.name);
+                                setPrevScore(d.score);
                                 sessionStorage.setItem('activeRole', 'player');
                                 sessionStorage.setItem('activePlayerName', d.name);
                                 sessionStorage.setItem('activeRoom', roomCode);
@@ -287,9 +241,15 @@
                 const unsubPlayers = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').onSnapshot(snap => {
                     const all = snap.docs.map(d => d.data()).filter(p => p.roomCode === code).sort((a,b) => b.score - a.score);
                     setPlayers(all);
+                    
+                    const me = all.find(p => p.uid === user.uid);
+                    // Update prevScore solo quando i risultati sono mostrati o quando non siamo in game
+                    if (me && (gameState?.status !== 'playing' || gameState?.showResults)) {
+                        setPrevScore(me.score);
+                    }
                 });
                 return () => { unsubRoom(); unsubPlayers(); };
-            }, [user, roomCode, role]);
+            }, [user, roomCode, role, gameState?.showResults, gameState?.status]);
 
             // Timer
             useEffect(() => {
@@ -359,7 +319,7 @@
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
                         <LogoArcigay className="h-24 mx-auto mb-6" />
-                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight font-black">Pride House Quiz</h1>
+                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Pride House Quiz</h1>
                         <div className="space-y-5 font-black">
                             <input type="text" placeholder="Nome Squadra" className="w-full border-2 p-4 rounded-2xl text-center text-xl font-bold" value={playerName} onChange={e => setName(e.target.value)} />
                             <input type="text" placeholder="Codice Stanza" className="w-full border-2 p-4 rounded-2xl text-center uppercase text-2xl font-mono" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
@@ -428,7 +388,7 @@
                                             <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm font-black shadow-md">Domanda {gameState.currentQuestionIndex+1} / 10</span>
                                             {!gameState.showResults && <div className="text-4xl font-mono bg-gray-900 text-white px-8 py-3 rounded-2xl font-black shadow-lg">{timeLeft}s</div>}
                                         </div>
-                                        <h2 className={`text-[#0054a6] leading-tight font-black tracking-tight ${gameState.showResults ? 'text-4xl text-left' : 'text-7xl text-center mt-10 mb-20'}`}>{q.question}</h2>
+                                        <h2 className={`text-[#0054a6] leading-tight font-black tracking-tight text-justify ${gameState.showResults ? 'text-4xl' : 'text-7xl mt-10 mb-20'}`}>{q.question}</h2>
                                         <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'} font-black`}>
                                             {q.options.map((o, i) => (
                                                 <div key={i} className="flex flex-col gap-3 font-black">
@@ -486,9 +446,9 @@
                                 <Icon name="crown" size={150} className="text-[#ffde00] mb-8 animate-bounce font-black" />
                                 <h2 className="text-8xl text-[#0054a6] mb-16 uppercase italic font-black tracking-tighter">PODIO FINALE!</h2>
                                 <div className="flex items-end gap-10 w-full max-w-5xl h-80 font-black">
-                                    {players[1] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-3 text-[#0054a6] uppercase font-black truncate w-full">{players[1].name}</p><div className="w-full bg-gray-200 h-48 rounded-t-[3rem] flex items-center justify-center text-7xl text-gray-400 border-t-8 border-gray-300 shadow-xl font-black">2</div></div>}
-                                    {players[0] && <div className="flex-1 flex flex-col items-center"><p className="text-4xl mb-5 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-64 rounded-t-[4rem] flex items-center justify-center text-[10rem] text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
-                                    {players[2] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-3 text-[#0054a6] uppercase font-black truncate w-full">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-[3rem] flex items-center justify-center text-7xl text-orange-300 border-t-8 border-orange-200 shadow-xl font-black">3</div></div>}
+                                    {players[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-2xl mb-3 text-[#0054a6] uppercase font-black truncate w-full">{players[1].name}</p><div className="w-full bg-gray-200 h-48 rounded-t-[3rem] flex items-center justify-center text-7xl text-gray-400 border-t-8 border-gray-300 shadow-xl font-black">2</div></div>}
+                                    {players[0] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-4xl mb-5 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-64 rounded-t-[4rem] flex items-center justify-center text-[10rem] text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
+                                    {players[2] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-2xl mb-3 text-[#0054a6] uppercase font-black truncate w-full">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-[3rem] flex items-center justify-center text-7xl text-orange-300 border-t-8 border-orange-200 shadow-xl font-black">3</div></div>}
                                 </div>
                                 <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-20 px-24 py-6 bg-gray-900 text-white rounded-full text-2xl uppercase tracking-widest shadow-2xl transition-all hover:bg-black font-black">Nuova Partita</button>
                             </div>
@@ -505,15 +465,17 @@
                             <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
                                 <Icon name={rankInfo.icon} size={18} className={rankInfo.color} />
                             </div>
-                            <span className="text-xl font-mono leading-none font-black">{players.find(p=>p.uid===user?.uid)?.score || 0}</span>
+                            <span className="text-xl font-mono leading-none font-black">{prevScore}</span>
                         </div>
                     </header>
 
                     <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black">
                         {gameState.status === 'lobby' && (
                             <div className="space-y-8 animate-fade-in max-w-xs font-black">
-                                <div className="w-28 h-28 bg-[#0054a6]/10 rounded-full flex items-center justify-center mx-auto border-4 border-[#0054a6]/20 animate-pulse text-[#0054a6] font-black shadow-inner"><Icon name="users" size={56} /></div>
-                                <h2 className="text-3xl uppercase tracking-tighter leading-tight font-black">Benvenuti alla Pride House!</h2>
+                                <div className="w-28 h-28 bg-[#0054a6]/10 rounded-full flex items-center justify-center mx-auto border-4 border-[#0054a6]/20 animate-pulse shadow-inner overflow-hidden">
+                                    <LogoPrideHouse className="w-full h-full object-cover" />
+                                </div>
+                                <h2 className="text-3xl uppercase tracking-tighter leading-tight font-black">IL QUIZ STA PER INIZIARE!</h2>
                                 <p className="text-gray-500 text-lg font-black tracking-widest italic opacity-70">Player: {playerName}</p>
                             </div>
                         )}
@@ -543,41 +505,41 @@
                         )}
 
                         {gameState.status === 'playing' && gameState.showResults && (
-                            <div className={`w-full max-w-[95%] p-8 rounded-[4rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
-                                <div className="bg-white/20 w-28 h-28 rounded-full flex items-center justify-center mb-8 shadow-inner text-white font-black shrink-0">
-                                    <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={72} />
+                            <div className={`w-full max-w-[320px] p-5 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                                <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-5 shadow-inner text-white font-black shrink-0">
+                                    <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={50} />
                                 </div>
-                                <h2 className="text-5xl uppercase tracking-tighter mb-8 leading-none font-black">
+                                <h2 className="text-3xl uppercase tracking-tighter mb-5 leading-none font-black text-center">
                                     {lastAnswerCorrect === true ? 'ESATTO!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'SCADUTO' : 'ERRATO')}
                                 </h2>
-                                <div className="w-full space-y-8 font-black">
+                                <div className="w-full space-y-6 font-black">
                                     {lastAnswerCorrect === true ? (
-                                        <div className="flex flex-col items-center gap-3 font-black">
+                                        <div className="flex flex-col items-center gap-2 font-black">
                                             <div className="flex items-center gap-3 font-black">
-                                                {isFastestPlayer && <Icon name="zap" size={32} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}
-                                                <span className="text-4xl font-black">+{lastPointsEarned} PT</span>
+                                                {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}
+                                                <span className="text-2xl font-black">+{lastPointsEarned} PT</span>
                                             </div>
-                                            {isFastestPlayer && <p className="text-xs text-[#ffde00] uppercase font-black animate-pulse tracking-[0.3em]">VELOCITÀ MASSIMA!</p>}
+                                            {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em]">VELOCITÀ MASSIMA!</p>}
                                         </div>
-                                    ) : <div className="text-3xl font-black opacity-60 uppercase tracking-widest font-black">0 PUNTI</div>}
-                                    <div className="border-t border-white/20 pt-8 font-black">
-                                        <p className="text-sm text-white/70 mb-2 uppercase tracking-widest font-black">Posizione attuale:</p>
-                                        <p className={`text-8xl ${rankInfo.color} drop-shadow font-black leading-none`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
+                                    ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black">0 PUNTI</div>}
+                                    <div className="border-t border-white/20 pt-5 font-black">
+                                        <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black">Classifica:</p>
+                                        <p className={`text-6xl ${rankInfo.color} drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {gameState.status === 'finished' && (
-                            <div className="text-center space-y-12 animate-fade-in max-w-[340px] font-black mx-auto">
-                                <div className="w-40 h-40 flex items-center justify-center bg-white rounded-full shadow-2xl mx-auto border-4 border-[#0054a6]/10 font-black">
-                                    <Icon name={rankInfo.icon} size={100} className={`drop-shadow-2xl ${rankInfo.color}`} />
+                            <div className="text-center space-y-10 animate-fade-in max-w-[320px] font-black mx-auto">
+                                <div className="w-32 h-32 flex items-center justify-center bg-white rounded-full shadow-2xl mx-auto border-4 border-[#0054a6]/10 font-black">
+                                    <Icon name={rankInfo.icon} size={80} className={`drop-shadow-2xl ${rankInfo.color}`} />
                                 </div>
                                 <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black">GARA FINITA!</h2>
-                                <div className="bg-white p-10 rounded-[3.5rem] border-2 border-gray-100 shadow-2xl w-full font-black">
-                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-4 font-black">Punteggio Finale</p>
-                                    <p className="text-3xl text-[#0054a6] mb-3 font-black">{rankInfo.label}° Posto</p>
-                                    <p className="text-8xl font-mono text-[#0054a6] leading-none tracking-tighter font-black mt-2">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
+                                <div className="bg-white p-8 rounded-[3.5rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center">
+                                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-3 font-black">Punteggio Finale</p>
+                                    <p className="text-3xl text-[#0054a6] mb-3 font-black leading-none">{rankInfo.label}° Posto</p>
+                                    <p className="text-7xl font-mono text-[#0054a6] leading-none tracking-tighter font-black mt-2">{players.find(p=>p.uid===user?.uid)?.score || 0}</p>
                                 </div>
                             </div>
                         )}
