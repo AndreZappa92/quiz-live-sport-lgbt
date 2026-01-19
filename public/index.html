@@ -37,7 +37,7 @@
         }
         .confetti-piece {
             position: absolute;
-            width: 10px; height: 10px;
+            width: 8px; height: 8px;
             animation: confetti-fall 3s linear infinite;
         }
     </style>
@@ -51,13 +51,12 @@
         // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                // Trofeo: U ridotta ulteriormente, stelo più lungo, base ok
                 trophy: (
                     <g fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 3H7v7a5 5 0 0 0 10 0V3z" />
-                        <path d="M6 8H4.5a2.5 2.5 0 0 1 0-5H6" />
-                        <path d="M18 8h1.5a2.5 2.5 0 0 0 0-5H18" />
-                        <path d="M12 14v7" />
+                        <path d="M17 3H7v6a5 5 0 0 0 10 0V3z" />
+                        <path d="M6 7H4.5a2.5 2.5 0 0 1 0-5H6" />
+                        <path d="M18 7h1.5a2.5 2.5 0 0 0 0-5H18" />
+                        <path d="M12 13v8" />
                         <path d="M8 21h8" />
                     </g>
                 ),
@@ -67,38 +66,14 @@
                         <path d="M12 8l1.5 3h3.5l-2.5 2 1 3.5-3.5-2-3.5 2 1-3.5-2.5-2h3.5z" />
                     </g>
                 ),
-                users: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                    </g>
-                ),
-                play: <path d="m7 4 12 8-12 8V4z" fill="currentColor"/>,
+                users: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></g>,
                 chevronRight: <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>,
-                checkCircle: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <path d="M22 4L12 14.01l-3-3"/>
-                    </g>
-                ),
-                xCircle: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="m15 9-6 6"/><path d="m9 9 6 6"/>
-                    </g>
-                ),
+                checkCircle: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></g>,
+                xCircle: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></g>,
                 crown: <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z" fill="currentColor"/>,
-                clock: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                    </g>
-                ),
+                clock: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></g>,
                 zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>,
-                qr: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
-                    </g>
-                ),
+                qr: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/></g>,
                 loader2: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></g>
             };
             return (
@@ -110,12 +85,12 @@
 
         // --- COMPONENTE CORIANDOLI ---
         const Confetti = () => {
-            const pieces = useMemo(() => Array.from({ length: 50 }).map((_, i) => ({
+            const pieces = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
                 id: i,
                 left: Math.random() * 100 + '%',
                 delay: Math.random() * 3 + 's',
                 color: ['#ffd700', '#c0c0c0', '#cd7f32', '#0054a6', '#e30613'][Math.floor(Math.random() * 5)],
-                size: Math.random() * 8 + 6 + 'px'
+                size: Math.random() * 6 + 4 + 'px'
             })), []);
 
             return (
@@ -161,21 +136,22 @@
         const appId = 'quiz-lgbt-sport-2026';
         const TIMER_SECONDS = 30;
 
+        // --- DATI QUIZ RIEQUILIBRATI (3A, 3B, 2C, 2D) - ORDINE MIXATO ---
         const QUIZ_DATA = {
             title: "Sport e Inclusione: LGBT+",
             questions: [
                 {
-                    id: 1,
+                    id: 1, // Correct: C
                     question: "In quale città e in quale anno si sono tenuti i primi Gay Games, l'evento multisportivo internazionale dedicato alla comunità LGBT+?",
                     options: [
                         { text: "Amsterdam, 1998", rationale: "Amsterdam ha ospitato un'edizione molto famosa, ma non è stata la città d'esordio.", isCorrect: false },
+                        { text: "New York, 1969", rationale: "Il 1969 è l'anno dei moti di Stonewall, ma la prima manifestazione sportiva ufficiale arrivò oltre un decennio dopo.", isCorrect: false },
                         { text: "San Francisco, 1982", rationale: "Fondati da Tom Waddell, l'obiettivo era promuovere lo spirito di inclusione e partecipazione attraverso lo sport.", isCorrect: true },
-                        { text: "New York, 1969", rationale: "Il 1969 è l'year dei moti di Stonewall, ma la prima manifestazione sportiva ufficiale arrivò oltre un decennio dopo.", isCorrect: false },
                         { text: "Londra, 1975", rationale: "Sebbene Londra sia attiva nell'attivismo, i primi giochi nacquero sulla costa occidentale degli Uniti.", isCorrect: false }
                     ]
                 },
                 {
-                    id: 2,
+                    id: 2, // Correct: B
                     question: "Chi è stato il primo calciatore professionista in attività a fare coming out nel 1990?",
                     options: [
                         { text: "Thomas Hitzlsperger", rationale: "L'ex centrocampista della Lazio ha fatto coming out solo dopo il ritiro dall'attività agonistica.", isCorrect: false },
@@ -185,67 +161,67 @@
                     ]
                 },
                 {
-                    id: 3,
+                    id: 3, // Correct: A
                     question: "L'atleta Laurel Hubbard ha segnato la storia delle Olimpiadi di Tokyo 2020 per quale motivo?",
                     options: [
-                        { text: "Amsterdam, 1998", rationale: "Amsterdam ha ospitato un'edizione molto famosa, ma non è stata la città d'esordio.", isCorrect: false },
                         { text: "È stata la prima donna transgender a competere in una gara individuale", rationale: "La sua partecipazione nel sollevamento pesi ha aperto un importante dibattito globale sull'inclusività e le regole sportive.", isCorrect: true },
                         { text: "Ha vinto la prima medaglia d'oro per una persona non binaria", rationale: "Sebbene sia stata una pioniera, non ha raggiunto il podio durante quell'edizione dei Giochi.", isCorrect: false },
+                        { text: "È stata la portabandiera della squadra dei rifugiati", rationale: "Questo ruolo è stato ricoperto da altri atleti; la Hubbard rappresentava la Nuova Zelanda.", isCorrect: false },
                         { text: "Ha stabilito un record mondiale nel lancio del disco", rationale: "La Hubbard gareggiava nella categoria del sollevamento pesi, non nell'atletica leggera.", isCorrect: false }
                     ]
                 },
                 {
-                    id: 4,
+                    id: 4, // Correct: D
                     question: "Quale icona del tennis mondiale ha vinto 18 titoli del Grande Slam ed è stata una delle prime atlete d'élite a vivere apertamente la propria omosessualità?",
                     options: [
                         { text: "Billie Jean King", rationale: "Anche lei è un'icona dei diritti, ma il suo coming out pubblico è avvenuto in circostanze diverse rispetto alla Navratilova.", isCorrect: false },
                         { text: "Chris Evert", rationale: "Storica rivale della Navratilova, la Evert non appartiene alla comunità LGBT+.", isCorrect: false },
-                        { text: "Martina Navratilova", rationale: "Oltre ai successi in campo, è diventata una delle più influenti attiviste per i diritti LGBT+ nel mondo dello sport.", isCorrect: true },
-                        { text: "Steffi Graf", rationale: "La tennista tedesca ha dominato gli anni '90 ma non è nota per attivismo legato alla comunità LGBT+.", isCorrect: false }
+                        { text: "Steffi Graf", rationale: "La tennista tedesca ha dominato gli anni '90 ma non è nota per attivismo legato alla comunità LGBT+.", isCorrect: false },
+                        { text: "Martina Navratilova", rationale: "Oltre ai successi in campo, è diventata una delle più influenti attiviste per i diritti LGBT+ nel mondo dello sport.", isCorrect: true }
                     ]
                 },
                 {
-                    id: 5,
+                    id: 5, // Correct: B
                     question: "La calciatrice Megan Rapinoe è famosa non solo per i suoi successi in campo, ma anche per il suo attivismo. Quale premio ha vinto nel 2019?",
                     options: [
-                        { text: "Pallone d'Oro femminile", rationale: "In quell'anno ha trascinato gli USA alla vittoria del Mondiale, diventando un simbolo globale di lotta per l'uguaglianza.", isCorrect: true },
                         { text: "Premio Oscar per il miglior documentario", rationale: "Sebbene sia apparsa in molti media, non ha mai vinto un premio dell'Academy cinematografica.", isCorrect: false },
+                        { text: "Pallone d'Oro femminile", rationale: "In quell'anno ha trascinato gli USA alla vittoria del Mondiale, diventando un simbolo globale di lotta per l'uguaglianza.", isCorrect: true },
                         { text: "Medaglia d'oro nel nuoto sincronizzato", rationale: "La Rapinoe è esclusivamente una calciatrice professionista.", isCorrect: false },
                         { text: "Sindaco della città di Seattle", rationale: "È molto amata a Seattle, ma non ha mai ricoperto cariche politiche elettive.", isCorrect: false }
                     ]
                 },
                 {
-                    id: 6,
+                    id: 6, // Correct: A
                     question: "Durante i Mondiali di calcio in Qatar 2022, quale simbolo di supporto alla comunità LGBT+ è stato al centro di una disputa tra FIFA e diverse nazionali europee?",
                     options: [
+                        { text: "La fascia da capitano 'OneLove'", rationale: "La FIFA proibì l'uso della fascia arcobaleno minacciando sanzioni sportive ai capitani che l'avessero indossata.", isCorrect: true },
                         { text: "Le scarpe con i tacchetti glitterati", rationale: "Non c'è stata alcuna polemica specifica riguardante le calzature dei giocatori in quel senso.", isCorrect: false },
                         { text: "Il fumo colorato arcobaleno negli stadi", rationale: "L'uso di fumogeni è vietato per motivi di sicurezza, indipendentemente dal colore.", isCorrect: false },
-                        { text: "La fascia da capitano 'OneLove'", rationale: "La FIFA proibì l'uso della fascia arcobaleno minacciando sanzioni sportive ai capitani che l'avessero indossata.", isCorrect: true },
                         { text: "Il cambio del nome della competizione in 'Gay Cup'", rationale: "Il nome della competizione è rimasto FIFA World Cup senza alcuna proposta di modifica.", isCorrect: false }
                     ]
                 },
                 {
-                    id: 7,
+                    id: 7, // Correct: B
                     question: "Chi è il tuffatore britannico, oro olimpico a Tokyo 2020, che usa la sua visibilità per normalizzare il coming out e combattere l'omofobia?",
                     options: [
+                        { text: "Matthew Mitcham", rationale: "Mitcham è stato un grande campione australiano, ma il riferimento all'oro olimpico e alla passione per l'uncinetto è tipico di Daley.", isCorrect: false },
                         { text: "Tom Daley", rationale: "Oltre ai tuffi, è amatissimo per la sua passione per l'uncinetto e per il suo impegno costante nel sociale.", isCorrect: true },
-                        { text: "Matthew Mitcham", rationale: "Mitcham è stato un grande campione australiano, ma il riferimento al bronzo olimpico e alla passione per l'uncinetto è tipico di Daley.", isCorrect: false },
                         { text: "Greg Louganis", rationale: "Louganis è una leggenda del passato (anni '80), mentre l'atleta in questione è contemporaneo.", isCorrect: false },
                         { text: "Ian Thorpe", rationale: "Thorpe è un nuotatore (non un tuffatore) e ha fatto coming out dopo la fine della carriera.", isCorrect: false }
                     ]
                 },
                 {
-                    id: 8,
+                    id: 8, // Correct: D
                     question: "Quale di questi è lo scopo principale degli 'EuroGames'?",
                     options: [
                         { text: "Selezionare gli atleti per le prossime Olimpiadi", rationale: "Gli EuroGames non sono un evento di qualificazione olimpica ufficiale.", isCorrect: false },
-                        { text: "Gareggiare esclusivamente per vincere premi in denaro", rationale: "Lo spirito dell'evento è sociale e comunitario, not basato su grandi premi monetari.", isCorrect: false },
-                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Si tratta di un evento multisportivo europeo aperto a tutti, indipendentemente dall'orientamento sessuale.", isCorrect: true },
-                        { text: "Permettere la partecipazione solo ad atleti professionisti", rationale: "L'evento è aperto ad atleti di ogni livello, dai dilettanti ai professionisti.", isCorrect: false }
+                        { text: "Gareggiare esclusivamente per vincere premi in denaro", rationale: "Lo spirito dell'evento è sociale e comunitario, non basato su grandi premi monetari.", isCorrect: false },
+                        { text: "Permettere la partecipazione solo ad atleti professionisti", rationale: "L'evento è aperto ad atleti di ogni livello, dai dilettanti ai professionisti.", isCorrect: false },
+                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBT+ nello sport", rationale: "Si tratta di un evento multisportivo europeo aperto a tutti, indipendentemente dall'orientamento sessuale.", isCorrect: true }
                     ]
                 },
                 {
-                    id: 9,
+                    id: 9, // Correct: A
                     question: "Nel 2018, lo sciatore Gus Kenworthy ha attirato l'attenzione mondiale per un gesto alle Olimpiadi Invernali di Pyeongchang. Di cosa si trattava?",
                     options: [
                         { text: "Un bacio in diretta TV al suo compagno", rationale: "È stato un momento storico di visibilità e spontaneità in un contesto sportivo globale molto seguito.", isCorrect: true },
@@ -255,12 +231,12 @@
                     ]
                 },
                 {
-                    id: 10,
+                    id: 10, // Correct: C
                     question: "Cosa rappresentano i 'Rainbow Laces' (lacci arcobaleno) spesso indossati dagli atleti in varie discipline?",
                     options: [
-                        { text: "Una campagna per l'inclusione della comunità LGBT+ nello sport", rationale: "Nata nel Regno Unito, l'iniziativa invita gli atleti a mostrare solidarietà attraverso questo piccolo ma visibile dettaglio.", isCorrect: true },
                         { text: "Un nuovo standard obbligatorio per le scarpe da corsa", rationale: "Non esiste alcun obbligo tecnico che imponga i colori arcobaleno per i lacci.", isCorrect: false },
                         { text: "Il simbolo di chi ha vinto più di dieci medaglie", rationale: "Le medaglie e i lacci sono simboli completamente distinti.", isCorrect: false },
+                        { text: "Una campagna per l'inclusione della comunità LGBT+ nello sport", rationale: "Nata nel Regno Unito, l'iniziativa invita gli atleti a mostrare solidarietà attraverso questo piccolo ma visibile dettaglio.", isCorrect: true },
                         { text: "Una decorazione usata solo durante il mese di dicembre", rationale: "Sebbene siano più comuni durante i Pride Month, vengono usati tutto l'anno per diverse campagne di sensibilizzazione.", isCorrect: false }
                     ]
                 }
@@ -332,9 +308,10 @@
                 }
             }, [players, gameState?.showResults, gameState?.status, user?.uid]);
 
-            // Timer migliorato per sincronizzazione
+            // Timer fluido con protezione sincronizzazione
             useEffect(() => {
                 if (gameState?.status === 'playing' && !gameState.showResults && gameState.questionStartTime) {
+                    let frame;
                     const updateTimer = () => {
                         const elapsed = Math.floor((Date.now() - gameState.questionStartTime) / 1000);
                         const remaining = Math.max(0, TIMER_SECONDS - elapsed);
@@ -343,11 +320,11 @@
                         if (remaining === 0) {
                             if (role === 'player' && !hasAnswered) setHasAnswered(true);
                         } else {
-                            requestAnimationFrame(updateTimer);
+                            frame = requestAnimationFrame(updateTimer);
                         }
                     };
-                    const handle = requestAnimationFrame(updateTimer);
-                    return () => cancelAnimationFrame(handle);
+                    frame = requestAnimationFrame(updateTimer);
+                    return () => cancelAnimationFrame(frame);
                 }
             }, [gameState, role, hasAnswered]);
 
@@ -364,7 +341,6 @@
             const submitAnswer = async (i) => {
                 if (hasAnswered || timeLeft === 0 || !gameState || gameState.showResults) return;
                 const isCorrect = QUIZ_DATA.questions[gameState.currentQuestionIndex].options[i].isCorrect;
-                // Offset protettivo per sincronizzazione PC/Mobile
                 const timeTaken = Math.max(0.1, (Date.now() - gameState.questionStartTime) / 1000);
                 const earned = isCorrect ? Math.floor(500 + (500 * (1 - Math.min(1, timeTaken/TIMER_SECONDS)))) : 0;
                 setHasAnswered(true);
@@ -393,18 +369,21 @@
 
             const isFastestPlayer = useMemo(() => {
                 if (!gameState?.showResults) return false;
-                const correct = players.filter(p => p.lastQuestionIndexAnswered === gameState.currentQuestionIndex && QUIZ_DATA.questions[gameState.currentQuestionIndex].options[p.lastAnswerIndex]?.isCorrect);
+                const currentIdx = gameState.currentQuestionIndex;
+                const correct = players.filter(p => p.lastQuestionIndexAnswered === currentIdx && QUIZ_DATA.questions[currentIdx].options[p.lastAnswerIndex]?.isCorrect);
                 if (correct.length === 0) return false;
                 const minTime = Math.min(...correct.map(p => p.lastAnsweredAt));
                 return players.find(p => p.uid === user?.uid)?.lastAnsweredAt === minTime && lastAnswerCorrect;
             }, [players, gameState, lastAnswerCorrect, user]);
+
+            const myRankIndex = useMemo(() => displayedPlayers.findIndex(p => p.uid === user?.uid), [displayedPlayers, user]);
 
             // --- UI ---
             if (!role) return (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
                         <LogoArcigay className="h-24 mx-auto mb-6 object-contain" />
-                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight font-black">Pride House Quiz</h1>
+                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Pride House Quiz</h1>
                         <div className="space-y-5">
                             <input type="text" placeholder="Nome Squadra" className="w-full border-2 p-4 rounded-2xl text-center text-xl font-bold" value={playerName} onChange={e => setName(e.target.value)} />
                             <input type="text" placeholder="Codice Stanza" className="w-full border-2 p-4 rounded-2xl text-center uppercase text-2xl font-mono" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
@@ -419,7 +398,7 @@
                                     sessionStorage.setItem('activeRoom', cleanCode); sessionStorage.setItem('activeRole', 'player'); sessionStorage.setItem('activePlayerName', cleanName);
                                     setRole('player');
                                 }
-                            }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl transition-all active:scale-95 shadow-md font-black">Partecipa</button>
+                            }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl active:scale-95 transition-all shadow-md">Partecipa</button>
                             <button onClick={async () => {
                                 const code = Math.random().toString(36).substring(2,6).toUpperCase();
                                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
@@ -436,7 +415,7 @@
                 const q = QUIZ_DATA.questions[gameState.currentQuestionIndex];
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden font-black">
-                        <header className="flex justify-between items-center bg-white p-4 border-b">
+                        <header className="flex justify-between items-center bg-white p-4 border-b shadow-sm">
                             <LogoArcigay className="h-14 object-contain" />
                             <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center">
                                 <Icon name="users" size={20}/> <span className="text-xl font-black">{players.length}</span>
@@ -447,7 +426,7 @@
                             <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black">
                                 {gameState.status === 'lobby' ? (
                                     <div className="flex flex-col items-center gap-8 w-full max-w-4xl">
-                                        <h2 className="text-6xl text-[#0054a6] uppercase tracking-tighter font-black">In attesa dei campioni...</h2>
+                                        <h2 className="text-6xl text-[#0054a6] uppercase tracking-tighter">In attesa dei campioni...</h2>
                                         <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-md mx-auto shadow-inner">
                                             <div className="flex flex-col items-center">
                                                 <img src={getQrUrl()} alt="QR" className="w-80 h-80 rounded-2xl mb-4" />
@@ -461,18 +440,18 @@
                                     </div>
                                 ) : (
                                     <div className="w-full max-w-5xl space-y-8 font-black">
-                                        <div className="flex justify-between items-center font-black">
+                                        <div className="flex justify-between items-center">
                                             <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm shadow-md font-black">Domanda {gameState.currentQuestionIndex+1} / 10</span>
                                             {!gameState.showResults && <div className="text-4xl font-mono bg-gray-900 text-white px-8 py-3 rounded-2xl shadow-lg font-black">{timeLeft}s</div>}
                                         </div>
                                         <h2 className={`text-[#0054a6] leading-tight tracking-tight text-justify font-black ${gameState.showResults ? 'text-4xl' : 'text-7xl mt-10 mb-20'}`}>{q.question}</h2>
-                                        <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'} font-black`}>
+                                        <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'}`}>
                                             {q.options.map((o, i) => (
                                                 <div key={i} className="flex flex-col gap-3 font-black">
-                                                    <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-4 transition-all ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-30 grayscale border-gray-100') : 'bg-gray-50 border-transparent shadow-inner font-black'}`}>
+                                                    <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-4 transition-all font-black ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-30 grayscale border-gray-100') : 'bg-gray-50 border-transparent shadow-inner font-black'}`}>
                                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-2xl shadow-lg font-black`}>{String.fromCharCode(65+i)}</div>
                                                         <span className="text-[#0054a6] text-2xl text-left font-bold leading-tight font-black">{o.text}</span>
-                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto font-black" />}
+                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto" />}
                                                     </div>
                                                     {gameState.showResults && (
                                                         <div className={`px-8 py-5 rounded-3xl text-xl text-justify font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
@@ -502,7 +481,7 @@
                                 {gameState.showResults && (
                                     <div className="bg-white p-6 rounded-[2rem] shadow border flex-1 overflow-hidden flex flex-col font-black">
                                         <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica</h3>
-                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 font-black">
                                             {displayedPlayers.slice(0, 10).map((p, i) => {
                                                 let rowStyle = "bg-gray-50 border-gray-100 font-black";
                                                 let nameStyle = "text-xs font-black";
@@ -511,8 +490,8 @@
                                                 else if (i === 2) { rowStyle = "bg-[#cd7f32]/20 border-[#cd7f32] font-black"; nameStyle = "text-lg text-[#8b4513]"; }
                                                 return (
                                                     <div key={p.uid} className={`flex justify-between items-center p-3 rounded-xl border transition-all ${rowStyle}`}>
-                                                        <span className={`truncate max-w-[110px] font-black uppercase ${nameStyle}`}>{i+1}. {p.name}</span>
-                                                        <span className="font-mono font-bold text-sm">{p.score}</span>
+                                                        <span className={`truncate max-w-[110px] font-black uppercase font-black ${nameStyle}`}>{i+1}. {p.name}</span>
+                                                        <span className="font-mono font-bold text-sm font-black">{p.score}</span>
                                                     </div>
                                                 );
                                             })}
@@ -527,9 +506,9 @@
                                 <Icon name="crown" size={120} className="text-[#ffde00] mb-6 animate-bounce" />
                                 <h2 className="text-7xl text-[#0054a6] mb-12 uppercase italic tracking-tighter font-black">I Vincitori!</h2>
                                 <div className="flex items-end gap-10 w-full max-w-4xl h-72">
-                                    {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl">2</div></div>}
-                                    {displayedPlayers[0] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-3xl mb-4 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md"> {displayedPlayers[0].name} </p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
-                                    {displayedPlayers[2] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[2].name} </p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-5xl text-orange-300 border-t-8 border-orange-200 shadow-xl font-black">3</div></div>}
+                                    {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl font-black">2</div></div>}
+                                    {displayedPlayers[0] && <div className="flex-1 flex flex-col items-center font-black font-black"><p className="text-3xl mb-4 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md"> {displayedPlayers[0].name} </p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
+                                    {displayedPlayers[2] && <div className="flex-1 flex flex-col items-center font-black font-black font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[2].name} </p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-5xl text-orange-300 border-t-8 border-orange-200 shadow-xl font-black">3</div></div>}
                                 </div>
                                 <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-16 px-16 py-5 bg-gray-900 text-white rounded-full text-xl uppercase tracking-widest shadow-xl transition-all hover:bg-black font-black">Nuova Partita</button>
                             </div>
@@ -542,7 +521,7 @@
                 <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
                     <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black">
                         <LogoArcigay className="h-10 object-contain font-black" />
-                        <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm font-black">
+                        <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm font-black font-black">
                             <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
                                 <Icon name={rankInfo.icon} size={18} className={rankInfo.color} />
                             </div>
@@ -551,7 +530,7 @@
                     </header>
 
                     <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black relative overflow-hidden">
-                        {gameState.status === 'finished' && myRankIndex <= 2 && <Confetti />}
+                        {gameState.status === 'finished' && myRankIndex >= 0 && myRankIndex <= 2 && <Confetti />}
 
                         {gameState.status === 'lobby' && (
                             <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center font-black">
@@ -568,10 +547,10 @@
                                     <span className={`text-5xl font-mono font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
                                 </div>
                                 {hasAnswered ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black">
+                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black font-black">
                                         <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4 font-black" />
-                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black">Acquisita</h2>
-                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black font-black">Guarda lo schermo principale</p>
+                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black font-black">Acquisita</h2>
+                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black">Guarda lo schermo principale</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 gap-5 flex-1 font-black">
@@ -587,7 +566,7 @@
 
                         {gameState.status === 'playing' && gameState.showResults && (
                             <div className={`w-full max-w-[320px] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
-                                <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner text-white font-black shrink-0">
+                                <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner text-white font-black shrink-0 font-black">
                                     <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={48} />
                                 </div>
                                 <h2 className="text-3xl uppercase mb-4 leading-none font-black text-center font-black">
@@ -595,15 +574,15 @@
                                 </h2>
                                 <div className="w-full space-y-4 font-black">
                                     {lastAnswerCorrect === true ? (
-                                        <div className="flex flex-col items-center gap-1 font-black">
+                                        <div className="flex flex-col items-center gap-1 font-black font-black">
                                             <div className="flex items-center gap-3">
                                                 {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce font-black" />}
                                                 <span className="text-2xl font-black">+{lastPointsEarned} PT</span>
                                             </div>
                                             {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em] font-black">VELOCITÀ MASSIMA!</p>}
                                         </div>
-                                    ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black">0 PUNTI</div>}
-                                    <div className="border-t border-white/20 pt-4 font-black">
+                                    ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black font-black">0 PUNTI</div>}
+                                    <div className="border-t border-white/20 pt-4 font-black font-black">
                                         <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black">Classifica:</p>
                                         <p className={`text-6xl ${rankInfo.color} drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
                                     </div>
@@ -612,20 +591,20 @@
                         )}
 
                         {gameState.status === 'finished' && (
-                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto text-center z-10">
-                                <div className="w-28 h-28 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-6 font-black">
+                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto text-center z-10 font-black font-black">
+                                <div className="w-28 h-28 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-6 font-black font-black">
                                     <Icon name={rankInfo.icon} size={60} className={`drop-shadow-xl ${rankInfo.color}`} />
                                 </div>
                                 
-                                {displayedPlayers.findIndex(p => p.uid === user?.uid) <= 2 && (
-                                    <p className="text-[#ffde00] text-3xl uppercase tracking-widest font-black mb-2 drop-shadow-md animate-pulse">Complimenti!</p>
+                                {myRankIndex >= 0 && myRankIndex <= 2 && (
+                                    <p className="text-[#ffde00] text-3xl uppercase tracking-widest font-black mb-2 drop-shadow-md animate-pulse font-black font-black">Complimenti!</p>
                                 )}
                                 
-                                <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black mb-6">GARA FINITA!</h2>
+                                <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black mb-6 font-black font-black font-black">GARA FINITA!</h2>
                                 
-                                <div className="bg-white p-6 rounded-[3rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center">
-                                    <div className="flex flex-col items-center justify-center gap-2">
-                                        <p className="text-sm text-gray-500 uppercase font-black">Posizione finale:</p>
+                                <div className="bg-white p-6 rounded-[3rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center font-black font-black font-black">
+                                    <div className="flex flex-col items-center justify-center gap-2 font-black font-black">
+                                        <p className="text-sm text-gray-500 uppercase font-black font-black font-black">Posizione finale:</p>
                                         <span className={`text-8xl font-black drop-shadow-sm`} style={{ color: rankInfo.colorHex }}>
                                             {rankInfo.label}°
                                         </span>
