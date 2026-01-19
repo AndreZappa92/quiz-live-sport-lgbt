@@ -21,6 +21,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
         body { -webkit-tap-highlight-color: transparent; }
+        .text-justify { text-align: justify; text-justify: inter-word; }
     </style>
 </head>
 <body class="bg-gray-50 overflow-x-hidden select-none font-sans">
@@ -29,7 +30,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, Fragment } = React;
 
-        // --- COMPONENTE ICONE ---
+        // --- COMPONENTE ICONE (Normalizzato per centratura perfetta) ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
                 trophy: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6V3h12v1h1.5a2.5 2.5 0 0 1 0 5H18v3c0 4.42-3.58 8-8 8H8a8 8 0 0 1-2-15.74V9z"/><path d="M12 18a6 6 0 0 0 6-6V4H6v8a6 6 0 0 0 6 6z"/></g>,
@@ -47,7 +48,7 @@
                 loader2: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></g>
             };
             return (
-                <svg viewBox="0 0 24 24" width={size} height={size} className={className}>
+                <svg viewBox="0 0 24 24" width={size} height={size} className={`${className} flex items-center justify-center shrink-0`}>
                     {icons[name] || null}
                 </svg>
             );
@@ -243,7 +244,6 @@
                     setPlayers(all);
                     
                     const me = all.find(p => p.uid === user.uid);
-                    // Update prevScore solo quando i risultati sono mostrati o quando non siamo in game
                     if (me && (gameState?.status !== 'playing' || gameState?.showResults)) {
                         setPrevScore(me.score);
                     }
@@ -398,7 +398,7 @@
                                                         {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={40} className="text-[#009640] ml-auto font-black" />}
                                                     </div>
                                                     {gameState.showResults && (
-                                                        <div className={`px-8 py-5 rounded-3xl text-xl text-left font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500'}`}>
+                                                        <div className={`px-8 py-5 rounded-3xl text-xl text-justify font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500'}`}>
                                                             <p className="font-bold leading-tight">{o.rationale}</p>
                                                         </div>
                                                     )}
@@ -462,8 +462,8 @@
                     <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black">
                         <LogoArcigay className="h-12" />
                         <div className="bg-[#0054a6] px-5 py-2 rounded-full flex items-center gap-3 text-white font-black shadow-sm">
-                            <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
-                                <Icon name={rankInfo.icon} size={18} className={rankInfo.color} />
+                            <div className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full shrink-0">
+                                <Icon name={rankInfo.icon} size={20} className={rankInfo.color} />
                             </div>
                             <span className="text-xl font-mono leading-none font-black">{prevScore}</span>
                         </div>
@@ -471,10 +471,8 @@
 
                     <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black">
                         {gameState.status === 'lobby' && (
-                            <div className="space-y-8 animate-fade-in max-w-xs font-black">
-                                <div className="w-28 h-28 bg-[#0054a6]/10 rounded-full flex items-center justify-center mx-auto border-4 border-[#0054a6]/20 animate-pulse shadow-inner overflow-hidden">
-                                    <LogoPrideHouse className="w-full h-full object-cover" />
-                                </div>
+                            <div className="space-y-8 animate-fade-in max-w-xs font-black flex flex-col items-center">
+                                <LogoPrideHouse className="h-40 w-auto object-contain mb-4 animate-fade-in" />
                                 <h2 className="text-3xl uppercase tracking-tighter leading-tight font-black">IL QUIZ STA PER INIZIARE!</h2>
                                 <p className="text-gray-500 text-lg font-black tracking-widest italic opacity-70">Player: {playerName}</p>
                             </div>
@@ -487,7 +485,7 @@
                                     <span className={`text-5xl font-mono font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
                                 </div>
                                 {hasAnswered ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black">
+                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black text-center">
                                         <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-6 font-black" />
                                         <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black">Acquisita</h2>
                                         <p className="text-gray-400 mt-6 text-sm tracking-[0.2em] uppercase font-black">Guarda lo schermo principale</p>
@@ -505,16 +503,16 @@
                         )}
 
                         {gameState.status === 'playing' && gameState.showResults && (
-                            <div className={`w-full max-w-[320px] p-5 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
-                                <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-5 shadow-inner text-white font-black shrink-0">
+                            <div className={`w-full max-w-[320px] mx-auto p-4 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white transition-colors duration-500 font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                                <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner text-white font-black shrink-0">
                                     <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={50} />
                                 </div>
-                                <h2 className="text-3xl uppercase tracking-tighter mb-5 leading-none font-black text-center">
+                                <h2 className="text-3xl uppercase tracking-tighter mb-4 leading-none font-black text-center">
                                     {lastAnswerCorrect === true ? 'ESATTO!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'SCADUTO' : 'ERRATO')}
                                 </h2>
-                                <div className="w-full space-y-6 font-black">
+                                <div className="w-full space-y-4 font-black">
                                     {lastAnswerCorrect === true ? (
-                                        <div className="flex flex-col items-center gap-2 font-black">
+                                        <div className="flex flex-col items-center gap-1 font-black">
                                             <div className="flex items-center gap-3 font-black">
                                                 {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}
                                                 <span className="text-2xl font-black">+{lastPointsEarned} PT</span>
@@ -522,7 +520,7 @@
                                             {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em]">VELOCITÀ MASSIMA!</p>}
                                         </div>
                                     ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black">0 PUNTI</div>}
-                                    <div className="border-t border-white/20 pt-5 font-black">
+                                    <div className="border-t border-white/20 pt-4 font-black">
                                         <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black">Classifica:</p>
                                         <p className={`text-6xl ${rankInfo.color} drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
                                     </div>
@@ -531,8 +529,8 @@
                         )}
 
                         {gameState.status === 'finished' && (
-                            <div className="text-center space-y-10 animate-fade-in max-w-[320px] font-black mx-auto">
-                                <div className="w-32 h-32 flex items-center justify-center bg-white rounded-full shadow-2xl mx-auto border-4 border-[#0054a6]/10 font-black">
+                            <div className="text-center space-y-10 animate-fade-in max-w-[320px] font-black mx-auto flex flex-col items-center">
+                                <div className="w-32 h-32 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 font-black">
                                     <Icon name={rankInfo.icon} size={80} className={`drop-shadow-2xl ${rankInfo.color}`} />
                                 </div>
                                 <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black">GARA FINITA!</h2>
