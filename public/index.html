@@ -201,7 +201,11 @@
             useEffect(() => {
                 const unsubscribe = auth.onAuthStateChanged(async (u) => {
                     if (!u) {
-                        try { await auth.signInAnonymously(); } catch(e) { setErrorMessage("Errore connessione server."); }
+                        try { 
+                            await auth.signInAnonymously(); 
+                        } catch(e) { 
+                            setErrorMessage("Errore connessione server Firebase."); 
+                        }
                     } else {
                         setUser(u);
                         // Tentativo ripristino sessione silenzioso
@@ -216,7 +220,7 @@
                                     sessionStorage.setItem('activePlayerName', d.name);
                                     sessionStorage.setItem('activeRoom', roomCode);
                                 }
-                            } catch(e) { console.error(e); }
+                            } catch(e) { console.error("Restore error:", e); }
                         }
                     }
                     setAuthLoading(false);
@@ -280,15 +284,16 @@
                         lastQuestionIndexAnswered: gameState.currentQuestionIndex,
                         lastAnsweredAt: Date.now()
                     });
-                } catch(e) { console.error(e); }
+                } catch(e) { console.error("Submit error:", e); }
             };
 
             const joinRoom = async () => {
                 const cleanName = playerName.trim();
                 const cleanCode = roomCode.trim().toUpperCase();
                 if (!cleanName || !cleanCode) { setErrorMessage("Inserisci nome e codice!"); return; }
-                if (!user) return;
+                if (!user) { setErrorMessage("Connessione in corso..."); return; }
                 setLoadingAction(true);
+                setErrorMessage('');
                 try {
                     const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(cleanCode).get();
                     if (room.exists()) {
@@ -300,15 +305,15 @@
                         sessionStorage.setItem('activePlayerName', cleanName);
                         setRoomCode(cleanCode);
                         setRole('player');
-                        setErrorMessage('');
-                    } else { setErrorMessage("Codice non trovato."); }
-                } catch (e) { setErrorMessage("Errore di rete."); }
+                    } else { setErrorMessage("Codice stanza non trovato."); }
+                } catch (e) { setErrorMessage("Errore di rete o permessi."); }
                 setLoadingAction(false);
             };
 
             const createRoom = async () => {
-                if (!user) { setErrorMessage("Connessione..."); return; }
+                if (!user) { setErrorMessage("Connessione in corso..."); return; }
                 setLoadingAction(true);
+                setErrorMessage('');
                 try {
                     const code = Math.random().toString(36).substring(2,6).toUpperCase();
                     await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
@@ -318,7 +323,10 @@
                     sessionStorage.setItem('activeRole', 'host');
                     setRoomCode(code);
                     setRole('host');
-                } catch (e) { setErrorMessage("Errore creazione stanza."); }
+                } catch (e) { 
+                    console.error("Create error:", e);
+                    setErrorMessage("Errore creazione stanza. Controlla le regole del DB."); 
+                }
                 setLoadingAction(false);
             };
 
@@ -338,6 +346,14 @@
                 return { icon: "coins", label: (r + 1).toString(), color: "text-white" };
             }, [players, user]);
 
+            const isFastest = useMemo(() => {
+                if (!gameState?.showResults) return false;
+                const correct = players.filter(p => p.lastQuestionIndexAnswered === gameState.currentQuestionIndex && QUIZ_DATA.questions[gameState.currentQuestionIndex].answerOptions?.[p.lastAnswerIndex]?.isCorrect);
+                if (!correct.length) return false;
+                const min = Math.min(...correct.map(p => p.lastAnsweredAt));
+                return players.find(p => p.uid === user?.uid)?.lastAnsweredAt === min && lastAnswerCorrect;
+            }, [players, gameState, user, lastAnswerCorrect]);
+
             if (authLoading) return <div className="min-h-screen flex items-center justify-center font-black text-[#0054a6]"><Icon name="loader2" size={32} className="animate-spin mr-2" /> Caricamento...</div>;
 
             if (role && !gameState) return (
@@ -353,13 +369,13 @@
                     <div className="max-w-md w-full bg-white p-10 rounded-3xl shadow-xl border border-gray-200 text-center">
                         <LogoArcigay className="h-24 mx-auto mb-6 object-contain" />
                         <h1 className="text-3xl font-black text-[#0054a6] uppercase mb-10 leading-tight">Pride House Quiz</h1>
-                        {errorMessage && <div className="mb-4 text-red-500 text-sm">{errorMessage}</div>}
+                        {errorMessage && <div className="mb-4 text-red-500 text-sm font-bold bg-red-50 p-2 rounded">{errorMessage}</div>}
                         <div className="space-y-5">
                             <input type="text" placeholder="Nome Squadra" className="w-full bg-gray-50 border p-4 rounded-xl outline-none focus:ring-2 focus:ring-[#0054a6]" value={playerName} onChange={e => setName(e.target.value)} />
                             <input type="text" placeholder="Codice Stanza" className="w-full bg-gray-50 border p-4 rounded-xl uppercase font-mono text-center focus:ring-2 focus:ring-[#0054a6]" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
-                            <button onClick={joinRoom} disabled={loadingAction} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl shadow-lg active:scale-95 uppercase font-bold">{loadingAction ? "..." : "PARTECIPA"}</button>
+                            <button onClick={joinRoom} disabled={loadingAction} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl shadow-lg active:scale-95 uppercase font-bold text-xl">{loadingAction ? "..." : "PARTECIPA"}</button>
                             <div className="pt-4 border-t">
-                                <button onClick={createRoom} disabled={loadingAction} className="w-full bg-white border-2 border-[#0054a6] text-[#0054a6] p-3 rounded-xl uppercase text-sm font-black flex items-center justify-center gap-2">
+                                <button onClick={createRoom} disabled={loadingAction} className="w-full bg-white border-2 border-[#0054a6] text-[#0054a6] p-3 rounded-xl uppercase text-sm font-black flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors">
                                     <Icon name="users" size={16}/> {loadingAction ? "Creazione..." : "Crea Stanza Host"}
                                 </button>
                             </div>
@@ -389,10 +405,13 @@
                                             <h2 className="text-8xl text-[#0054a6] uppercase tracking-tighter">Pronti?</h2>
                                             <div className="bg-white p-8 rounded-[3rem] border shadow-2xl">
                                                 <p className="text-gray-400 uppercase text-sm mb-2 font-black">Codice d'accesso</p>
-                                                <p className="text-8xl font-mono text-[#0054a6] tracking-widest">{roomCode}</p>
-                                                <input type="text" placeholder="IP Locale (opzionale dev)" className="mt-4 w-full p-2 text-sm border rounded font-mono" value={localIp} onChange={e => setLocalIp(e.target.value)} />
+                                                <p className="text-8xl font-mono text-[#0054a6] tracking-widest leading-none">{roomCode}</p>
+                                                <div className="mt-6 p-4 bg-gray-50 rounded-2xl">
+                                                    <p className="text-xs text-gray-500 uppercase mb-2">Opzioni Avanzate (Local IP)</p>
+                                                    <input type="text" placeholder="es: 192.168.1.15" className="w-full p-2 text-sm border rounded font-mono" value={localIp} onChange={e => setLocalIp(e.target.value)} />
+                                                </div>
                                             </div>
-                                            <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-16 py-6 rounded-2xl text-3xl shadow-xl uppercase active:scale-95 font-bold">INIZIA IL QUIZ</button>
+                                            <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-16 py-6 rounded-2xl text-3xl shadow-xl uppercase active:scale-95 font-bold tracking-widest">INIZIA IL QUIZ</button>
                                         </div>
                                         <div className="flex flex-col items-center">
                                             <div className="bg-white p-8 rounded-[4rem] border-4 border-[#0054a6]/10 shadow-2xl">
@@ -409,7 +428,7 @@
                                                 {!gameState.showResults && (
                                                     <div className="flex items-center gap-6">
                                                         <div className="bg-blue-50 px-6 py-2 rounded-full border text-[#0054a6] text-xl font-bold">Risposte: {answeredCount} / {players.length}</div>
-                                                        <div className="bg-gray-900 text-white px-6 py-2 rounded-full text-3xl font-mono font-bold">{timeLeft}s</div>
+                                                        <div className="bg-gray-900 text-white px-6 py-2 rounded-full text-3xl font-mono font-bold leading-none">{timeLeft}s</div>
                                                     </div>
                                                 )}
                                             </div>
@@ -419,7 +438,7 @@
                                                     <div key={i} className="flex flex-col gap-3">
                                                         <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-6 transition-all ${gameState.showResults ? (o.isCorrect ? 'border-[#009640] bg-[#009640]/5 shadow-lg scale-102 font-bold' : 'opacity-30 grayscale') : 'bg-gray-50 shadow-inner'}`}>
                                                             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-4xl shadow-lg font-bold`}>{String.fromCharCode(65+i)}</div>
-                                                            <span className="text-[#0054a6] text-2xl flex-1 font-bold">{o.text}</span>
+                                                            <span className="text-[#0054a6] text-2xl flex-1 font-bold leading-tight">{o.text}</span>
                                                             {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={40} className="text-[#009640]" />}
                                                         </div>
                                                         {gameState.showResults && (
@@ -436,8 +455,8 @@
                                                 if (gameState.currentQuestionIndex === 9) await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
                                                 else await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
                                             } else await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
-                                        }} className="w-full mt-4 bg-[#0054a6] text-white py-6 rounded-[2.5rem] text-4xl shadow-2xl active:scale-95 uppercase tracking-tighter font-bold">
-                                            {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima") : "Scopri Risposta"} <Icon name="chevronRight" className="inline ml-2" size={40} />
+                                        }} className="w-full mt-4 bg-[#0054a6] text-white py-6 rounded-[2.5rem] text-4xl shadow-2xl active:scale-95 uppercase tracking-tighter font-bold flex items-center justify-center gap-4">
+                                            {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima") : "Scopri Risposta"} <Icon name="chevronRight" size={40} />
                                         </button>
                                     </div>
                                 )}
@@ -458,7 +477,7 @@
                                             <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar font-sans text-xs">
                                                 {players.map((p, i) => (
                                                     <div key={i} className={`flex justify-between p-2 rounded-lg ${i<3 ? 'bg-blue-50 text-[#0054a6] font-bold' : ''}`}>
-                                                        <span>{i+1}. {p.name}</span>
+                                                        <span className="truncate max-w-[100px]">{i+1}. {p.name}</span>
                                                         <span className="font-mono font-bold">{p.score}</span>
                                                     </div>
                                                 ))}
@@ -471,13 +490,13 @@
                         {gameState.status === 'finished' && (
                             <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-in zoom-in">
                                 <Icon name="crown" size={150} className="text-[#ffde00] mb-8 animate-bounce" />
-                                <h2 className="text-8xl text-[#0054a6] mb-16 uppercase italic font-black text-center leading-none">I CAMPIONI!</h2>
+                                <h2 className="text-8xl text-[#0054a6] mb-16 uppercase italic font-black text-center leading-none">PODIO FINALE!</h2>
                                 <div className="flex items-end gap-8 w-full max-w-5xl h-80">
-                                    {players[1] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6] uppercase font-bold">{players[1].name}</p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-7xl text-gray-400 shadow-xl border-t-8 border-gray-300 font-bold">2</div></div>}
-                                    {players[0] && <div className="flex-1 flex flex-col items-center"><p className="text-4xl mb-4 text-[#0054a6] drop-shadow-md uppercase font-black">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-[10rem] text-[#0054a6] shadow-2xl border-t-8 border-[#ffde00] font-black">1</div></div>}
-                                    {players[2] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6] uppercase font-bold">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-7xl text-orange-300 shadow-xl border-t-8 border-orange-200 font-bold">3</div></div>}
+                                    {players[1] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6] uppercase font-bold truncate w-full text-center">{players[1].name}</p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-7xl text-gray-400 shadow-xl border-t-8 border-gray-300 font-bold">2</div></div>}
+                                    {players[0] && <div className="flex-1 flex flex-col items-center"><p className="text-4xl mb-4 text-[#0054a6] drop-shadow-md uppercase font-black truncate w-full text-center">{players[0].name}</p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-[10rem] text-[#0054a6] shadow-2xl border-t-8 border-[#ffde00] font-black">1</div></div>}
+                                    {players[2] && <div className="flex-1 flex flex-col items-center"><p className="text-2xl mb-2 text-[#0054a6] uppercase font-bold truncate w-full text-center">{players[2].name}</p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-7xl text-orange-300 shadow-xl border-t-8 border-orange-200 font-bold">3</div></div>}
                                 </div>
-                                <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-20 bg-gray-900 text-white px-20 py-5 rounded-full text-xl shadow-2xl uppercase font-bold">Nuova Partita</button>
+                                <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-20 bg-gray-900 text-white px-20 py-5 rounded-full text-xl shadow-2xl uppercase font-bold hover:bg-black transition-colors">Nuova Partita</button>
                             </div>
                         )}
                     </div>
@@ -496,7 +515,7 @@
                             {!isAnswering && (
                                 <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex items-center gap-2">
                                     <Icon name={rankData.icon} size={20} className={rankData.color} />
-                                    <span className="text-xl font-mono font-bold">{me?.score || 0}</span>
+                                    <span className="text-xl font-mono font-bold leading-none">{me?.score || 0}</span>
                                 </div>
                             )}
                         </header>
@@ -506,7 +525,7 @@
                                     <Icon name="users" size={48} className="mx-auto text-[#0054a6] animate-pulse" />
                                     <h2 className="text-3xl uppercase leading-tight font-black">Benvenuti alla Pride House!</h2>
                                     <p className="text-gray-500 font-bold">In attesa dell'inizio...</p>
-                                    <p className="pt-8 text-[10px] text-gray-400 uppercase tracking-widest font-black">Connesso come: {playerName}</p>
+                                    <p className="pt-8 text-[10px] text-gray-400 uppercase tracking-widest font-black leading-none">Connesso come: {playerName}</p>
                                 </div>
                             )}
                             {isAnswering && (
@@ -515,13 +534,13 @@
                                         <p className="text-gray-400 text-[10px] uppercase mb-1 font-bold">Domanda {(gameState.currentQuestionIndex || 0) + 1}</p>
                                         <div className="flex items-center justify-center gap-2">
                                             <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse' : ''} />
-                                            <p className={`text-5xl font-mono font-bold ${timeLeft < 10 ? 'text-red-500' : ''}`}>{timeLeft}s</p>
+                                            <p className={`text-5xl font-mono font-bold leading-none ${timeLeft < 10 ? 'text-red-500' : ''}`}>{timeLeft}s</p>
                                         </div>
                                     </div>
                                     {hasAnswered ? (
-                                        <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] animate-pulse shadow-inner">
+                                        <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] animate-pulse shadow-inner p-4">
                                             <Icon name="loader2" size={48} className="animate-spin text-[#0054a6] mb-6" />
-                                            <h2 className="text-3xl uppercase font-black">Acquisita</h2>
+                                            <h2 className="text-3xl uppercase font-black text-center">Acquisita</h2>
                                             <p className="text-gray-400 text-sm mt-4 uppercase font-bold text-center">Guarda lo schermo principale</p>
                                         </div>
                                     ) : (
@@ -534,11 +553,11 @@
                                 </div>
                             )}
                             {gameState?.status === 'playing' && gameState?.showResults && (
-                                <div className={`w-full max-w-[95%] p-10 rounded-[4rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
-                                    <div className="bg-white/20 w-28 h-28 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                                <div className={`w-full max-w-[95%] p-10 rounded-[4rem] flex flex-col items-center justify-center text-center shadow-2xl border-b-8 animate-in zoom-in text-white transition-colors duration-500 ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                                    <div className="bg-white/20 w-28 h-28 rounded-full flex items-center justify-center mb-6 shadow-inner shrink-0">
                                         <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={72} />
                                     </div>
-                                    <h2 className="text-5xl uppercase leading-none mb-8 font-black text-center">
+                                    <h2 className="text-4xl uppercase leading-none mb-8 font-black text-center h-20 flex items-center justify-center">
                                         {lastAnswerCorrect === true ? 'RISPOSTA ESATTA!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO' : 'RISPOSTA ERRATA')}
                                     </h2>
                                     <div className="w-full flex flex-col items-center justify-center">
@@ -546,13 +565,13 @@
                                             <div className="flex flex-col items-center justify-center gap-2 mb-6">
                                                 <div className="flex items-center gap-2">
                                                     {isFastest && <Icon name="zap" size={28} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}
-                                                    <span className="text-3xl font-bold">+{lastPointsEarned} PT</span>
+                                                    <span className="text-3xl font-bold leading-none">+{lastPointsEarned} PT</span>
                                                 </div>
-                                                {isFastest && <p className="text-sm text-[#ffde00] uppercase animate-pulse font-bold tracking-widest">Velocità Massima!</p>}
+                                                {isFastest && <p className="text-sm text-[#ffde00] uppercase animate-pulse font-bold tracking-widest leading-none">Velocità Massima!</p>}
                                             </div>
-                                        ) : <div className="text-xl mb-6 uppercase font-bold">0 PUNTI</div>}
+                                        ) : <div className="text-xl mb-6 uppercase font-bold leading-none">0 PUNTI</div>}
                                         <div className="border-t border-white/20 pt-8 w-full flex flex-col items-center justify-center">
-                                            <p className="text-sm text-white/70 mb-2 uppercase font-bold">Posizione in classifica:</p>
+                                            <p className="text-sm text-white/70 mb-2 uppercase font-bold leading-none">Posizione in classifica:</p>
                                             <p className={`text-7xl ${rankData.color} drop-shadow-sm leading-none font-black`}>{rankData.label}{rankData.label !== "-" ? "°" : ""}</p>
                                         </div>
                                     </div>
