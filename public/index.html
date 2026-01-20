@@ -51,14 +51,14 @@
         // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                // Trofeo: U rialzata e accorciata, stelo allungato
+                // Trofeo: Versione slanciata e pulita
                 trophy: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 2.5H7v5a5 5 0 0 0 10 0v-5z" />
-                        <path d="M6 7H4.5a2.5 2.5 0 0 1 0-5H6" />
-                        <path d="M18 7h1.5a2.5 2.5 0 0 0 0-5H18" />
-                        <path d="M12 12v9" />
-                        <path d="M8 21.5h8" />
+                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                         <path d="M8 21h8" /> {/* Base */}
+                         <path d="M12 13v8" /> {/* Stelo */}
+                         <path d="M8 3h8v6a4 4 0 0 1-8 0V3z" /> {/* Coppa slanciata */}
+                         <path d="M8 6H6a2 2 0 0 0 0 4h2" /> {/* Manico Sx */}
+                         <path d="M16 6h2a2 2 0 0 1 0 4h-2" /> {/* Manico Dx */}
                     </g>
                 ),
                 coins: (
@@ -528,7 +528,7 @@
                         <LogoArcigay className="h-10 object-contain font-black" />
                         <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm font-black font-black">
                             <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
-                                <Icon name={rankInfo.icon} size={18} className={rankInfo.color} />
+                                <Icon name={rankInfo.icon} size={18} className={rankInfo.icon === 'coins' ? 'text-white' : rankInfo.color} />
                             </div>
                             <span className="text-xl font-mono leading-none font-black font-black">{prevScore}</span>
                         </div>
