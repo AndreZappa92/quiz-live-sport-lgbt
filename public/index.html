@@ -556,7 +556,7 @@
                 const idx = displayedPlayers.findIndex(p => p.uid === user?.uid);
                 const me = displayedPlayers[idx];
                 
-                if (!me || me.score === 0) return { 
+                if (!me || !me.score) return { 
                     label: "NC", 
                     color: "text-[#0054a6]",
                     icon: "coins", 
@@ -798,7 +798,7 @@
                                                 let nameStyle = "text-xs font-black";
                                                 
                                                 // Logica NC per la sidebar Host
-                                                const isNC = p.score === 0;
+                                                const isNC = !p.score;
                                                 
                                                 if (!isNC) {
                                                     if (i === 0) { rowStyle = "bg-[#ffd700]/20 border-[#ffd700] shadow-md font-black"; nameStyle = "text-xl text-[#b8860b]"; }
