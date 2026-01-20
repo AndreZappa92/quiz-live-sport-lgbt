@@ -144,12 +144,14 @@
                             answerAudio.src = trackName;
                             answerAudio.loop = true;
                         }
+                        // Fade IN in entrata (2 secondi)
                         fadeAudioTo(answerAudio, 0.5, 2000);
                     }
                 } else {
-                    if (!answerAudio.paused) {
-                        fadeAudioTo(answerAudio, 0, 2000);
-                    }
+                    // STOP BRUSCO in uscita (richiesta utente)
+                    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+                    answerAudio.pause();
+                    answerAudio.currentTime = 0;
                 }
             }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex]);
 
@@ -536,7 +538,11 @@
                         <HostAudioManager gameState={gameState} />
 
                         <header className="flex justify-between items-center bg-white p-4 border-b shadow-sm">
-                            <LogoArcigay className="h-14 object-contain" />
+                            <div className="flex items-center gap-4">
+                                <LogoArcigay className="h-14 object-contain" />
+                                <span className="text-[#0054a6] text-xl font-black">X</span>
+                                <LogoPrideHouse className="h-14 object-contain" />
+                            </div>
                             <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center">
                                 <Icon name="users" size={20}/> <span className="text-xl font-black">{players.length}</span>
                             </div>
@@ -548,7 +554,7 @@
                                 {/* Background Squiggle - Only when Playing/Finished (not Lobby) */}
                                 {gameState.status !== 'lobby' && (
                                     <div 
-                                        className="absolute inset-0 z-0 opacity-10 pointer-events-none transition-all duration-1000"
+                                        className="absolute inset-0 z-0 opacity-70 pointer-events-none transition-all duration-1000"
                                         style={{
                                             backgroundImage: `url(squiggle_${(gameState.currentQuestionIndex % 6) + 1}.svg)`,
                                             backgroundSize: 'cover',
@@ -699,7 +705,11 @@
             if (role === 'player' && gameState) return (
                 <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
                     <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black">
-                        <LogoArcigay className="h-10 object-contain font-black" />
+                        <div className="flex items-center gap-4">
+                            <LogoArcigay className="h-10 object-contain font-black" />
+                            <span className="text-[#0054a6] text-lg font-black">X</span>
+                            <LogoPrideHouse className="h-10 object-contain font-black" />
+                        </div>
                         <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm font-black font-black">
                             <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
                                 <Icon name={rankInfo.icon} size={18} className={rankInfo.icon === 'coins' ? 'text-white' : rankInfo.color} />
