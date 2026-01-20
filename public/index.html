@@ -287,6 +287,7 @@
         
         // --- MODIFICA TIMER: 60 SECONDI ---
         const TIMER_SECONDS = 60;
+        const BONUS_POINTS = 200; // Bonus per il più veloce
 
         // --- DATI QUIZ RIEQUILIBRATI (3A, 3B, 2C, 2D) - ORDINE MIXATO ---
         const QUIZ_DATA = {
@@ -758,7 +759,30 @@
                                                         // ATTIVA INTERMISSION INVECE DI CAMBIARE SUBITO
                                                         setIsIntermission(true);
                                                     }
-                                                } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
+                                                } else {
+                                                    // RIVELA RISPOSTE - E ORA: ASSEGNA BONUS AL PIÙ VELOCE!
+                                                    const currentIdx = gameState.currentQuestionIndex;
+                                                    const correctOptionIndex = QUIZ_DATA.questions[currentIdx].options.findIndex(o => o.isCorrect);
+                                                    
+                                                    // Trova tutti quelli che hanno risposto giusto a questa domanda
+                                                    const correctPlayers = players.filter(p => p.lastQuestionIndexAnswered === currentIdx && p.lastAnswerIndex === correctOptionIndex);
+                                                    
+                                                    if (correctPlayers.length > 0) {
+                                                        // Trova il tempo minimo (il più veloce)
+                                                        const minTime = Math.min(...correctPlayers.map(p => p.lastAnsweredAt));
+                                                        // Filtra chi ha fatto quel tempo (gestione ex-aequo)
+                                                        const winners = correctPlayers.filter(p => p.lastAnsweredAt === minTime);
+                                                        
+                                                        // Assegna bonus
+                                                        winners.forEach(w => {
+                                                            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${roomCode}_${w.uid}`).update({
+                                                                score: firebase.firestore.FieldValue.increment(BONUS_POINTS)
+                                                            });
+                                                        });
+                                                    }
+                                                    
+                                                    db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
+                                                }
                                             }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all">
                                                 {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={32} />
                                             </button>
@@ -798,7 +822,7 @@
                         {gameState.status === 'finished' && (
                             <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-fade-in text-center font-black">
                                 <Icon name="crown" size={120} className="text-[#ffde00] mb-6 animate-bounce" />
-                                <h2 className="text-7xl text-[#0054a6] mb-12 uppercase italic tracking-tighter font-black">I Vincitori!</h2>
+                                <h2 className="text-7xl text-[#0054a6] mb-12 uppercase italic tracking-tighter font-black">Podio Finale</h2>
                                 <div className="flex items-end gap-10 w-full max-w-4xl h-72">
                                     {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl">2</div></div>}
                                     {displayedPlayers[0] && <div className="flex-1 flex flex-col items-center font-black font-black"><p className="text-3xl mb-4 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md"> {displayedPlayers[0].name} </p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
@@ -888,7 +912,7 @@
                                                 {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce font-black" />}
                                                 <span className="text-2xl font-black">+{lastPointsEarned} PT</span>
                                             </div>
-                                            {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em] font-black">VELOCITÀ MASSIMA!</p>}
+                                            {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em] font-black">BONUS VELOCITÀ MASSIMA! +{BONUS_POINTS}</p>}
                                         </div>
                                     ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black font-black">0 PUNTI</div>}
                                     <div className="border-t border-white/20 pt-4 font-black">
