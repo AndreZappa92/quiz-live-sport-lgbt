@@ -127,6 +127,7 @@
                 const showResults = gameState?.showResults;
                 
                 // Suona se siamo in Lobby OPPURE se stiamo giocando (NON risultati) E NON siamo in intermission E NON è finito
+                // NOTA: isIntermission serve a tenere spenta la BG music mentre sfuma la Answer Music
                 const shouldPlayBg = (status === 'lobby' || (status === 'playing' && !showResults && !isIntermission)) && status !== 'finished';
 
                 if (shouldPlayBg) {
@@ -145,10 +146,16 @@
                 const answerAudio = answerAudioRef.current;
                 const isShowingResults = gameState?.status === 'playing' && gameState?.showResults;
                 
-                if (isIntermission || gameState?.status === 'finished') {
+                if (gameState?.status === 'finished') {
                     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
                     answerAudio.pause();
                     answerAudio.currentTime = 0;
+                    return;
+                }
+
+                // MODIFICA: Fade out di 3 secondi durante l'intermission (countdown cambio domanda)
+                if (isIntermission) {
+                    fadeAudioTo(answerAudio, 0, 3000); 
                     return;
                 }
 
@@ -162,8 +169,10 @@
                         fadeAudioTo(answerAudio, 0.5, 2000);
                     }
                 } else {
-                    if (!answerAudio.paused) {
-                        fadeAudioTo(answerAudio, 0, 2000);
+                    // Se non siamo in intermission e non stiamo mostrando i risultati, assicurati che sia spenta
+                    // (caso fallback se il fade non fosse finito)
+                    if (!answerAudio.paused && answerAudio.volume > 0) {
+                        fadeAudioTo(answerAudio, 0, 500); 
                     }
                 }
             }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, isIntermission]);
@@ -402,6 +411,10 @@
             const [prevScore, setPrevScore] = useState(0);
             const [isIntermission, setIsIntermission] = useState(false);
             const [intermissionTime, setIntermissionTime] = useState(3);
+            
+            // NUOVO STATO: Countdown Inizio Partita
+            const [isStarting, setIsStarting] = useState(false);
+            const [startingTime, setStartingTime] = useState(3);
 
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
@@ -483,7 +496,7 @@
                 }
             }, [gameState?.currentQuestionIndex, gameState?.showResults]);
 
-            // GESTIONE INTERMISSION COUNTDOWN
+            // GESTIONE INTERMISSION COUNTDOWN (TRA UNA DOMANDA E L'ALTRA)
             useEffect(() => {
                 if (isIntermission) {
                     setIntermissionTime(3);
@@ -505,6 +518,28 @@
                     return () => clearInterval(interval);
                 }
             }, [isIntermission, roomCode]);
+
+            // NUOVA LOGICA: COUNTDOWN AVVIO PARTITA
+            useEffect(() => {
+                if (isStarting) {
+                    setStartingTime(3);
+                    const interval = setInterval(() => {
+                        setStartingTime(prev => {
+                            if (prev <= 1) {
+                                clearInterval(interval);
+                                // AVVIO EFFETTIVO DELLA PARTITA
+                                db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({
+                                    status:'playing', 
+                                    questionStartTime: Date.now()
+                                }).then(() => setIsStarting(false));
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    }, 1000);
+                    return () => clearInterval(interval);
+                }
+            }, [isStarting, roomCode]);
 
             const submitAnswer = async (i) => {
                 if (hasAnswered || timeLeft === 0 || !gameState || gameState.showResults) return;
@@ -600,16 +635,16 @@
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden font-black">
                         {/* --- RENDERIZZA AUDIO MANAGER SOLO PER L'HOST --- */}
-                        <HostAudioManager gameState={gameState} />
+                        <HostAudioManager gameState={gameState} isIntermission={isIntermission} />
 
-                        {/* --- OVERLAY INTERMISSION (RIPRISTINATO) --- */}
-                        {isIntermission && (
+                        {/* --- OVERLAY INTERMISSION E START (UNIFICATI) --- */}
+                        {(isIntermission || isStarting) && (
                             <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center animate-fade-in">
                                 <h2 className="text-5xl md:text-7xl text-[#0054a6] uppercase font-black tracking-tighter mb-10 text-center px-4">
-                                    Prossima domanda tra...
+                                    {isStarting ? "PRIMA DOMANDA TRA..." : "PROSSIMA DOMANDA TRA..."}
                                 </h2>
                                 <div className="text-9xl md:text-[12rem] font-mono font-black text-[#0054a6] animate-pulse">
-                                    {intermissionTime}
+                                    {isStarting ? startingTime : intermissionTime}
                                 </div>
                                 <Icon name="loader2" size={64} className="mt-12 text-[#0054a6]/20 animate-spin" />
                             </div>
@@ -674,7 +709,7 @@
                                                     )}
                                                 </div>
                                                 <button 
-                                                    onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} 
+                                                    onClick={() => setIsStarting(true)} 
                                                     className="bg-[#0054a6] text-white px-16 py-6 rounded-3xl text-3xl uppercase transition-all active:scale-95 shadow-xl font-black hover:bg-[#00428a] mt-4"
                                                 >
                                                     Inizia Quiz
@@ -760,7 +795,8 @@
                         {gameState.status === 'finished' && (
                             <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center p-10 animate-fade-in text-center font-black">
                                 <Icon name="crown" size={120} className="text-[#ffde00] mb-6 animate-bounce" />
-                                <h2 className="text-7xl text-[#0054a6] mb-12 uppercase italic tracking-tighter font-black">I Vincitori!</h2>
+                                <h2 className="text-7xl text-[#0054a6] mb-4 uppercase italic tracking-tighter font-black">QUIZ FINITO!</h2>
+                                <p className="text-2xl text-[#0054a6] mb-12 font-bold font-black">Grazie per aver giocato con noi ❤️</p>
                                 <div className="flex items-end gap-10 w-full max-w-4xl h-72">
                                     {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl">2</div></div>}
                                     {displayedPlayers[0] && <div className="flex-1 flex flex-col items-center font-black font-black"><p className="text-3xl mb-4 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md"> {displayedPlayers[0].name} </p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
