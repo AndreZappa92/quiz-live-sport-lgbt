@@ -62,21 +62,28 @@
             9: "TrueColors.mp3"
         };
         const BG_MUSIC_FILE = "ok_prezzo_giusto.mp3";
+        const FINISHED_MUSIC_FILE = "HigherLove.mp3";
 
         // --- COMPONENTE GESTIONE AUDIO HOST (ISOLATO) ---
         const HostAudioManager = ({ gameState, isIntermission }) => {
             const bgMusicRef = useRef(new Audio(BG_MUSIC_FILE));
             const answerAudioRef = useRef(new Audio());
+            const finishedMusicRef = useRef(new Audio(FINISHED_MUSIC_FILE));
             const fadeIntervalRef = useRef(null);
             
             useEffect(() => {
                 const bg = bgMusicRef.current;
                 bg.loop = true;
                 bg.volume = 0.5;
+
+                const fin = finishedMusicRef.current;
+                fin.loop = true;
+                fin.volume = 0.5;
                 
                 return () => {
                     bg.pause();
                     answerAudioRef.current.pause();
+                    fin.pause();
                     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
                 };
             }, []);
@@ -114,14 +121,13 @@
             };
 
             // LOGICA: Musica di Sottofondo
-            // Aggiornato: Non suonare durante l'intermission (countdown)
             useEffect(() => {
                 const bgMusic = bgMusicRef.current;
                 const status = gameState?.status;
                 const showResults = gameState?.showResults;
                 
-                // Suona se siamo in Lobby OPPURE se stiamo giocando (NON risultati) E NON siamo in intermission
-                const shouldPlayBg = status === 'lobby' || (status === 'playing' && !showResults && !isIntermission);
+                // Suona se siamo in Lobby OPPURE se stiamo giocando (NON risultati) E NON siamo in intermission E NON è finito
+                const shouldPlayBg = (status === 'lobby' || (status === 'playing' && !showResults && !isIntermission)) && status !== 'finished';
 
                 if (shouldPlayBg) {
                     if (bgMusic.paused || (status === 'playing' && !showResults && !isIntermission && bgMusic.currentTime > 0)) {
@@ -139,8 +145,7 @@
                 const answerAudio = answerAudioRef.current;
                 const isShowingResults = gameState?.status === 'playing' && gameState?.showResults;
                 
-                // Se c'è l'intermission, ferma tutto l'audio risposte immediatamente
-                if (isIntermission) {
+                if (isIntermission || gameState?.status === 'finished') {
                     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
                     answerAudio.pause();
                     answerAudio.currentTime = 0;
@@ -162,6 +167,21 @@
                     }
                 }
             }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, isIntermission]);
+
+            // LOGICA: Musica Finale (Podio)
+            useEffect(() => {
+                const finMusic = finishedMusicRef.current;
+                if (gameState?.status === 'finished') {
+                    if (finMusic.paused) {
+                        finMusic.currentTime = 0;
+                        finMusic.play().catch(e => console.log("Fin music err", e));
+                        fadeAudioTo(finMusic, 0.6, 2000);
+                    }
+                } else {
+                    finMusic.pause();
+                    finMusic.currentTime = 0;
+                }
+            }, [gameState?.status]);
 
             return null;
         };
@@ -565,26 +585,10 @@
             if (role === 'host' && gameState) {
                 const q = QUIZ_DATA.questions[gameState.currentQuestionIndex];
                 const answersCount = players.filter(p => p.lastQuestionIndexAnswered === gameState.currentQuestionIndex).length;
-                
-                // SCHERMATA INTERMISSION (COUNTDOWN)
-                if (isIntermission) {
-                    return (
-                        <div className="h-screen flex flex-col items-center justify-center bg-gray-50 overflow-hidden font-black">
-                            <HostAudioManager gameState={gameState} isIntermission={true} />
-                            <div className="flex flex-col items-center animate-fade-in">
-                                <h2 className="text-5xl text-[#0054a6] uppercase tracking-tighter mb-8 font-black">Prossima domanda tra...</h2>
-                                <div className="text-9xl font-black text-[#e30613] drop-shadow-2xl animate-bounce">
-                                    {intermissionTime}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                }
-
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden font-black">
                         {/* --- RENDERIZZA AUDIO MANAGER SOLO PER L'HOST --- */}
-                        <HostAudioManager gameState={gameState} isIntermission={false} />
+                        <HostAudioManager gameState={gameState} />
 
                         <header className="flex justify-between items-center bg-white p-4 border-b shadow-sm">
                             <div className="flex items-center gap-3">
