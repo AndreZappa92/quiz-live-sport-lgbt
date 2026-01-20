@@ -268,22 +268,9 @@
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
             const [prevScore, setPrevScore] = useState(0);
 
-            // GESTIONE AUDIO (SOLO HOST)
-            // 1. Background Music (Lobby e Domande)
-            const bgMusic = useMemo(() => {
-                if (role !== 'host') return null; // Solo host
-                const audio = new Audio(BG_MUSIC_FILE);
-                audio.loop = true;
-                audio.volume = 0.5;
-                return audio;
-            }, [role]);
-
-            // 2. Answer Music - FIX PER HOST: Inizializza solo se role diventa Host
-            const answerAudio = useMemo(() => {
-                if (role !== 'host') return null;
-                return new Audio();
-            }, [role]);
-
+            // GESTIONE AUDIO (SOLO HOST) - USIAMO REF PER PERSISTENZA E INIT MANUALE
+            const bgMusicRef = useRef(null);
+            const answerAudioRef = useRef(null);
             const fadeIntervalRef = useRef(null);
 
             // Funzione FADE (Solo Host)
@@ -321,6 +308,7 @@
 
             // EFFECT: Gestione Background Music (SOLO HOST)
             useEffect(() => {
+                const bgMusic = bgMusicRef.current;
                 if (role !== 'host' || !bgMusic) return;
 
                 const status = gameState?.status;
@@ -339,11 +327,11 @@
                 } else {
                     bgMusic.pause();
                 }
-                
-            }, [gameState?.status, gameState?.showResults, bgMusic, role]);
+            }, [gameState?.status, gameState?.showResults, role]);
 
             // EFFECT: Gestione Answer Music (SOLO HOST)
             useEffect(() => {
+                const answerAudio = answerAudioRef.current;
                 if (role !== 'host' || !answerAudio) return;
 
                 const isShowingResults = gameState?.status === 'playing' && gameState?.showResults;
@@ -365,9 +353,9 @@
                 
                 return () => { 
                     if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                    answerAudio.pause(); 
+                    // Non stoppare qui per permettere fade out completo
                 };
-            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, role, answerAudio]);
+            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, role]);
 
 
             useEffect(() => {
@@ -497,6 +485,12 @@
                                 const cleanName = playerName.trim(); const cleanCode = roomCode.trim().toUpperCase();
                                 if (!cleanName || !cleanCode) return;
                                 
+                                // FIX PLAYER CRASH: Controlla che user sia pronto
+                                if (!user) {
+                                    alert("Attendi il caricamento...");
+                                    return;
+                                }
+                                
                                 try {
                                     const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(cleanCode).get();
                                     if (room.exists) {
@@ -514,10 +508,21 @@
                                 }
                             }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl active:scale-95 transition-all shadow-md">Partecipa</button>
                             <button onClick={async () => {
-                                // HOST: SBLOCCO AUDIO
-                                if (bgMusic) bgMusic.play().catch(()=>{});
-                                // Risolve il bug Audio Risposte: Inizializza l'audio host al click
+                                // HOST: INIZIALIZZA E SBLOCCA AUDIO QUI
+                                if (!bgMusicRef.current) {
+                                    bgMusicRef.current = new Audio(BG_MUSIC_FILE);
+                                    bgMusicRef.current.loop = true;
+                                    bgMusicRef.current.volume = 0.5;
+                                }
+                                if (!answerAudioRef.current) {
+                                    answerAudioRef.current = new Audio();
+                                }
                                 
+                                // Play immediato per sbloccare l'audio policy del browser
+                                bgMusicRef.current.play().catch(e => console.warn("Audio start fail", e));
+                                answerAudioRef.current.play().catch(()=>{}); 
+                                answerAudioRef.current.pause(); // Subito pausa per le risposte
+
                                 const code = Math.random().toString(36).substring(2,6).toUpperCase();
                                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
                                     code, status: 'lobby', currentQuestionIndex: 0, showResults: false, hostId: user.uid, createdAt: Date.now(), questionStartTime: 0
