@@ -422,18 +422,52 @@
                         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
                             <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black">
                                 {gameState.status === 'lobby' ? (
-                                    <div className="flex flex-col items-center gap-8 w-full max-w-4xl">
-                                        <h2 className="text-6xl text-[#0054a6] uppercase tracking-tighter">In attesa dei campioni...</h2>
-                                        <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-md mx-auto shadow-inner">
-                                            <div className="flex flex-col items-center font-black">
-                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} alt="QR" className="w-80 h-80 rounded-2xl mb-4" />
-                                                <p className="text-4xl text-[#0054a6] font-mono tracking-widest leading-none font-black">{roomCode}</p>
+                                    <div className="flex flex-col items-center w-full h-full justify-center">
+                                        {/* Title */}
+                                        <h2 className="text-5xl md:text-6xl text-[#0054a6] uppercase tracking-tighter text-center leading-tight mb-12 max-w-5xl">
+                                            SCANSIONA IL QR CODE E GIOCA CON NOI!
+                                        </h2>
+
+                                        {/* Main Content Area: Logo Left, QR Right */}
+                                        <div className="flex flex-col md:flex-row items-center justify-center gap-16 w-full max-w-6xl mb-12">
+                                            
+                                            {/* Logo */}
+                                            <div className="flex-1 flex justify-center md:justify-end">
+                                                <LogoPrideHouse className="h-auto w-full max-w-md object-contain drop-shadow-lg" />
+                                            </div>
+
+                                            {/* QR Code */}
+                                            <div className="flex-1 flex justify-center md:justify-start">
+                                                <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-sm shadow-inner transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                                                    <div className="flex flex-col items-center font-black">
+                                                        <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} alt="QR" className="w-64 h-64 rounded-2xl mb-4" />
+                                                        <p className="text-5xl text-[#0054a6] font-mono tracking-widest leading-none font-black">{roomCode}</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
-                                            {players.map(p => <div key={p.uid} className="bg-[#0054a6] text-white px-4 py-2 rounded-full text-sm animate-fade-in">{p.name}</div>)}
+
+                                        {/* Players Area */}
+                                        <div className="w-full flex flex-col items-center gap-6">
+                                            <div className="flex flex-wrap gap-3 justify-center max-w-4xl min-h-[3rem]">
+                                                {players.length === 0 ? (
+                                                    <p className="text-3xl text-gray-300 font-black animate-pulse uppercase tracking-widest text-center">In attesa di partecipanti....</p>
+                                                ) : (
+                                                    players.map(p => (
+                                                        <div key={p.uid} className="bg-[#0054a6] text-white px-6 py-3 rounded-full text-xl font-bold animate-fade-in shadow-md">
+                                                            {p.name}
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                            
+                                            <button 
+                                                onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} 
+                                                className="bg-[#0054a6] text-white px-16 py-6 rounded-3xl text-3xl uppercase transition-all active:scale-95 shadow-xl font-black hover:bg-[#00428a] mt-4"
+                                            >
+                                                Inizia Quiz
+                                            </button>
                                         </div>
-                                        <button onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} className="bg-[#0054a6] text-white px-12 py-5 rounded-2xl text-2xl uppercase transition-all active:scale-95 shadow-xl font-black">Inizia Quiz</button>
                                     </div>
                                 ) : (
                                     <div className="w-full max-w-5xl space-y-8 font-black">
