@@ -48,6 +48,119 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef, Fragment } = React;
 
+        // --- CONFIGURAZIONE AUDIO ---
+        const ANSWER_AUDIO_FILES = {
+            0: "SanFrancisco.mp3", 
+            1: "Freedom90.mp3",    
+            2: "RainOnMe.mp3",     
+            3: "StillStanding.mp3" 
+        };
+        const BG_MUSIC_FILE = "ok_prezzo_giusto.mp3";
+
+        // --- COMPONENTE GESTIONE AUDIO HOST (ISOLATO) ---
+        // Questo componente viene renderizzato SOLO se role === 'host'
+        // Previene crash e caricamenti inutili sui device dei giocatori.
+        const HostAudioManager = ({ gameState }) => {
+            const bgMusicRef = useRef(new Audio(BG_MUSIC_FILE));
+            const answerAudioRef = useRef(new Audio());
+            const fadeIntervalRef = useRef(null);
+            
+            // Configurazione iniziale
+            useEffect(() => {
+                const bg = bgMusicRef.current;
+                bg.loop = true;
+                bg.volume = 0.5;
+                
+                // Pulizia al termine
+                return () => {
+                    bg.pause();
+                    answerAudioRef.current.pause();
+                    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+                };
+            }, []);
+
+            // Funzione Fade
+            const fadeAudioTo = (targetAudio, targetVolume, duration = 2000) => {
+                if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+                
+                if (targetVolume > 0 && targetAudio.paused) {
+                    targetAudio.volume = 0;
+                    targetAudio.play().catch(e => console.log("Audio play prevented", e));
+                }
+
+                const stepTime = 50; 
+                const steps = duration / stepTime;
+                const volStep = (targetVolume - targetAudio.volume) / steps;
+
+                fadeIntervalRef.current = setInterval(() => {
+                    let newVol = targetAudio.volume + volStep;
+                    // Clamp value
+                    if (newVol > 1) newVol = 1;
+                    if (newVol < 0) newVol = 0;
+                    
+                    const isFinished = (volStep > 0 && newVol >= targetVolume) || (volStep < 0 && newVol <= targetVolume);
+                    
+                    if (isFinished) {
+                        targetAudio.volume = targetVolume;
+                        clearInterval(fadeIntervalRef.current);
+                        if (targetVolume === 0) {
+                            targetAudio.pause();
+                            targetAudio.currentTime = 0;
+                        }
+                    } else {
+                        targetAudio.volume = newVol;
+                    }
+                }, stepTime);
+            };
+
+            // LOGICA: Musica di Sottofondo (Lobby e Domande)
+            useEffect(() => {
+                const bgMusic = bgMusicRef.current;
+                const status = gameState?.status;
+                const showResults = gameState?.showResults;
+                
+                // Suona se siamo in Lobby OPPURE se stiamo giocando e NON stiamo mostrando i risultati
+                const shouldPlayBg = status === 'lobby' || (status === 'playing' && !showResults);
+
+                if (shouldPlayBg) {
+                    // RESET: Se la musica era ferma o se stiamo passando a una nuova fase attiva
+                    // Questo assicura che tra Lobby -> Domanda 1, o Domanda 1 -> Domanda 2, riparta da capo
+                    if (bgMusic.paused || (status === 'playing' && !showResults && bgMusic.currentTime > 0)) {
+                         bgMusic.currentTime = 0;
+                         bgMusic.volume = 0.5;
+                         bgMusic.play().catch(e => console.warn("BG Play Error:", e));
+                    }
+                } else {
+                    bgMusic.pause();
+                }
+            }, [gameState?.status, gameState?.showResults]);
+
+            // LOGICA: Musica Risposte (Solo quando si rivelano i risultati)
+            useEffect(() => {
+                const answerAudio = answerAudioRef.current;
+                const isShowingResults = gameState?.status === 'playing' && gameState?.showResults;
+                
+                if (isShowingResults) {
+                    const trackName = ANSWER_AUDIO_FILES[gameState.currentQuestionIndex];
+                    if (trackName) {
+                        // Cambia traccia solo se diversa per evitare reload inutili
+                        if (!answerAudio.src.includes(trackName)) {
+                            answerAudio.src = trackName;
+                            answerAudio.loop = true; // Loop per coprire tutto il tempo della lettura
+                        }
+                        fadeAudioTo(answerAudio, 0.5, 2000); // 2s Fade IN
+                    }
+                } else {
+                    // Se usciamo dai risultati, sfuma la musica risposta
+                    if (!answerAudio.paused) {
+                        fadeAudioTo(answerAudio, 0, 2000); // 2s Fade OUT
+                    }
+                }
+            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex]);
+
+            return null; // Componente logico, nessun render visuale
+        };
+
         // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
@@ -242,15 +355,6 @@
             ]
         };
 
-        // --- MAPPA AUDIO ---
-        const ANSWER_AUDIO_FILES = {
-            0: "SanFrancisco.mp3", // DOMANDA 1
-            1: "Freedom90.mp3",    // DOMANDA 2
-            2: "RainOnMe.mp3",     // DOMANDA 3
-            3: "StillStanding.mp3" // DOMANDA 4
-        };
-        const BG_MUSIC_FILE = "ok_prezzo_giusto.mp3";
-
         const COLORS = ['bg-[#e30613]', 'bg-[#0054a6]', 'bg-[#009640]', 'bg-[#ffde00]'];
 
         const App = () => {
@@ -267,96 +371,6 @@
             const [errorMessage, setErrorMessage] = useState('');
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
             const [prevScore, setPrevScore] = useState(0);
-
-            // GESTIONE AUDIO (SOLO HOST) - USIAMO REF PER PERSISTENZA E INIT MANUALE
-            const bgMusicRef = useRef(null);
-            const answerAudioRef = useRef(null);
-            const fadeIntervalRef = useRef(null);
-
-            // Funzione FADE (Solo Host)
-            const fadeAudioTo = (targetAudio, targetVolume, duration = 2000) => {
-                if (role !== 'host' || !targetAudio) return;
-                
-                if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                
-                if (targetVolume > 0 && targetAudio.paused) {
-                    targetAudio.volume = 0;
-                    targetAudio.play().catch(e => console.log("Answer Audio wait..."));
-                }
-
-                const stepTime = 50; 
-                const steps = duration / stepTime;
-                const volStep = (targetVolume - targetAudio.volume) / steps;
-
-                fadeIntervalRef.current = setInterval(() => {
-                    let newVol = targetAudio.volume + volStep;
-                    if (newVol > 1) newVol = 1;
-                    if (newVol < 0) newVol = 0;
-                    
-                    if ((volStep > 0 && newVol >= targetVolume) || (volStep < 0 && newVol <= targetVolume)) {
-                        targetAudio.volume = targetVolume;
-                        clearInterval(fadeIntervalRef.current);
-                        if (targetVolume === 0) {
-                            targetAudio.pause();
-                            targetAudio.currentTime = 0;
-                        }
-                    } else {
-                        targetAudio.volume = newVol;
-                    }
-                }, stepTime);
-            };
-
-            // EFFECT: Gestione Background Music (SOLO HOST)
-            useEffect(() => {
-                const bgMusic = bgMusicRef.current;
-                if (role !== 'host' || !bgMusic) return;
-
-                const status = gameState?.status;
-                const showResults = gameState?.showResults;
-                
-                // Determina se deve suonare (Lobby o Domanda in corso)
-                const shouldPlayBg = status === 'lobby' || (status === 'playing' && !showResults);
-
-                if (shouldPlayBg) {
-                    // Reset e Play ogni volta che si entra in uno stato attivo (Lobby o Domanda)
-                    if (bgMusic.paused || (status === 'playing' && !showResults && bgMusic.currentTime > 0)) {
-                         bgMusic.currentTime = 0;
-                         bgMusic.volume = 0.5;
-                         bgMusic.play().catch(()=>{});
-                    }
-                } else {
-                    bgMusic.pause();
-                }
-            }, [gameState?.status, gameState?.showResults, role]);
-
-            // EFFECT: Gestione Answer Music (SOLO HOST)
-            useEffect(() => {
-                const answerAudio = answerAudioRef.current;
-                if (role !== 'host' || !answerAudio) return;
-
-                const isShowingResults = gameState?.status === 'playing' && gameState?.showResults;
-                
-                if (isShowingResults) {
-                    const trackName = ANSWER_AUDIO_FILES[gameState.currentQuestionIndex];
-                    if (trackName) {
-                        if (!answerAudio.src.includes(trackName)) {
-                            answerAudio.src = trackName;
-                            answerAudio.loop = true;
-                        }
-                        fadeAudioTo(answerAudio, 0.5, 2000); // 2s Fade IN
-                    }
-                } else {
-                    if (!answerAudio.paused) {
-                        fadeAudioTo(answerAudio, 0, 2000); // 2s Fade OUT
-                    }
-                }
-                
-                return () => { 
-                    if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                    // Non stoppare qui per permettere fade out completo
-                };
-            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, role]);
-
 
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
@@ -485,7 +499,6 @@
                                 const cleanName = playerName.trim(); const cleanCode = roomCode.trim().toUpperCase();
                                 if (!cleanName || !cleanCode) return;
                                 
-                                // FIX PLAYER CRASH: Controlla che user sia pronto
                                 if (!user) {
                                     alert("Attendi il caricamento...");
                                     return;
@@ -508,21 +521,6 @@
                                 }
                             }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl active:scale-95 transition-all shadow-md">Partecipa</button>
                             <button onClick={async () => {
-                                // HOST: INIZIALIZZA E SBLOCCA AUDIO QUI
-                                if (!bgMusicRef.current) {
-                                    bgMusicRef.current = new Audio(BG_MUSIC_FILE);
-                                    bgMusicRef.current.loop = true;
-                                    bgMusicRef.current.volume = 0.5;
-                                }
-                                if (!answerAudioRef.current) {
-                                    answerAudioRef.current = new Audio();
-                                }
-                                
-                                // Play immediato per sbloccare l'audio policy del browser
-                                bgMusicRef.current.play().catch(e => console.warn("Audio start fail", e));
-                                answerAudioRef.current.play().catch(()=>{}); 
-                                answerAudioRef.current.pause(); // Subito pausa per le risposte
-
                                 const code = Math.random().toString(36).substring(2,6).toUpperCase();
                                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
                                     code, status: 'lobby', currentQuestionIndex: 0, showResults: false, hostId: user.uid, createdAt: Date.now(), questionStartTime: 0
@@ -539,6 +537,9 @@
                 const answersCount = players.filter(p => p.lastQuestionIndexAnswered === gameState.currentQuestionIndex).length;
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden font-black">
+                        {/* --- RENDERIZZA AUDIO MANAGER SOLO PER L'HOST --- */}
+                        <HostAudioManager gameState={gameState} />
+
                         <header className="flex justify-between items-center bg-white p-4 border-b shadow-sm">
                             <LogoArcigay className="h-14 object-contain" />
                             <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center">
@@ -550,20 +551,13 @@
                             <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black">
                                 {gameState.status === 'lobby' ? (
                                     <div className="flex flex-col items-center w-full h-full justify-center">
-                                        {/* Title */}
                                         <h2 className="text-5xl md:text-6xl text-[#0054a6] uppercase tracking-tighter text-center leading-tight mb-12 max-w-5xl">
                                             SCANSIONA IL QR CODE E GIOCA CON NOI!
                                         </h2>
-
-                                        {/* Main Content Area: Logo Left, QR Right */}
                                         <div className="flex flex-col md:flex-row items-center justify-center gap-16 w-full max-w-6xl mb-12">
-                                            
-                                            {/* Logo */}
                                             <div className="flex-1 flex justify-center md:justify-end">
                                                 <LogoPrideHouse className="h-auto w-full max-w-md object-contain drop-shadow-lg" />
                                             </div>
-
-                                            {/* QR Code */}
                                             <div className="flex-1 flex justify-center md:justify-start">
                                                 <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-sm shadow-inner transform rotate-1 hover:rotate-0 transition-transform duration-300">
                                                     <div className="flex flex-col items-center font-black">
@@ -573,8 +567,6 @@
                                                 </div>
                                             </div>
                                         </div>
-
-                                        {/* Players Area */}
                                         <div className="w-full flex flex-col items-center gap-6">
                                             <div className="flex flex-wrap gap-3 justify-center max-w-4xl min-h-[3rem]">
                                                 {players.length === 0 ? (
@@ -587,7 +579,6 @@
                                                     ))
                                                 )}
                                             </div>
-                                            
                                             <button 
                                                 onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} 
                                                 className="bg-[#0054a6] text-white px-16 py-6 rounded-3xl text-3xl uppercase transition-all active:scale-95 shadow-xl font-black hover:bg-[#00428a] mt-4"
