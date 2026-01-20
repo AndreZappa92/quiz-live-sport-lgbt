@@ -994,32 +994,28 @@
                         )}
 
                         {gameState.status === 'finished' && (
-                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto text-center z-10 font-black font-black">
-                                <div className="w-28 h-28 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-6 font-black font-black">
-                                    <Icon name={rankInfo.icon} size={60} className={`drop-shadow-xl ${rankInfo.color}`} />
+                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto text-center z-10">
+                                <div className="w-20 h-20 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-4 font-black font-black">
+                                    <Icon name={rankInfo.icon} size={40} className={`drop-shadow-xl ${rankInfo.color}`} />
                                 </div>
                                 
                                 {myRankIndex >= 0 && myRankIndex <= 2 && (
-                                    <p className={`text-3xl uppercase tracking-widest font-black mb-2 drop-shadow-md animate-pulse font-black`} style={{ color: rankInfo.colorHex }}>Complimenti!</p>
+                                    <p className={`text-2xl uppercase tracking-widest font-black mb-1 drop-shadow-md animate-pulse font-black`} style={{ color: rankInfo.colorHex }}>Complimenti!</p>
                                 )}
                                 
-                                <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black mb-2 font-black font-black font-black">QUIZ FINITO!</h2>
-                                <p className="text-lg text-gray-500 mb-6 font-bold font-black">Grazie per aver giocato con noi ❤️</p>
-                                {/* --- RISPOSTE ESATTE NELLA SCHERMATA FINALE --- */}
-                                <div className="mb-6 flex flex-col items-center gap-2">
-                                    <span className="text-xl text-[#0054a6] font-black uppercase tracking-widest">Risposte Esatte</span>
-                                    <span className="text-4xl font-black text-[#0054a6]">{Object.values(myHistory).filter(v => v === true).length}/10</span>
-                                    <div className="mt-2">
-                                        <QuestionStatusBar history={myHistory} />
-                                    </div>
-                                </div>
+                                <h2 className="text-4xl uppercase tracking-tighter leading-tight font-black mb-2 font-black text-[#0054a6]">QUIZ FINITO!</h2>
+                                <p className="text-lg text-gray-500 mb-1 font-bold font-black">Grazie per aver giocato con noi ❤️</p>
                                 
-                                <div className="bg-white p-6 rounded-[3rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center font-black font-black font-black">
-                                    <div className="flex flex-col items-center justify-center gap-2 font-black font-black">
-                                        <p className="text-sm text-gray-500 uppercase font-black font-black font-black">Posizione finale:</p>
+                                <p className="text-lg text-[#0054a6] font-black uppercase tracking-widest mb-6">
+                                    Risposte Esatte: {Object.values(myHistory).filter(v => v === true).length}/10
+                                </p>
+                                
+                                <div className="bg-white p-4 rounded-[2rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center font-black font-black">
+                                    <div className="flex flex-col items-center justify-center gap-1 font-black font-black">
+                                        <p className="text-xs text-gray-500 uppercase font-black font-black font-black">Posizione finale:</p>
                                         <div className="flex items-center justify-center gap-2">
-                                            {myRankIndex >= 0 && myRankIndex <= 2 && rankInfo.label !== "NC" && <Icon name="crown" size={50} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
-                                            <span className={`text-8xl font-black drop-shadow-sm`} style={{ color: rankInfo.colorHex }}>
+                                            {myRankIndex >= 0 && myRankIndex <= 2 && rankInfo.label !== "NC" && <Icon name="crown" size={32} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
+                                            <span className={`text-6xl font-black drop-shadow-sm`} style={{ color: rankInfo.colorHex }}>
                                                 {rankInfo.label}{(rankInfo.label !== "NC" && rankInfo.label !== "-") ? "ᵃ" : ""}
                                             </span>
                                         </div>
