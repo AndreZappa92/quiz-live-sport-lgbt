@@ -64,7 +64,7 @@
         const BG_MUSIC_FILE = "ok_prezzo_giusto.mp3";
 
         // --- COMPONENTE GESTIONE AUDIO HOST (ISOLATO) ---
-        const HostAudioManager = ({ gameState }) => {
+        const HostAudioManager = ({ gameState, isIntermission }) => {
             const bgMusicRef = useRef(new Audio(BG_MUSIC_FILE));
             const answerAudioRef = useRef(new Audio());
             const fadeIntervalRef = useRef(null);
@@ -114,15 +114,17 @@
             };
 
             // LOGICA: Musica di Sottofondo
+            // Aggiornato: Non suonare durante l'intermission (countdown)
             useEffect(() => {
                 const bgMusic = bgMusicRef.current;
                 const status = gameState?.status;
                 const showResults = gameState?.showResults;
                 
-                const shouldPlayBg = status === 'lobby' || (status === 'playing' && !showResults);
+                // Suona se siamo in Lobby OPPURE se stiamo giocando (NON risultati) E NON siamo in intermission
+                const shouldPlayBg = status === 'lobby' || (status === 'playing' && !showResults && !isIntermission);
 
                 if (shouldPlayBg) {
-                    if (bgMusic.paused || (status === 'playing' && !showResults && bgMusic.currentTime > 0)) {
+                    if (bgMusic.paused || (status === 'playing' && !showResults && !isIntermission && bgMusic.currentTime > 0)) {
                          bgMusic.currentTime = 0;
                          bgMusic.volume = 0.5;
                          bgMusic.play().catch(e => console.warn("BG Play Error:", e));
@@ -130,13 +132,21 @@
                 } else {
                     bgMusic.pause();
                 }
-            }, [gameState?.status, gameState?.showResults]);
+            }, [gameState?.status, gameState?.showResults, isIntermission]);
 
             // LOGICA: Musica Risposte
             useEffect(() => {
                 const answerAudio = answerAudioRef.current;
                 const isShowingResults = gameState?.status === 'playing' && gameState?.showResults;
                 
+                // Se c'è l'intermission, ferma tutto l'audio risposte immediatamente
+                if (isIntermission) {
+                    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+                    answerAudio.pause();
+                    answerAudio.currentTime = 0;
+                    return;
+                }
+
                 if (isShowingResults) {
                     const trackName = ANSWER_AUDIO_FILES[gameState.currentQuestionIndex];
                     if (trackName) {
@@ -147,12 +157,11 @@
                         fadeAudioTo(answerAudio, 0.5, 2000);
                     }
                 } else {
-                    // STOP BRUSCO in uscita (come richiesto)
-                    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                    answerAudio.pause();
-                    answerAudio.currentTime = 0;
+                    if (!answerAudio.paused) {
+                        fadeAudioTo(answerAudio, 0, 2000);
+                    }
                 }
-            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex]);
+            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, isIntermission]);
 
             return null;
         };
@@ -367,6 +376,8 @@
             const [errorMessage, setErrorMessage] = useState('');
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
             const [prevScore, setPrevScore] = useState(0);
+            const [isIntermission, setIsIntermission] = useState(false);
+            const [intermissionTime, setIntermissionTime] = useState(3);
 
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
@@ -439,6 +450,29 @@
                     setTimeLeft(TIMER_SECONDS);
                 }
             }, [gameState?.currentQuestionIndex, gameState?.showResults]);
+
+            // GESTIONE INTERMISSION COUNTDOWN
+            useEffect(() => {
+                if (isIntermission) {
+                    setIntermissionTime(3);
+                    const interval = setInterval(() => {
+                        setIntermissionTime(prev => {
+                            if (prev <= 1) {
+                                clearInterval(interval);
+                                // TRIGGER DEL CAMBIO DOMANDA
+                                db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({
+                                    currentQuestionIndex: firebase.firestore.FieldValue.increment(1), 
+                                    showResults: false, 
+                                    questionStartTime: Date.now()
+                                }).then(() => setIsIntermission(false));
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    }, 1000);
+                    return () => clearInterval(interval);
+                }
+            }, [isIntermission, roomCode]);
 
             const submitAnswer = async (i) => {
                 if (hasAnswered || timeLeft === 0 || !gameState || gameState.showResults) return;
@@ -531,10 +565,26 @@
             if (role === 'host' && gameState) {
                 const q = QUIZ_DATA.questions[gameState.currentQuestionIndex];
                 const answersCount = players.filter(p => p.lastQuestionIndexAnswered === gameState.currentQuestionIndex).length;
+                
+                // SCHERMATA INTERMISSION (COUNTDOWN)
+                if (isIntermission) {
+                    return (
+                        <div className="h-screen flex flex-col items-center justify-center bg-gray-50 overflow-hidden font-black">
+                            <HostAudioManager gameState={gameState} isIntermission={true} />
+                            <div className="flex flex-col items-center animate-fade-in">
+                                <h2 className="text-5xl text-[#0054a6] uppercase tracking-tighter mb-8 font-black">Prossima domanda tra...</h2>
+                                <div className="text-9xl font-black text-[#e30613] drop-shadow-2xl animate-bounce">
+                                    {intermissionTime}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden font-black">
                         {/* --- RENDERIZZA AUDIO MANAGER SOLO PER L'HOST --- */}
-                        <HostAudioManager gameState={gameState} />
+                        <HostAudioManager gameState={gameState} isIntermission={false} />
 
                         <header className="flex justify-between items-center bg-white p-4 border-b shadow-sm">
                             <div className="flex items-center gap-3">
@@ -635,8 +685,12 @@
                                             </div>
                                             <button onClick={() => {
                                                 if (gameState.showResults) {
-                                                    if (gameState.currentQuestionIndex === 9) db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
-                                                    else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
+                                                    if (gameState.currentQuestionIndex === 9) {
+                                                        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
+                                                    } else {
+                                                        // ATTIVA INTERMISSION INVECE DI CAMBIARE SUBITO
+                                                        setIsIntermission(true);
+                                                    }
                                                 } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
                                             }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all">
                                                 {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={32} />
