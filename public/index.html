@@ -562,15 +562,19 @@
             const rankInfo = useMemo(() => {
                 const idx = displayedPlayers.findIndex(p => p.uid === user?.uid);
                 const me = displayedPlayers[idx];
-                if (!me || me.score === 0 || idx > 2) return { 
-                    label: idx !== -1 ? (idx + 1).toString() : "-", 
-                    color: "text-[#0054a6]", 
+                
+                // --- MODIFICA RICHIESTA: Punteggio 0 = NC ---
+                if (!me || me.score === 0) return { 
+                    label: "NC", 
+                    color: "text-[#0054a6]", // Colore default (blu) per icona header
                     icon: "coins", 
-                    colorHex: "#0054a6" 
+                    colorHex: "#0054a6" // Hex default (blu) per schermata finale
                 };
+
                 if (idx === 0) return { label: "1", color: "text-[#ffd700]", icon: "trophy", colorHex: "#ffd700" };
                 if (idx === 1) return { label: "2", color: "text-[#c0c0c0]", icon: "trophy", colorHex: "#c0c0c0" };
                 if (idx === 2) return { label: "3", color: "text-[#cd7f32]", icon: "trophy", colorHex: "#cd7f32" };
+                
                 return { label: (idx + 1).toString(), color: "text-[#0054a6]", icon: "coins", colorHex: "#0054a6" };
             }, [displayedPlayers, user]);
 
@@ -923,9 +927,13 @@
                                     <div className="border-t border-white/20 pt-4 font-black">
                                         <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black font-black">Classifica attuale:</p>
                                         <div className="flex items-center justify-center gap-2">
-                                            {myRankIndex >= 0 && myRankIndex <= 2 && <Icon name="crown" size={40} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
-                                            <p className="text-6xl font-black drop-shadow-md leading-none" style={{ color: rankInfo.colorHex, textShadow: '0px 2px 4px rgba(0,0,0,0.3)' }}>
-                                                {rankInfo.label}{rankInfo.label !== "-" ? "ᵃ" : ""}
+                                            {myRankIndex >= 0 && myRankIndex <= 2 && rankInfo.label !== "NC" && <Icon name="crown" size={40} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
+                                            <p className="text-6xl font-black drop-shadow-md leading-none" 
+                                               style={{ 
+                                                   color: (myRankIndex > 2 || rankInfo.label === "NC") ? '#ffffff' : rankInfo.colorHex, 
+                                                   textShadow: '0px 2px 4px rgba(0,0,0,0.3)' 
+                                               }}>
+                                                {rankInfo.label}{(rankInfo.label !== "NC" && rankInfo.label !== "-") ? "ᵃ" : ""}
                                             </p>
                                         </div>
                                     </div>
@@ -950,9 +958,9 @@
                                     <div className="flex flex-col items-center justify-center gap-2 font-black font-black">
                                         <p className="text-sm text-gray-500 uppercase font-black font-black font-black">Posizione finale:</p>
                                         <div className="flex items-center justify-center gap-2">
-                                            {myRankIndex >= 0 && myRankIndex <= 2 && <Icon name="crown" size={50} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
+                                            {myRankIndex >= 0 && myRankIndex <= 2 && rankInfo.label !== "NC" && <Icon name="crown" size={50} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
                                             <span className={`text-8xl font-black drop-shadow-sm`} style={{ color: rankInfo.colorHex }}>
-                                                {rankInfo.label}{rankInfo.label !== "-" ? "ᵃ" : ""}
+                                                {rankInfo.label}{(rankInfo.label !== "NC" && rankInfo.label !== "-") ? "ᵃ" : ""}
                                             </span>
                                         </div>
                                     </div>
