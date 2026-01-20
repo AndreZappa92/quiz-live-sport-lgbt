@@ -53,7 +53,13 @@
             0: "SanFrancisco.mp3", 
             1: "Freedom90.mp3",    
             2: "RainOnMe.mp3",     
-            3: "StillStanding.mp3" 
+            3: "StillStanding.mp3",
+            4: "TheMan.mp3",
+            5: "OneLove.mp3",
+            6: "WatermelonSugar.mp3",
+            7: "Euphoria.mp3",
+            8: "MysteryOfLove.mp3",
+            9: "TrueColors.mp3"
         };
         const BG_MUSIC_FILE = "ok_prezzo_giusto.mp3";
 
@@ -237,7 +243,7 @@
         const appId = 'quiz-lgbt-sport-2026';
         const TIMER_SECONDS = 30;
 
-        // --- DATI QUIZ ---
+        // --- DATI QUIZ RIEQUILIBRATI (3A, 3B, 2C, 2D) - ORDINE MIXATO ---
         const QUIZ_DATA = {
             title: "Sport e Inclusione: LGBT+",
             questions: [
@@ -537,86 +543,102 @@
                         </header>
                         
                         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
-                            <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black">
-                                {gameState.status === 'lobby' ? (
-                                    <div className="flex flex-col items-center w-full h-full justify-center">
-                                        <h2 className="text-5xl md:text-6xl text-[#0054a6] uppercase tracking-tighter text-center leading-tight mb-12 max-w-5xl">
-                                            SCANSIONA IL QR CODE E GIOCA CON NOI!
-                                        </h2>
-                                        <div className="flex flex-col md:flex-row items-center justify-center gap-16 w-full max-w-6xl mb-12">
-                                            <div className="flex-1 flex justify-center md:justify-end">
-                                                <LogoPrideHouse className="h-auto w-full max-w-md object-contain drop-shadow-lg" />
-                                            </div>
-                                            <div className="flex-1 flex justify-center md:justify-start">
-                                                <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-sm shadow-inner transform rotate-1 hover:rotate-0 transition-transform duration-300">
-                                                    <div className="flex flex-col items-center font-black">
-                                                        <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} alt="QR" className="w-64 h-64 rounded-2xl mb-4" />
-                                                        <p className="text-5xl text-[#0054a6] font-mono tracking-widest leading-none font-black">{roomCode}</p>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black relative overflow-hidden">
+                                
+                                {/* Background Squiggle - Only when Playing/Finished (not Lobby) */}
+                                {gameState.status !== 'lobby' && (
+                                    <div 
+                                        className="absolute inset-0 z-0 opacity-10 pointer-events-none transition-all duration-1000"
+                                        style={{
+                                            backgroundImage: `url(squiggle_${(gameState.currentQuestionIndex % 6) + 1}.svg)`,
+                                            backgroundSize: 'cover',
+                                            backgroundPosition: 'center',
+                                            backgroundRepeat: 'no-repeat'
+                                        }}
+                                    />
+                                )}
+
+                                <div className="relative z-10 w-full flex flex-col items-center">
+                                    {gameState.status === 'lobby' ? (
+                                        <div className="flex flex-col items-center w-full h-full justify-center">
+                                            <h2 className="text-5xl md:text-6xl text-[#0054a6] uppercase tracking-tighter text-center leading-tight mb-12 max-w-5xl">
+                                                SCANSIONA IL QR CODE E GIOCA CON NOI!
+                                            </h2>
+                                            <div className="flex flex-col md:flex-row items-center justify-center gap-16 w-full max-w-6xl mb-12">
+                                                <div className="flex-1 flex justify-center md:justify-end">
+                                                    <LogoPrideHouse className="h-auto w-full max-w-md object-contain drop-shadow-lg" />
+                                                </div>
+                                                <div className="flex-1 flex justify-center md:justify-start">
+                                                    <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-sm shadow-inner transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                                                        <div className="flex flex-col items-center font-black">
+                                                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} alt="QR" className="w-64 h-64 rounded-2xl mb-4" />
+                                                            <p className="text-5xl text-[#0054a6] font-mono tracking-widest leading-none font-black">{roomCode}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="w-full flex flex-col items-center gap-6">
-                                            <div className="flex flex-wrap gap-3 justify-center max-w-4xl min-h-[3rem]">
-                                                {players.length === 0 ? (
-                                                    <p className="text-3xl text-gray-300 font-black animate-pulse uppercase tracking-widest text-center">In attesa di partecipanti....</p>
-                                                ) : (
-                                                    players.map(p => (
-                                                        <div key={p.uid} className="bg-[#0054a6] text-white px-6 py-3 rounded-full text-xl font-bold animate-fade-in shadow-md">
-                                                            {p.name}
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                            <button 
-                                                onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} 
-                                                className="bg-[#0054a6] text-white px-16 py-6 rounded-3xl text-3xl uppercase transition-all active:scale-95 shadow-xl font-black hover:bg-[#00428a] mt-4"
-                                            >
-                                                Inizia Quiz
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="w-full max-w-5xl space-y-8 font-black">
-                                        <div className="flex justify-between items-center">
-                                            <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm shadow-md font-black">Domanda {gameState.currentQuestionIndex+1} / 10</span>
-                                            {!gameState.showResults && (
-                                                <div className="flex items-center gap-6">
-                                                    <div className="flex items-center gap-3 bg-blue-50 px-6 py-2 rounded-full border border-blue-100">
-                                                        <Icon name="checkSquare" size={24} className="text-[#0054a6]" />
-                                                        <span className="text-xl font-black text-[#0054a6]">{answersCount} / {players.length}</span>
-                                                    </div>
-                                                    <div className="text-4xl font-mono bg-gray-900 text-white px-8 py-3 rounded-2xl shadow-lg font-black">{timeLeft}s</div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <h2 className={`text-[#0054a6] leading-tight tracking-tight text-justify ${gameState.showResults ? 'text-4xl' : 'text-7xl mt-10 mb-20'}`}>{q.question}</h2>
-                                        <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'}`}>
-                                            {q.options.map((o, i) => (
-                                                <div key={i} className="flex flex-col gap-3 font-black">
-                                                    <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-4 transition-all font-black ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-30 grayscale border-gray-100') : 'bg-gray-50 border-transparent shadow-inner'}`}>
-                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-2xl shadow-lg font-black`}>{String.fromCharCode(65+i)}</div>
-                                                        <span className="text-[#0054a6] text-2xl text-left font-bold leading-tight font-black">{o.text}</span>
-                                                        {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto" />}
-                                                    </div>
-                                                    {gameState.showResults && (
-                                                        <div className={`px-8 py-5 rounded-3xl text-xl text-justify font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
-                                                            <p className="font-bold leading-tight">{o.rationale}</p>
-                                                        </div>
+                                            <div className="w-full flex flex-col items-center gap-6">
+                                                <div className="flex flex-wrap gap-3 justify-center max-w-4xl min-h-[3rem]">
+                                                    {players.length === 0 ? (
+                                                        <p className="text-3xl text-gray-300 font-black animate-pulse uppercase tracking-widest text-center">In attesa di partecipanti....</p>
+                                                    ) : (
+                                                        players.map(p => (
+                                                            <div key={p.uid} className="bg-[#0054a6] text-white px-6 py-3 rounded-full text-xl font-bold animate-fade-in shadow-md">
+                                                                {p.name}
+                                                            </div>
+                                                        ))
                                                     )}
                                                 </div>
-                                            ))}
+                                                <button 
+                                                    onClick={() => db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'playing', questionStartTime: Date.now()})} 
+                                                    className="bg-[#0054a6] text-white px-16 py-6 rounded-3xl text-3xl uppercase transition-all active:scale-95 shadow-xl font-black hover:bg-[#00428a] mt-4"
+                                                >
+                                                    Inizia Quiz
+                                                </button>
+                                            </div>
                                         </div>
-                                        <button onClick={() => {
-                                            if (gameState.showResults) {
-                                                if (gameState.currentQuestionIndex === 9) db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
-                                                else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
-                                            } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
-                                        }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all">
-                                            {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={32} />
-                                        </button>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className="w-full max-w-5xl space-y-8 font-black">
+                                            <div className="flex justify-between items-center">
+                                                <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm shadow-md font-black">Domanda {gameState.currentQuestionIndex+1} / 10</span>
+                                                {!gameState.showResults && (
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="flex items-center gap-3 bg-blue-50 px-6 py-2 rounded-full border border-blue-100">
+                                                            <Icon name="checkSquare" size={24} className="text-[#0054a6]" />
+                                                            <span className="text-xl font-black text-[#0054a6]">{answersCount} / {players.length}</span>
+                                                        </div>
+                                                        <div className="text-4xl font-mono bg-gray-900 text-white px-8 py-3 rounded-2xl shadow-lg font-black">{timeLeft}s</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <h2 className={`text-[#0054a6] leading-tight tracking-tight text-justify ${gameState.showResults ? 'text-4xl' : 'text-7xl mt-10 mb-20'}`}>{q.question}</h2>
+                                            <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'}`}>
+                                                {q.options.map((o, i) => (
+                                                    <div key={i} className="flex flex-col gap-3 font-black">
+                                                        <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-4 transition-all font-black ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-30 grayscale border-gray-100') : 'bg-gray-50 border-transparent shadow-inner'}`}>
+                                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-2xl shadow-lg font-black`}>{String.fromCharCode(65+i)}</div>
+                                                            <span className="text-[#0054a6] text-2xl text-left font-bold leading-tight font-black">{o.text}</span>
+                                                            {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto" />}
+                                                        </div>
+                                                        {gameState.showResults && (
+                                                            <div className={`px-8 py-5 rounded-3xl text-xl text-justify font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
+                                                                <p className="font-bold leading-tight">{o.rationale}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button onClick={() => {
+                                                if (gameState.showResults) {
+                                                    if (gameState.currentQuestionIndex === 9) db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
+                                                    else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({currentQuestionIndex: firebase.firestore.FieldValue.increment(1), showResults: false, questionStartTime: Date.now()});
+                                                } else db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
+                                            }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all">
+                                                {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={32} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             
                             <div className="w-64 flex flex-col gap-4 font-black">
