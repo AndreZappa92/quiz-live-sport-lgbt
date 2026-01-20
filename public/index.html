@@ -278,41 +278,43 @@
                 return audio;
             }, [role]);
 
-            // 2. Answer Music
-            const answerMusicRef = useRef(role === 'host' ? new Audio() : null);
+            // 2. Answer Music - FIX PER HOST: Inizializza solo se role diventa Host
+            const answerAudio = useMemo(() => {
+                if (role !== 'host') return null;
+                return new Audio();
+            }, [role]);
+
             const fadeIntervalRef = useRef(null);
-            const prevStatusRef = useRef(null); // Per tracciare cambio stato e resettare audio
 
             // Funzione FADE (Solo Host)
-            const fadeAudioTo = (targetVolume, duration = 1000) => {
-                if (role !== 'host' || !answerMusicRef.current) return;
+            const fadeAudioTo = (targetAudio, targetVolume, duration = 2000) => {
+                if (role !== 'host' || !targetAudio) return;
                 
                 if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                const audio = answerMusicRef.current;
-                const stepTime = 50; 
-                const steps = duration / stepTime;
                 
-                if (targetVolume > 0 && audio.paused) {
-                    audio.volume = 0;
-                    audio.play().catch(e => console.log("Answer Audio wait..."));
+                if (targetVolume > 0 && targetAudio.paused) {
+                    targetAudio.volume = 0;
+                    targetAudio.play().catch(e => console.log("Answer Audio wait..."));
                 }
 
-                const volStep = (targetVolume - audio.volume) / steps;
+                const stepTime = 50; 
+                const steps = duration / stepTime;
+                const volStep = (targetVolume - targetAudio.volume) / steps;
 
                 fadeIntervalRef.current = setInterval(() => {
-                    let newVol = audio.volume + volStep;
+                    let newVol = targetAudio.volume + volStep;
                     if (newVol > 1) newVol = 1;
                     if (newVol < 0) newVol = 0;
                     
                     if ((volStep > 0 && newVol >= targetVolume) || (volStep < 0 && newVol <= targetVolume)) {
-                        audio.volume = targetVolume;
+                        targetAudio.volume = targetVolume;
                         clearInterval(fadeIntervalRef.current);
                         if (targetVolume === 0) {
-                            audio.pause();
-                            audio.currentTime = 0;
+                            targetAudio.pause();
+                            targetAudio.currentTime = 0;
                         }
                     } else {
-                        audio.volume = newVol;
+                        targetAudio.volume = newVol;
                     }
                 }, stepTime);
             };
@@ -329,42 +331,43 @@
 
                 if (shouldPlayBg) {
                     // Reset e Play ogni volta che si entra in uno stato attivo (Lobby o Domanda)
-                    bgMusic.currentTime = 0;
-                    bgMusic.volume = 0.5; // Assicura volume corretto
-                    bgMusic.play().catch(()=>{});
+                    if (bgMusic.paused || (status === 'playing' && !showResults && bgMusic.currentTime > 0)) {
+                         bgMusic.currentTime = 0;
+                         bgMusic.volume = 0.5;
+                         bgMusic.play().catch(()=>{});
+                    }
                 } else {
                     bgMusic.pause();
                 }
                 
-                // Non mettiamo bgMusic.pause() nel cleanup per evitare stop indesiderati durante i render
             }, [gameState?.status, gameState?.showResults, bgMusic, role]);
 
             // EFFECT: Gestione Answer Music (SOLO HOST)
             useEffect(() => {
-                if (role !== 'host') return;
+                if (role !== 'host' || !answerAudio) return;
 
                 const isShowingResults = gameState?.status === 'playing' && gameState?.showResults;
                 
                 if (isShowingResults) {
                     const trackName = ANSWER_AUDIO_FILES[gameState.currentQuestionIndex];
-                    if (trackName && answerMusicRef.current) {
-                        if (!answerMusicRef.current.src.includes(trackName)) {
-                            answerMusicRef.current.src = trackName;
-                            answerMusicRef.current.loop = true;
+                    if (trackName) {
+                        if (!answerAudio.src.includes(trackName)) {
+                            answerAudio.src = trackName;
+                            answerAudio.loop = true;
                         }
-                        fadeAudioTo(0.5, 2000); // 2s fade in
+                        fadeAudioTo(answerAudio, 0.5, 2000); // 2s Fade IN
                     }
                 } else {
-                    if (answerMusicRef.current && !answerMusicRef.current.paused) {
-                        fadeAudioTo(0, 2000); // 2s fade out
+                    if (!answerAudio.paused) {
+                        fadeAudioTo(answerAudio, 0, 2000); // 2s Fade OUT
                     }
                 }
                 
                 return () => { 
                     if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                    if (answerMusicRef.current) answerMusicRef.current.pause(); 
+                    answerAudio.pause(); 
                 };
-            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, role]);
+            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, role, answerAudio]);
 
 
             useEffect(() => {
@@ -494,22 +497,27 @@
                                 const cleanName = playerName.trim(); const cleanCode = roomCode.trim().toUpperCase();
                                 if (!cleanName || !cleanCode) return;
                                 
-                                // PLAYER: NESSUN AUDIO QUI (CAUSAVA BUG)
-                                
-                                const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(cleanCode).get();
-                                if (room.exists) {
-                                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${cleanCode}_${user.uid}`).set({
-                                        uid: user.uid, name: cleanName, roomCode: cleanCode, score: 0, lastAnswerIndex: -1, lastQuestionIndexAnswered: -1, lastAnsweredAt: 0
-                                    });
-                                    sessionStorage.setItem('activeRoom', cleanCode); sessionStorage.setItem('activeRole', 'player'); sessionStorage.setItem('activePlayerName', cleanName);
-                                    setRole('player');
+                                try {
+                                    const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(cleanCode).get();
+                                    if (room.exists) {
+                                        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${cleanCode}_${user.uid}`).set({
+                                            uid: user.uid, name: cleanName, roomCode: cleanCode, score: 0, lastAnswerIndex: -1, lastQuestionIndexAnswered: -1, lastAnsweredAt: 0
+                                        });
+                                        sessionStorage.setItem('activeRoom', cleanCode); sessionStorage.setItem('activeRole', 'player'); sessionStorage.setItem('activePlayerName', cleanName);
+                                        setRole('player');
+                                    } else {
+                                        alert("Stanza non trovata!");
+                                    }
+                                } catch (err) {
+                                    console.error("Errore di connessione:", err);
+                                    alert("Errore di connessione. Riprova.");
                                 }
                             }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl active:scale-95 transition-all shadow-md">Partecipa</button>
                             <button onClick={async () => {
                                 // HOST: SBLOCCO AUDIO
                                 if (bgMusic) bgMusic.play().catch(()=>{});
-                                if (answerMusicRef.current) answerMusicRef.current.play().catch(()=>{});
-
+                                // Risolve il bug Audio Risposte: Inizializza l'audio host al click
+                                
                                 const code = Math.random().toString(36).substring(2,6).toUpperCase();
                                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
                                     code, status: 'lobby', currentQuestionIndex: 0, showResults: false, hostId: user.uid, createdAt: Date.now(), questionStartTime: 0
