@@ -51,7 +51,6 @@
         // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                // Trofeo: Versione slanciata e pulita
                 trophy: (
                     <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                          <path d="M8 21h8" /> {/* Base */}
@@ -136,7 +135,7 @@
         const appId = 'quiz-lgbt-sport-2026';
         const TIMER_SECONDS = 30;
 
-        // --- DATI QUIZ RIEQUILIBRATI (3A, 3B, 2C, 2D) - ORDINE MIXATO ---
+        // --- DATI QUIZ ---
         const QUIZ_DATA = {
             title: "Sport e Inclusione: LGBT+",
             questions: [
@@ -244,13 +243,9 @@
         };
 
         // --- MAPPA AUDIO ---
-        // QUI PUOI MODIFICARE I NOMI DEI FILE PER OGNI RISPOSTA
-        // Il numero indica l'indice della domanda (0 = Domanda 1, 1 = Domanda 2, ecc.)
         const ANSWER_AUDIO_FILES = {
-            0: "SanFrancisco.mp3", // TEST DOMANDA 1
-            // Aggiungi qui gli altri file quando li avrai:
+            0: "SanFrancisco.mp3", // DOMANDA 1
             // 1: "track_q2.mp3",
-            // 2: "track_q3.mp3",
             // ...
         };
         const BG_MUSIC_FILE = "ok_prezzo_giusto.mp3";
@@ -272,28 +267,30 @@
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
             const [prevScore, setPrevScore] = useState(0);
 
-            // GESTIONE AUDIO
-            // 1. Background Music (Lobby e Domande) - NO FADE
+            // GESTIONE AUDIO (SOLO HOST)
+            // 1. Background Music (Lobby e Domande)
             const bgMusic = useMemo(() => {
+                if (role !== 'host') return null; // Solo host
                 const audio = new Audio(BG_MUSIC_FILE);
                 audio.loop = true;
-                audio.volume = 0.5; // Volume fisso
+                audio.volume = 0.5;
                 return audio;
-            }, []);
+            }, [role]);
 
-            // 2. Answer Music (Solo Risposte) - CON FADE
-            // Nota: ricreiamo l'oggetto o cambiamo src dinamicamente
-            const answerMusicRef = useRef(new Audio());
+            // 2. Answer Music
+            const answerMusicRef = useRef(role === 'host' ? new Audio() : null);
             const fadeIntervalRef = useRef(null);
+            const prevStatusRef = useRef(null); // Per tracciare cambio stato e resettare audio
 
-            // Funzione FADE (solo per answerMusic)
+            // Funzione FADE (Solo Host)
             const fadeAudioTo = (targetVolume, duration = 1000) => {
+                if (role !== 'host' || !answerMusicRef.current) return;
+                
                 if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
                 const audio = answerMusicRef.current;
                 const stepTime = 50; 
                 const steps = duration / stepTime;
                 
-                // Se dobbiamo alzare il volume e l'audio è in pausa, avviamolo
                 if (targetVolume > 0 && audio.paused) {
                     audio.volume = 0;
                     audio.play().catch(e => console.log("Answer Audio wait..."));
@@ -319,59 +316,71 @@
                 }, stepTime);
             };
 
-            // EFFECT: Gestione Background Music (Start/Stop immediato)
+            // EFFECT: Gestione Background Music (SOLO HOST)
             useEffect(() => {
-                const shouldPlayBg = gameState && (
-                    gameState.status === 'lobby' || 
-                    (gameState.status === 'playing' && !gameState.showResults)
-                );
+                if (role !== 'host' || !bgMusic) return;
+
+                const status = gameState?.status;
+                const isPlaying = status === 'playing';
+                const showResults = gameState?.showResults;
+                const prevStatus = prevStatusRef.current;
+
+                // Logica Reset:
+                // Se passiamo da 'lobby' a 'playing' (inizio gara) -> Reset
+                // Se siamo 'playing' e 'showResults' diventa false (prossima domanda) -> Reset
+                // Ma attenzione: 'showResults' false è lo stato normale di 'playing'
+                // Quindi controlliamo se bgMusic è in pausa e dobbiamo ripartire
+                
+                // Determina se deve suonare
+                const shouldPlayBg = status === 'lobby' || (isPlaying && !showResults);
 
                 if (shouldPlayBg) {
-                    // Start immediato se non sta già suonando
+                    // RESET FORCE: Se veniamo dalla lobby o se eravamo in pausa (es. dopo i risultati)
+                    // Riavvia da 0 se è l'inizio di una nuova fase "attiva"
                     if (bgMusic.paused) {
-                        bgMusic.volume = 0.5; // Reset volume in caso fosse stato toccato
+                        bgMusic.currentTime = 0; // RESTART FROM 0
+                        bgMusic.volume = 0.5;
                         bgMusic.play().catch(()=>{});
+                    } else {
+                        // Caso specifico: passaggio Lobby -> Game (senza pausa intermedia)
+                        if (prevStatus === 'lobby' && status === 'playing') {
+                             bgMusic.currentTime = 0;
+                        }
                     }
                 } else {
-                    // Stop immediato
                     bgMusic.pause();
-                    if (gameState?.showResults) {
-                        bgMusic.currentTime = 0; 
-                    }
                 }
+                
+                prevStatusRef.current = status;
                 return () => bgMusic.pause();
-            }, [gameState?.status, gameState?.showResults, bgMusic]);
+            }, [gameState?.status, gameState?.showResults, bgMusic, role]);
 
-            // EFFECT: Gestione Answer Music (Con Fade)
+            // EFFECT: Gestione Answer Music (SOLO HOST)
             useEffect(() => {
+                if (role !== 'host') return;
+
                 const isShowingResults = gameState?.status === 'playing' && gameState?.showResults;
                 
                 if (isShowingResults) {
-                    // 1. Trova il file giusto
                     const trackName = ANSWER_AUDIO_FILES[gameState.currentQuestionIndex];
-                    if (trackName) {
-                        // 2. Imposta sorgente se diversa
-                        // Nota: per semplicità ricarichiamo src se necessario
+                    if (trackName && answerMusicRef.current) {
                         if (!answerMusicRef.current.src.includes(trackName)) {
                             answerMusicRef.current.src = trackName;
-                            answerMusicRef.current.loop = true; // Loop se la canzone finisce mentre si leggono i risultati?
+                            answerMusicRef.current.loop = true;
                         }
-                        // 3. Fade IN
-                        fadeAudioTo(0.5, 1500); // 1.5s fade in
+                        fadeAudioTo(0.5, 1500);
                     }
                 } else {
-                    // 4. Se usciamo dai risultati -> Fade OUT
-                    // Controlliamo se stava suonando qualcosa
-                    if (!answerMusicRef.current.paused) {
-                        fadeAudioTo(0, 800); // 0.8s fade out
+                    if (answerMusicRef.current && !answerMusicRef.current.paused) {
+                        fadeAudioTo(0, 800);
                     }
                 }
                 
                 return () => { 
                     if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                    answerMusicRef.current.pause(); 
+                    if (answerMusicRef.current) answerMusicRef.current.pause(); 
                 };
-            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex]);
+            }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, role]);
 
 
             useEffect(() => {
@@ -501,10 +510,8 @@
                                 const cleanName = playerName.trim(); const cleanCode = roomCode.trim().toUpperCase();
                                 if (!cleanName || !cleanCode) return;
                                 
-                                // Sblocco Audio
-                                bgMusic.play().catch(()=>{});
-                                answerMusicRef.current.play().catch(()=>{});
-
+                                // PLAYER: NESSUN AUDIO QUI (CAUSAVA BUG)
+                                
                                 const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(cleanCode).get();
                                 if (room.exists) {
                                     await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${cleanCode}_${user.uid}`).set({
@@ -515,9 +522,9 @@
                                 }
                             }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl active:scale-95 transition-all shadow-md">Partecipa</button>
                             <button onClick={async () => {
-                                // Sblocco Audio
-                                bgMusic.play().catch(()=>{});
-                                answerMusicRef.current.play().catch(()=>{});
+                                // HOST: SBLOCCO AUDIO
+                                if (bgMusic) bgMusic.play().catch(()=>{});
+                                if (answerMusicRef.current) answerMusicRef.current.play().catch(()=>{});
 
                                 const code = Math.random().toString(36).substring(2,6).toUpperCase();
                                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
@@ -675,6 +682,115 @@
                                 <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-16 px-16 py-5 bg-gray-900 text-white rounded-full text-xl uppercase tracking-widest shadow-xl transition-all hover:bg-black font-black">Nuova Partita</button>
                             </div>
                         )}
+                    </div>
+                );
+            }
+
+            if (role === 'player' && gameState) return (
+                <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
+                    <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black">
+                        <LogoArcigay className="h-10 object-contain font-black" />
+                        <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm font-black font-black">
+                            <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
+                                <Icon name={rankInfo.icon} size={18} className={rankInfo.icon === 'coins' ? 'text-white' : rankInfo.color} />
+                            </div>
+                            <span className="text-xl font-mono leading-none font-black font-black">{prevScore}</span>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black relative overflow-hidden">
+                        {gameState.status === 'finished' && myRankIndex >= 0 && myRankIndex <= 2 && <Confetti />}
+
+                        {gameState.status === 'lobby' && (
+                            <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center font-black font-black">
+                                <LogoPrideHouse className="h-40 w-auto object-contain mx-auto mb-4 font-black font-black" />
+                                <h2 className="text-2xl uppercase tracking-tighter leading-tight font-black font-black">IL QUIZ STA PER INIZIARE!</h2>
+                                <p className="text-gray-500 text-sm italic tracking-widest font-black font-black">Player: {playerName}</p>
+                            </div>
+                        )}
+
+                        {gameState.status === 'playing' && !gameState.showResults && (
+                            <div className="w-full max-w-sm flex flex-col gap-6 h-full py-4 font-black font-black">
+                                <div className="flex items-center justify-center gap-3 font-black">
+                                    <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse font-black' : 'text-[#0054a6]'} />
+                                    <span className={`text-5xl font-mono font-black font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
+                                </div>
+                                {hasAnswered ? (
+                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black font-black">
+                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4 font-black" />
+                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black font-black">Acquisita</h2>
+                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black font-black">Guarda lo schermo principale</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-5 flex-1 font-black">
+                                        {COLORS.map((c, i) => (
+                                            <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-2xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black`}>
+                                                {String.fromCharCode(65 + i)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {gameState.status === 'playing' && gameState.showResults && (
+                            <div className={`w-full max-w-[320px] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 font-black font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                                <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner text-white font-black shrink-0">
+                                    <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={48} />
+                                </div>
+                                <h2 className="text-3xl uppercase mb-4 leading-none font-black text-center font-black">
+                                    {lastAnswerCorrect === true ? 'ESATTO!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO' : 'ERRATO')}
+                                </h2>
+                                <div className="w-full space-y-4 font-black">
+                                    {lastAnswerCorrect === true ? (
+                                        <div className="flex flex-col items-center gap-1 font-black font-black">
+                                            <div className="flex items-center gap-3">
+                                                {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce font-black" />}
+                                                <span className="text-2xl font-black">+{lastPointsEarned} PT</span>
+                                            </div>
+                                            {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em] font-black">VELOCITÀ MASSIMA!</p>}
+                                        </div>
+                                    ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black font-black">0 PUNTI</div>}
+                                    <div className="border-t border-white/20 pt-4 font-black">
+                                        <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black font-black">Classifica attuale:</p>
+                                        <p className={`text-6xl text-white drop-shadow-sm leading-none font-black`}>{rankInfo.label}{rankInfo.label !== "-" ? "°" : ""}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {gameState.status === 'finished' && (
+                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto text-center z-10 font-black font-black">
+                                <div className="w-28 h-28 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-6 font-black font-black">
+                                    <Icon name={rankInfo.icon} size={60} className={`drop-shadow-xl ${rankInfo.color}`} />
+                                </div>
+                                
+                                {myRankIndex >= 0 && myRankIndex <= 2 && (
+                                    <p className={`text-3xl uppercase tracking-widest font-black mb-2 drop-shadow-md animate-pulse font-black`} style={{ color: rankInfo.colorHex }}>Complimenti!</p>
+                                )}
+                                
+                                <h2 className="text-5xl uppercase tracking-tighter leading-tight font-black mb-6 font-black font-black font-black">GARA FINITA!</h2>
+                                
+                                <div className="bg-white p-6 rounded-[3rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center font-black font-black font-black">
+                                    <div className="flex flex-col items-center justify-center gap-2 font-black font-black">
+                                        <p className="text-sm text-gray-500 uppercase font-black font-black font-black">Posizione finale:</p>
+                                        <span className={`text-8xl font-black drop-shadow-sm`} style={{ color: rankInfo.colorHex }}>
+                                            {rankInfo.label}°
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+
+            // FIX SCHERMATA BIANCA PLAYER (se role c'è ma gameState non ancora caricato)
+            if (role === 'player' && !gameState) {
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center bg-white text-[#0054a6] font-black">
+                        <Icon name="loader2" size={64} className="animate-spin mb-4" />
+                        <p className="text-xl uppercase tracking-widest animate-pulse">Connessione in corso...</p>
                     </div>
                 );
             }
