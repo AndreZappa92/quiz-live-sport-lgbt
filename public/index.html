@@ -144,11 +144,10 @@
                             answerAudio.src = trackName;
                             answerAudio.loop = true;
                         }
-                        // Fade IN in entrata (2 secondi)
                         fadeAudioTo(answerAudio, 0.5, 2000);
                     }
                 } else {
-                    // STOP BRUSCO in uscita (richiesta utente)
+                    // STOP BRUSCO in uscita (come richiesto)
                     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
                     answerAudio.pause();
                     answerAudio.currentTime = 0;
@@ -538,8 +537,8 @@
                         <HostAudioManager gameState={gameState} />
 
                         <header className="flex justify-between items-center bg-white p-4 border-b shadow-sm">
-                            <div className="flex items-center gap-4">
-                                <LogoArcigay className="h-14 object-contain" />
+                            <div className="flex items-center gap-3">
+                                <LogoArcigay className="h-12 object-contain" />
                                 <span className="text-[#0054a6] text-xl font-black">X</span>
                                 <LogoPrideHouse className="h-14 object-contain" />
                             </div>
@@ -554,7 +553,7 @@
                                 {/* Background Squiggle - Only when Playing/Finished (not Lobby) */}
                                 {gameState.status !== 'lobby' && (
                                     <div 
-                                        className="absolute inset-0 z-0 opacity-70 pointer-events-none transition-all duration-1000"
+                                        className="absolute inset-0 z-0 opacity-50 pointer-events-none transition-all duration-1000"
                                         style={{
                                             backgroundImage: `url(squiggle_${(gameState.currentQuestionIndex % 6) + 1}.svg)`,
                                             backgroundSize: 'cover',
@@ -705,8 +704,8 @@
             if (role === 'player' && gameState) return (
                 <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
                     <header className="p-4 bg-white border-b-4 border-[#ffde00] flex justify-between items-center shadow-md font-black">
-                        <div className="flex items-center gap-4">
-                            <LogoArcigay className="h-10 object-contain font-black" />
+                        <div className="flex items-center gap-2">
+                            <LogoArcigay className="h-8 object-contain font-black" />
                             <span className="text-[#0054a6] text-lg font-black">X</span>
                             <LogoPrideHouse className="h-10 object-contain font-black" />
                         </div>
