@@ -255,14 +255,19 @@
             );
         };
 
-        const QuestionStatusBar = ({ history, total = 10 }) => {
+        const QuestionStatusBar = ({ history, total = 10, currentIndex = -1 }) => {
             return (
                 <div className="flex justify-center gap-1.5 py-3 w-full max-w-sm mx-auto">
                     {Array.from({ length: total }).map((_, i) => {
                         let statusColor = "bg-gray-200 text-gray-400"; // Default: non risposto
+                        
                         if (history && history[i] !== undefined) {
                             statusColor = history[i] ? "bg-green-500 text-white shadow-sm" : "bg-red-500 text-white shadow-sm";
+                        } else if (i === currentIndex) {
+                            // Domanda in corso (risultato non ancora mostrato) -> Giallo
+                            statusColor = "bg-[#ffde00] text-[#0054a6] shadow-sm animate-pulse";
                         }
+
                         return (
                             <div key={i} className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${statusColor}`}>
                                 {i + 1}
@@ -613,6 +618,19 @@
                 return me?.answersHistory || {};
             }, [players, user]);
 
+            // NEW: Filtra la storia per non mostrare spoiler sulla domanda corrente
+            const visibleHistory = useMemo(() => {
+                if (!gameState || !myHistory) return {};
+                if (gameState.status === 'finished') return myHistory;
+                
+                const filtered = { ...myHistory };
+                // Se i risultati non sono ancora mostrati, nascondi l'esito della domanda corrente
+                if (!gameState.showResults) {
+                    delete filtered[gameState.currentQuestionIndex];
+                }
+                return filtered;
+            }, [myHistory, gameState]);
+
             if (!role) return (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
@@ -898,7 +916,10 @@
                         </div>
                         {/* --- STATUS BAR AGGIUNTA NELL'HEADER --- */}
                         <div className="bg-gray-50 border-b border-gray-200 py-1">
-                            <QuestionStatusBar history={myHistory} />
+                            <QuestionStatusBar 
+                                history={visibleHistory} 
+                                currentIndex={gameState.status === 'playing' ? gameState.currentQuestionIndex : -1} 
+                            />
                         </div>
                     </header>
 
