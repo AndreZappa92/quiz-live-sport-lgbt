@@ -402,7 +402,7 @@
                     options: [
                         { text: "Un bacio in diretta TV al suo compagno", rationale: "È stato un momento storico di visibilità e spontaneità in un contesto sportivo globale molto seguito.", isCorrect: true },
                         { text: "Ha gareggiato indossando un tutù arcobaleno", rationale: "Gus Kenworthy ha gareggiato con la divisa ufficiale della sua nazionale.", isCorrect: false },
-                        { text: "Ha rifiutato di ritirare la medaglia d'argento", rationale: "Non c'è stato alcun rifiuto della medaglia per motivi legati all'orientamento sessuale.", isCorrect: false },
+                        { text: "Ha rifiutato di ritirare la medaglia d'argento", rationale: "Non c'è stata alcun rifiuto della medaglia per motivi legati all'orientamento sessuale.", isCorrect: false },
                         { text: "Ha portato un gatto randagio sul podio", rationale: "Gus Kenworthy è noto per aver salvato dei cani in Russia, ma il gesto simbolico del 2018 riguardava la sua vita affettiva.", isCorrect: false }
                     ]
                 },
@@ -428,6 +428,8 @@
             const [playerName, setName] = useState(() => sessionStorage.getItem('activePlayerName') || '');
             const [gameState, setGameState] = useState(null);
             const [players, setPlayers] = useState([]);
+            // NEW: Stato personale per il giocatore (per garantire consistenza dati)
+            const [userData, setUserData] = useState(null); 
             const [displayedPlayers, setDisplayedPlayers] = useState([]);
             const [hasAnswered, setHasAnswered] = useState(false);
             const [lastAnswerCorrect, setLastAnswerCorrect] = useState(null);
@@ -470,28 +472,86 @@
                 return () => unsub();
             }, [roomCode, playerName]);
 
+            // --- OPTIMIZATION START: Split Listeners ---
             useEffect(() => {
                 if (!user || !roomCode || !role) return;
                 const code = roomCode.trim().toUpperCase();
+                
+                // 1. Tutti ascoltano la stanza (per stato gioco e ORA ANCHE per classifica aggregata)
                 const unsubRoom = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).onSnapshot(s => {
-                    if (s.exists) setGameState(s.data());
-                    else if (role === 'player') setErrorMessage("Stanza chiusa.");
+                    if (s.exists) {
+                        const data = s.data();
+                        setGameState(data);
+                        // OPTIMIZATION: Se sono un giocatore, prendo la classifica dalla stanza, non scarico la collection players!
+                        if (role === 'player' && data.leaderboard) {
+                            setPlayers(data.leaderboard);
+                        }
+                    } else if (role === 'player') setErrorMessage("Stanza chiusa.");
                 });
-                const unsubPlayers = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').onSnapshot(snap => {
-                    const all = snap.docs.map(d => d.data()).filter(p => p.roomCode === code).sort((a,b) => b.score - a.score);
-                    setPlayers(all);
-                });
-                return () => { unsubRoom(); unsubPlayers(); };
+
+                let unsubPlayers = () => {};
+                let unsubMe = () => {};
+
+                if (role === 'host') {
+                    // HOST: Ascolta TUTTI i giocatori (costoso, ma lo fa solo lui)
+                    unsubPlayers = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').onSnapshot(snap => {
+                        const all = snap.docs.map(d => d.data()).filter(p => p.roomCode === code).sort((a,b) => b.score - a.score);
+                        setPlayers(all);
+                    });
+                } else if (role === 'player') {
+                    // PLAYER: Ascolta SOLO SE STESSO (per avere certezza del proprio punteggio/storico)
+                    unsubMe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${code}_${user.uid}`).onSnapshot(snap => {
+                        if (snap.exists) setUserData(snap.data());
+                    });
+                }
+
+                return () => { unsubRoom(); unsubPlayers(); unsubMe(); };
             }, [user, roomCode, role]);
+
+            // --- OPTIMIZATION: Host Aggregator Debounce ---
+            useEffect(() => {
+                // Solo l'host esegue questa logica
+                if (role === 'host' && players.length > 0) {
+                    // Debounce: Aspetta 1 secondo dopo l'ultimo aggiornamento dei player
+                    const timer = setTimeout(() => {
+                        // Crea una versione leggera della classifica da scrivere nella stanza
+                        const leaderboard = players.map(p => ({
+                            uid: p.uid,
+                            name: p.name,
+                            score: p.score,
+                            // Includiamo dati minimi per logica "Fastest Player" lato client
+                            lastAnswerIndex: p.lastAnswerIndex,
+                            lastQuestionIndexAnswered: p.lastQuestionIndexAnswered,
+                            lastAnsweredAt: p.lastAnsweredAt
+                            // ESCLUSO: answersHistory (pesante e inutile agli altri)
+                        }));
+                        
+                        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({
+                            leaderboard: leaderboard
+                        }).catch(err => console.error("Leaderboard update err", err));
+
+                    }, 1000); // 1 Secondo di ritardo
+                    return () => clearTimeout(timer);
+                }
+            }, [players, role, roomCode]);
+            // --- OPTIMIZATION END ---
 
             useEffect(() => {
                 if (!gameState) return;
                 if (gameState.status === 'lobby' || gameState.showResults || gameState.status === 'finished') {
                     setDisplayedPlayers(players);
+                }
+            }, [players, gameState?.showResults, gameState?.status]);
+
+            // Aggiornamento prevScore ottimizzato: usa i dati personali live se disponibili
+            useEffect(() => {
+                if (userData) {
+                    setPrevScore(userData.score);
+                } else if (players.length > 0) {
                     const me = players.find(p => p.uid === user?.uid);
                     if (me) setPrevScore(me.score);
                 }
-            }, [players, gameState?.showResults, gameState?.status, user?.uid]);
+            }, [userData, players, user?.uid]);
 
             useEffect(() => {
                 if (gameState?.status === 'playing' && !gameState.showResults && gameState.questionStartTime) {
@@ -612,19 +672,19 @@
                 return displayedPlayers.findIndex(p => p.uid === user.uid);
             }, [displayedPlayers, user]);
             
+            // MODIFICATO: Usa userData se disponibile (perché 'players' scaricato dalla stanza non ha history)
             const myHistory = useMemo(() => {
+                if (userData) return userData.answersHistory || {};
                 if (!user || players.length === 0) return {};
                 const me = players.find(p => p.uid === user.uid);
                 return me?.answersHistory || {};
-            }, [players, user]);
+            }, [players, user, userData]);
 
-            // NEW: Filtra la storia per non mostrare spoiler sulla domanda corrente
             const visibleHistory = useMemo(() => {
                 if (!gameState || !myHistory) return {};
                 if (gameState.status === 'finished') return myHistory;
                 
                 const filtered = { ...myHistory };
-                // Se i risultati non sono ancora mostrati, nascondi l'esito della domanda corrente
                 if (!gameState.showResults) {
                     delete filtered[gameState.currentQuestionIndex];
                 }
@@ -894,7 +954,7 @@
                 );
             }
 
-            // --- ECCO IL BLOCCO MANCANTE: INTERFACCIA GIOCATORE ---
+            // --- INTERFACCIA GIOCATORE ---
             if (role === 'player' && gameState) return (
                 <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
                     <header className="bg-white border-b-4 border-[#ffde00] shadow-md font-black flex flex-col">
