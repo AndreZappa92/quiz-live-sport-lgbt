@@ -544,14 +544,26 @@
             }, [players, gameState?.showResults, gameState?.status]);
 
             // Aggiornamento prevScore ottimizzato: usa i dati personali live se disponibili
+            // MODIFICA ANTI-SPOILER: Aggiorna solo quando è "sicuro" farlo
             useEffect(() => {
+                let currentRealScore = 0;
+                
+                // 1. Recupera il punteggio reale attuale dal DB
                 if (userData) {
-                    setPrevScore(userData.score);
+                    currentRealScore = userData.score;
                 } else if (players.length > 0) {
                     const me = players.find(p => p.uid === user?.uid);
-                    if (me) setPrevScore(me.score);
+                    if (me) currentRealScore = me.score;
                 }
-            }, [userData, players, user?.uid]);
+
+                // 2. Logica condizionale per l'aggiornamento UI
+                // Aggiorna SEMPRE se siamo in Lobby o Finito
+                // Se stiamo giocando, aggiorna SOLO se i risultati sono visibili (showResults === true)
+                // Se stiamo giocando e NON ci sono risultati (!showResults), mantieni il vecchio valore (freeze)
+                if (!gameState || gameState.status === 'lobby' || gameState.status === 'finished' || (gameState.status === 'playing' && gameState.showResults)) {
+                    setPrevScore(currentRealScore);
+                }
+            }, [userData, players, user?.uid, gameState?.status, gameState?.showResults]);
 
             useEffect(() => {
                 if (gameState?.status === 'playing' && !gameState.showResults && gameState.questionStartTime) {
