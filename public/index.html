@@ -736,13 +736,48 @@
                                     alert("Errore di connessione. Riprova.");
                                 }
                             }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl active:scale-95 transition-all shadow-md">Partecipa</button>
-                            <button onClick={async () => {
-                                const code = Math.random().toString(36).substring(2,6).toUpperCase();
-                                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
-                                    code, status: 'lobby', currentQuestionIndex: 0, showResults: false, hostId: user.uid, createdAt: Date.now(), questionStartTime: 0
-                                });
-                                sessionStorage.setItem('activeRoom', code); sessionStorage.setItem('activeRole', 'host'); setRoomCode(code); setRole('host');
-                            }} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-sm uppercase font-black">Crea Stanza Host</button>
+							<button onClick={async () => {
+								try {
+									// 1. Avvia il Login con Google (Popup)
+									const provider = new firebase.auth.GoogleAuthProvider();
+									await auth.signInWithPopup(provider);
+									
+									// 2. Controllo di sicurezza lato client (Opzionale ma utile per UX)
+									// Sostituisci con la tua email vera!
+									const myEmail = 'latuaemail@gmail.com'; 
+									
+									if (auth.currentUser.email !== myEmail) {
+										alert("Accesso negato: Questo account Google non è autorizzato a fare l'Host.");
+										await auth.signOut();
+										return;
+									}
+
+									// 3. Se sei tu, crea la stanza
+									const code = Math.random().toString(36).substring(2,6).toUpperCase();
+									
+									await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
+										code, 
+										status: 'lobby', 
+										currentQuestionIndex: 0, 
+										showResults: false, 
+										hostId: auth.currentUser.uid, // Ora salviamo il tuo UID reale di Google
+										hostEmail: auth.currentUser.email, // Utile per debug
+										createdAt: Date.now(), 
+										questionStartTime: 0
+									});
+
+									sessionStorage.setItem('activeRoom', code); 
+									sessionStorage.setItem('activeRole', 'host'); 
+									setRoomCode(code); 
+									setRole('host');
+
+								} catch (e) {
+									console.error(e);
+									alert("Errore durante il login: " + e.message);
+								}
+							}} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-sm uppercase font-black hover:bg-blue-50 transition-colors">
+								Crea Stanza Host (Login Google)
+							</button>
                         </div>
                     </div>
                 </div>
