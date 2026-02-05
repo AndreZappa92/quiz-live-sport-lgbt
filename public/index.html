@@ -1049,8 +1049,8 @@
                                 {hasAnswered ? (
                                     <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black font-black">
                                         <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4 font-black" />
-                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black font-black">Hai risposto</h2>
-                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black font-black">Guarda lo schermo principale</p>
+                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black font-black">OK, CI SIAMO!</h2>
+                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black font-black">A breve sveleremo la risposta</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 gap-5 flex-1 font-black">
@@ -1070,7 +1070,7 @@
                                     <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={48} />
                                 </div>
                                 <h2 className="text-3xl uppercase mb-4 leading-none font-black text-center font-black">
-                                    {lastAnswerCorrect === true ? 'ESATTO!' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO' : 'ERRATA')}
+                                    {lastAnswerCorrect === true ? 'RISPOSTA ESATTA 🎉' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO ⌛' : 'RISPOSTA ERRATA 🙁')}
                                 </h2>
                                 <div className="w-full space-y-4 font-black">
                                     {lastAnswerCorrect === true ? (
@@ -1110,7 +1110,15 @@
                                 )}
                                 
                                 <h2 className="text-4xl uppercase tracking-tighter leading-tight font-black mb-2 font-black text-[#0054a6]">QUIZ FINITO!</h2>
-                                <p className="text-lg text-gray-500 mb-1 font-bold font-black">Grazie per aver giocato con noi ❤️</p>
+
+                                <p className="text-lg text-[#0054a6] font-black uppercase tracking-widest mb-6">
+                                    Risposte Esatte: {Object.values(myHistory).filter(v => v === true).length}/10
+                                </p>
+								
+								<p className="text-lg text-gray-500 mb-1 font-bold font-black">
+									Grazie per aver giocato con noi ❤️
+								</p>
+								
 								<p className="text-lg text-gray-500 font-bold flex items-center flex-wrap gap-1">
 								Segui
 								<a href="https://www.instagram.com/prontocig/" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white font-black hover:shadow-lg hover:shadow-pink-500/30 transition-all duration-300 hover:-translate-y-0.5">
@@ -1134,9 +1142,6 @@
 								</a>
 								su Instagram!
 								</p>
-                                <p className="text-lg text-[#0054a6] font-black uppercase tracking-widest mb-6">
-                                    Risposte Esatte: {Object.values(myHistory).filter(v => v === true).length}/10
-                                </p>
                                 
                                 <div className="bg-white p-4 rounded-[2rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center font-black font-black">
                                     <div className="flex flex-col items-center justify-center gap-1 font-black font-black">
