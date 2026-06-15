@@ -192,7 +192,7 @@
         );
 
         const LogoArcigay = ({ className }) => <img src="/logoCIG.png" alt="Logo CIG" className={className} style={{ width: 'auto' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://www.arcigaymilano.org/wp-content/themes/arcigay-milano/assets/images/logo.png"; }} />;
-        const LogoPrideHouse = ({ className }) => <img src="/logo_psa.png" alt="Logo Pride Sport Arena" className={className} />;
+        const LogoPrideHouse = ({ className }) => <img src="/logo_psa.png?v=2" alt="Logo Pride Sport Arena" className={className} />;
 
         // --- CONFIGURAZIONE FIREBASE ---
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIzaSyDOWS0ZMGxhj6ATL6FFycR-DATvuYug3WM", authDomain: "quiz-live-sport-lgbt.firebaseapp.com", projectId: "quiz-live-sport-lgbt", storageBucket: "quiz-live-sport-lgbt.firebasestorage.app", messagingSenderId: "741735100972", appId: "1:741735100972:web:6040adbb5b040257931789", measurementId: "G-47N6SFEWZG" };
@@ -493,12 +493,15 @@
                 return filtered;
             }, [myHistory, gameState]);
 
+            // Costante che indica quando nascondere la barra in alto per i giocatori
+            const isPlayerAnsweringActive = role === 'player' && gameState?.status === 'playing' && !gameState?.showResults;
+
             // --- LOGIN SCHERMATA ---
             if (!role) return (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
                         <LogoArcigay className="h-24 mx-auto mb-6 object-contain" />
-                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Queer Quiz Pride Sport Arena</h1>
+                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Queer Quiz con La Wanda!</h1>
                         <div className="space-y-5">
                             <input type="text" placeholder="Nome" className="w-full border-2 p-4 rounded-2xl text-center text-xl font-bold" value={playerName} onChange={e => setName(e.target.value)} />
                             <input type="text" placeholder="Codice Stanza" className="w-full border-2 p-4 rounded-2xl text-center uppercase text-2xl font-mono" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
@@ -794,17 +797,21 @@
 
                 return (
                     <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
-                        <header className="bg-white border-b-4 border-[#ffde00] shadow-md flex flex-col z-10">
-                            <div className="p-4 flex justify-between items-center">
-                                <div className="flex items-center gap-2"><LogoArcigay className="h-8 object-contain" /><span className="text-[#0054a6] text-lg font-black">X</span><LogoPrideHouse className="h-10 object-contain" /></div>
-                                <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white shadow-sm font-black">
-                                    <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0"><Icon name={rankInfo.icon} size={18} className={rankInfo.icon === 'coins' ? 'text-white' : rankInfo.color} /></div>
-                                    <span className="text-xl font-mono leading-none">{prevScore}</span>
+                        
+                        {/* Nascondiamo completamente l'Header solo mentre si sta leggendo/rispondendo per massimizzare lo spazio verticale su Mobile */}
+                        {!isPlayerAnsweringActive && (
+                            <header className="bg-white border-b-4 border-[#ffde00] shadow-md flex flex-col z-10 shrink-0">
+                                <div className="p-4 flex justify-between items-center">
+                                    <div className="flex items-center gap-2"><LogoArcigay className="h-8 object-contain" /><span className="text-[#0054a6] text-lg font-black">X</span><LogoPrideHouse className="h-10 object-contain" /></div>
+                                    <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white shadow-sm font-black">
+                                        <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0"><Icon name={rankInfo.icon} size={18} className={rankInfo.icon === 'coins' ? 'text-white' : rankInfo.color} /></div>
+                                        <span className="text-xl font-mono leading-none">{prevScore}</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="bg-gray-100 text-[#0054a6] py-1 text-center text-sm font-black uppercase tracking-widest border-t border-gray-200">Player: <span className="text-black">{playerName}</span></div>
-                            <div className="bg-gray-50 border-b border-gray-200 py-1"><QuestionStatusBar history={visibleHistory} currentIndex={gameState.status === 'playing' ? gameState.currentQuestionIndex : -1} /></div>
-                        </header>
+                                <div className="bg-gray-100 text-[#0054a6] py-1 text-center text-sm font-black uppercase tracking-widest border-t border-gray-200">Player: <span className="text-black">{playerName}</span></div>
+                                <div className="bg-gray-50 border-b border-gray-200 py-1"><QuestionStatusBar history={visibleHistory} currentIndex={gameState.status === 'playing' ? gameState.currentQuestionIndex : -1} /></div>
+                            </header>
+                        )}
 
                         <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black relative overflow-hidden">
                             {gameState.status === 'finished' && myRankIndex >= 0 && myRankIndex <= 2 && <Confetti />}
@@ -833,34 +840,38 @@
                             )}
 
                             {gameState.status === 'playing' && !gameState.showResults && (
-                                <div className="w-full max-w-md flex flex-col gap-4 h-full py-2">
-                                    <div className="flex items-center justify-center gap-3">
-                                        <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-[#0054a6]'} />
-                                        <span className={`text-5xl font-mono ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
+                                <div className="w-full max-w-md flex flex-col gap-2 h-full py-1 justify-center">
+                                    <div className="flex items-center justify-between px-2">
+                                        <div className="flex items-center gap-2">
+                                            <Icon name="clock" size={24} className={timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-[#0054a6]'} />
+                                            <span className={`text-3xl font-mono ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
+                                        </div>
+                                        {/* Ricorda il numero di domanda visto che abbiamo nascosto l'header in questa fase */}
+                                        <span className="text-sm font-black text-[#0054a6] uppercase">Domanda {gameState.currentQuestionIndex + 1}/10</span>
                                     </div>
                                     
                                     {isMobileMode && (
-                                        <div className="bg-white p-5 rounded-[2rem] shadow-sm border-2 border-gray-100 text-justify text-lg leading-tight text-[#0054a6]">
+                                        <div className="bg-white p-3 rounded-2xl shadow-sm border-2 border-gray-100 text-justify text-base leading-tight text-[#0054a6]">
                                             {q.question}
                                         </div>
                                     )}
 
                                     {hasAnswered ? (
-                                        <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10">
-                                            <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4" />
-                                            <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none">OK, CI SIAMO!</h2>
-                                            <p className="text-gray-400 mt-4 text-xs tracking-[0.2em] uppercase">A breve sveleremo la risposta</p>
+                                        <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-3xl shadow-inner animate-pulse p-6">
+                                            <Icon name="loader2" size={48} className="animate-spin text-[#0054a6]/40 mb-3" />
+                                            <h2 className="text-3xl uppercase text-[#0054a6]/60 leading-none">OK, CI SIAMO!</h2>
+                                            <p className="text-gray-400 mt-3 text-xs tracking-[0.2em] uppercase">A breve sveleremo la risposta</p>
                                         </div>
                                     ) : (
-                                        <div className={`grid gap-3 flex-1 ${isMobileMode ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                                        <div className={`grid gap-2 flex-1 ${isMobileMode ? 'grid-cols-1' : 'grid-cols-2'}`}>
                                             {q.options.map((o, i) => {
                                                 const isYellow = i === 3;
                                                 return (
-                                                    <button key={i} onClick={() => submitAnswer(i)} className={`w-full rounded-[2rem] ${COLORS[i]} shadow-xl border-b-8 border-black/20 active:translate-y-2 active:shadow-none transition-all flex ${isMobileMode ? 'items-center p-4 text-left' : 'items-center justify-center text-6xl'} ${isMobileMode && isYellow ? 'text-[#0054a6]' : 'text-white'}`}>
-                                                        <div className={`flex items-center justify-center shrink-0 ${isMobileMode ? 'w-12 h-12 rounded-xl bg-white/20 mr-4 text-2xl shadow-inner' : ''}`}>
+                                                    <button key={i} onClick={() => submitAnswer(i)} className={`w-full rounded-2xl ${COLORS[i]} shadow-md border-b-4 border-black/20 active:translate-y-1 active:shadow-none transition-all flex ${isMobileMode ? 'items-center p-2 text-left' : 'items-center justify-center text-5xl'} ${isMobileMode && isYellow ? 'text-[#0054a6]' : 'text-white'}`}>
+                                                        <div className={`flex items-center justify-center shrink-0 ${isMobileMode ? 'w-10 h-10 rounded-xl bg-white/20 mr-3 text-xl shadow-inner font-black' : ''}`}>
                                                             {String.fromCharCode(65 + i)}
                                                         </div>
-                                                        {isMobileMode && <span className="text-base leading-tight font-bold">{o.text}</span>}
+                                                        {isMobileMode && <span className="text-sm leading-tight font-bold">{o.text}</span>}
                                                     </button>
                                                 );
                                             })}
