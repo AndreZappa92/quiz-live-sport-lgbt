@@ -246,6 +246,9 @@
             const [startingTime, setStartingTime] = useState(5);
             const [isHostMenuOpen, setIsHostMenuOpen] = useState(false); 
 
+            // Player sync wait time
+            const [localWaitTime, setLocalWaitTime] = useState(5);
+
             // Stati per Accessibilità
             const [isFullscreen, setIsFullscreen] = useState(false);
             const [textSizeIdx, setTextSizeIdx] = useState(0); // 0: Normal, 1: Large, 2: X-Large
@@ -413,6 +416,18 @@
                     return () => clearInterval(interval);
                 }
             }, [isStarting, roomCode]);
+
+            // Countdown locale reattivo per i giocatori
+            useEffect(() => {
+                if (role === 'player' && (gameState?.status === 'intermission' || gameState?.status === 'starting')) {
+                    setLocalWaitTime(5);
+                    const interval = setInterval(() => {
+                        setLocalWaitTime(prev => Math.max(0, prev - 1));
+                    }, 1000);
+                    return () => clearInterval(interval);
+                }
+            }, [gameState?.status, role]);
+
 
             const submitAnswer = async (i) => {
                 if (hasAnswered || timeLeft === 0 || !gameState || gameState.showResults) return;
@@ -826,7 +841,8 @@
                             <header className={`${isMobileMode && isHighContrast ? 'bg-black border-white' : 'bg-white border-[#ffde00]'} border-b-4 shadow-md flex flex-col z-10 shrink-0`}>
                                 <div className="px-3 py-2 flex justify-between items-center">
                                     <div className="flex items-center gap-1.5">
-                                        <LogoArcigay className="h-5 object-contain" />
+                                        {/* Il logo CIG viene invertito tramite CSS se c'è l'Alto Contrasto */}
+                                        <LogoArcigay className={`h-5 object-contain ${isMobileMode && isHighContrast ? 'invert' : ''}`} />
                                         <span className={`${isMobileMode && isHighContrast ? 'text-white' : 'text-[#0054a6]'} text-sm font-black opacity-50`}>X</span>
                                         <LogoPrideHouse className="h-7 object-contain" />
                                     </div>
@@ -891,17 +907,25 @@
 
                             {gameState.status === 'starting' && (
                                 <div className="flex-1 flex flex-col items-center justify-center animate-fade-in w-full text-center p-6">
-                                    <Icon name="loader2" size={64} className={`animate-spin mb-8 ${isMobileMode && isHighContrast ? 'text-white/50' : 'text-[#0054a6]/50'}`} />
-                                    <h2 className={`text-4xl font-black uppercase tracking-tighter mb-2 ${isMobileMode && isHighContrast ? 'text-white' : 'text-[#0054a6]'}`}>Preparati!</h2>
-                                    <p className={`uppercase tracking-widest text-sm ${isMobileMode && isHighContrast ? 'text-gray-400' : 'text-gray-500'}`}>Il quiz sta per iniziare...</p>
+                                    <h2 className={`text-4xl md:text-5xl font-black uppercase tracking-tighter mb-6 ${isMobileMode && isHighContrast ? 'text-white' : 'text-[#0054a6]'}`}>
+                                        Preparati!
+                                    </h2>
+                                    <div className={`text-8xl md:text-9xl font-mono font-black animate-pulse ${isMobileMode && isHighContrast ? 'text-white' : 'text-[#0054a6]'}`}>
+                                        {localWaitTime}
+                                    </div>
+                                    <Icon name="loader2" size={48} className={`animate-spin mt-10 ${isMobileMode && isHighContrast ? 'text-white/20' : 'text-[#0054a6]/20'}`} />
                                 </div>
                             )}
 
                             {gameState.status === 'intermission' && (
                                 <div className="flex-1 flex flex-col items-center justify-center animate-fade-in w-full text-center p-6">
-                                    <Icon name="loader2" size={64} className={`animate-spin mb-8 ${isMobileMode && isHighContrast ? 'text-white/50' : 'text-[#0054a6]/50'}`} />
-                                    <h2 className={`text-4xl font-black uppercase tracking-tighter mb-2 ${isMobileMode && isHighContrast ? 'text-white' : 'text-[#0054a6]'}`}>Ottimo Lavoro!</h2>
-                                    <p className={`uppercase tracking-widest text-sm ${isMobileMode && isHighContrast ? 'text-gray-400' : 'text-gray-500'}`}>In attesa della prossima domanda...</p>
+                                    <h2 className={`text-3xl md:text-4xl font-black uppercase tracking-tighter mb-6 ${isMobileMode && isHighContrast ? 'text-white' : 'text-[#0054a6]'}`}>
+                                        Prossima<br/>Domanda tra
+                                    </h2>
+                                    <div className={`text-8xl md:text-9xl font-mono font-black animate-pulse ${isMobileMode && isHighContrast ? 'text-white' : 'text-[#0054a6]'}`}>
+                                        {localWaitTime}
+                                    </div>
+                                    <Icon name="loader2" size={48} className={`animate-spin mt-10 ${isMobileMode && isHighContrast ? 'text-white/20' : 'text-[#0054a6]/20'}`} />
                                 </div>
                             )}
 
