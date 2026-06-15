@@ -102,7 +102,6 @@
                 const bgMusic = bgMusicRef.current;
                 const status = gameState?.status;
                 const showResults = gameState?.showResults;
-                // Modifica: la musica di sottofondo suona anche durante i nuovi status 'starting'
                 const shouldPlayBg = (status === 'lobby' || status === 'starting' || (status === 'playing' && !showResults)) && status !== 'finished' && status !== 'intermission';
 
                 if (shouldPlayBg) {
@@ -242,7 +241,7 @@
             const [intermissionTime, setIntermissionTime] = useState(5);
             const [isStarting, setIsStarting] = useState(false);
             const [startingTime, setStartingTime] = useState(5);
-            const [isHostMenuOpen, setIsHostMenuOpen] = useState(false); // Nuovo stato Host per menu Mobile
+            const [isHostMenuOpen, setIsHostMenuOpen] = useState(false); 
 
             const isMobileMode = gameState?.quizMode === 'mobile';
 
@@ -353,7 +352,6 @@
                 }
             }, [gameState?.currentQuestionIndex, gameState?.showResults]);
 
-            // Host Countdown logiche aggiornate per scrivere nel DB
             useEffect(() => {
                 if (isIntermission) {
                     setIntermissionTime(5);
@@ -415,7 +413,6 @@
                     if (gameState.currentQuestionIndex === 9) {
                         db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
                     } else {
-                        // DB status intermission per i giocatori
                         db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'intermission'});
                         setIsIntermission(true);
                     }
@@ -556,28 +553,41 @@
                             </div>
                         )}
 
-                        <header className="flex justify-between items-center bg-white p-4 border-b shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <LogoArcigay className="h-12 object-contain" />
-                                <span className="text-[#0054a6] text-xl font-black">X</span>
-                                <LogoPrideHouse className="h-14 object-contain" />
-                            </div>
-                            <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center">
-                                <Icon name="users" size={20}/> <span className="text-xl font-black">{players.length}</span>
-                            </div>
-                        </header>
+                        {/* Header condizionale (nascosto in lobby mobile) */}
+                        {!(isMobileMode && gameState.status === 'lobby') && (
+                            <header className="flex justify-between items-center bg-white p-4 border-b shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <LogoArcigay className="h-12 object-contain" />
+                                    <span className="text-[#0054a6] text-xl font-black">X</span>
+                                    <LogoPrideHouse className="h-14 object-contain" />
+                                </div>
+                                <div className="bg-[#0054a6] text-white px-5 py-2 rounded-full flex gap-3 items-center">
+                                    <Icon name="users" size={20}/> <span className="text-xl font-black">{players.length}</span>
+                                </div>
+                            </header>
+                        )}
                         
-                        <div className="flex-1 flex gap-6 p-6 overflow-hidden relative">
+                        <div className={`flex-1 flex gap-6 overflow-hidden relative ${!(isMobileMode && gameState.status === 'lobby') ? 'p-6' : ''}`}>
                             {/* HOST: MODALITÀ MOBILE */}
-                            {isMobileMode && gameState.status !== 'lobby' && gameState.status !== 'finished' ? (
+                            {isMobileMode && gameState.status !== 'finished' ? (
                                 <div className="flex-1 flex flex-col items-center justify-center w-full relative">
-                                    <h2 className="text-4xl text-[#0054a6] font-black uppercase mb-8 text-center max-w-4xl px-4 leading-tight">
-                                        {gameState.showResults ? "TEMPO SCADUTO! GUARDA IL TUO SMARTPHONE" : (gameState.status === 'starting' ? "INIZIO IMMINENTE" : "LEGGI LA DOMANDA SUL TUO SMARTPHONE")}
-                                    </h2>
-                                    <div className="p-8 bg-white rounded-[3rem] shadow-2xl border-4 border-gray-100 flex flex-col items-center">
-                                        <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} className="w-80 h-80 rounded-2xl mb-6" />
-                                        <p className="text-6xl text-[#0054a6] font-mono font-black tracking-widest">{roomCode}</p>
-                                    </div>
+                                    {gameState.status === 'lobby' ? (
+                                        // SOLO QR CODE GIGANTE IN LOBBY MOBILE
+                                        <div className="w-full h-full flex items-center justify-center p-8 bg-white">
+                                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=800x800&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=0`} className="w-full max-h-[85vh] object-contain" alt="QR Code" />
+                                        </div>
+                                    ) : (
+                                        // UI DI GIOCO HOST MOBILE
+                                        <div className="flex-1 flex flex-col items-center justify-center w-full relative">
+                                            <h2 className="text-4xl text-[#0054a6] font-black uppercase mb-8 text-center max-w-4xl px-4 leading-tight">
+                                                {gameState.showResults ? "TEMPO SCADUTO! GUARDA IL TUO SMARTPHONE" : (gameState.status === 'starting' ? "INIZIO IMMINENTE" : "LEGGI LA DOMANDA SUL TUO SMARTPHONE")}
+                                            </h2>
+                                            <div className="p-8 bg-white rounded-[3rem] shadow-2xl border-4 border-gray-100 flex flex-col items-center">
+                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} className="w-80 h-80 rounded-2xl mb-6" />
+                                                <p className="text-6xl text-[#0054a6] font-mono font-black tracking-widest">{roomCode}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                     
                                     {/* FAB Menu per Host Mobile */}
                                     <button onClick={() => setIsHostMenuOpen(true)} className="absolute bottom-4 right-4 md:bottom-8 md:right-8 bg-[#0054a6] text-white p-6 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all z-40">
@@ -588,50 +598,84 @@
                                     {isHostMenuOpen && (
                                         <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm">
                                             <div className="w-full max-w-[400px] bg-white h-full shadow-2xl flex flex-col animate-slide-in-right relative">
-                                                <button onClick={() => setIsHostMenuOpen(false)} className="absolute top-6 left-6 p-2 text-gray-400 hover:text-black">
+                                                <button onClick={() => setIsHostMenuOpen(false)} className="absolute top-6 left-6 p-2 text-gray-400 hover:text-black z-10">
                                                     <Icon name="close" size={32} />
                                                 </button>
                                                 <div className="p-6 pt-24 flex flex-col h-full overflow-hidden">
                                                     
-                                                    {/* Statistiche Menu */}
-                                                    <div className="flex justify-between items-center bg-gray-100 p-5 rounded-2xl mb-6 shadow-inner">
-                                                        <div className="flex items-center gap-2">
-                                                            <Icon name="checkSquare" size={28} className="text-[#0054a6]" />
-                                                            <span className="text-3xl font-black text-[#0054a6]">{answersCount}/{players.length}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'} />
-                                                            <span className={`text-3xl font-mono font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Pulsante Azione */}
-                                                    <button onClick={() => {
-                                                        handleHostAction();
-                                                        setIsHostMenuOpen(false); // Chiudi il menu per pulizia
-                                                    }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-2xl uppercase font-black shadow-xl active:scale-95 flex items-center justify-center gap-4 transition-all mb-6">
-                                                        {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={28} />
-                                                    </button>
-
-                                                    {/* Classifica Host Rapida */}
-                                                    <div className="flex-1 bg-gray-50 rounded-[2rem] border-2 border-gray-100 p-4 flex flex-col overflow-hidden">
-                                                        <h3 className="text-sm text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica Live</h3>
-                                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
-                                                            {displayedPlayers.slice(0, 15).map((p, i) => (
-                                                                <div key={p.uid} className="flex justify-between items-center p-3 bg-white rounded-xl border font-black text-sm">
-                                                                    <span className="truncate max-w-[150px] uppercase">{!p.score ? "NC" : (i+1) + "."} {p.name}</span>
-                                                                    <span className="font-mono text-[#0054a6]">{p.score}</span>
+                                                    {gameState.status === 'lobby' ? (
+                                                        <Fragment>
+                                                            <div className="flex items-center justify-between mb-6">
+                                                                <h3 className="text-2xl font-black text-[#0054a6] uppercase tracking-widest">Lobby</h3>
+                                                                <div className="bg-[#0054a6] text-white px-4 py-1.5 rounded-full flex gap-2 items-center shadow-md">
+                                                                    <Icon name="users" size={18}/> <span className="font-black">{players.length}</span>
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
+                                                            </div>
+                                                            
+                                                            <button onClick={() => { 
+                                                                db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({ status: 'starting' }); 
+                                                                setIsStarting(true);
+                                                                setIsHostMenuOpen(false); 
+                                                            }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-2xl uppercase font-black shadow-xl active:scale-95 transition-all mb-6">
+                                                                Inizia Quiz
+                                                            </button>
+
+                                                            <div className="flex-1 bg-gray-50 rounded-[2rem] border-2 border-gray-100 p-4 flex flex-col overflow-hidden">
+                                                                <h3 className="text-sm text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Codice: {roomCode}</h3>
+                                                                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+                                                                    {players.length === 0 ? (
+                                                                        <p className="text-gray-400 text-center text-sm font-black mt-4">Nessun giocatore</p>
+                                                                    ) : (
+                                                                        players.map(p => (
+                                                                            <div key={p.uid} className="p-3 bg-white rounded-xl border font-black text-sm uppercase text-[#0054a6]">
+                                                                                {p.name}
+                                                                            </div>
+                                                                        ))
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </Fragment>
+                                                    ) : (
+                                                        <Fragment>
+                                                            {/* Statistiche Menu e pulsanti di gioco */}
+                                                            <div className="flex justify-between items-center bg-gray-100 p-5 rounded-2xl mb-6 shadow-inner">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Icon name="checkSquare" size={28} className="text-[#0054a6]" />
+                                                                    <span className="text-3xl font-black text-[#0054a6]">{answersCount}/{players.length}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'} />
+                                                                    <span className={`text-3xl font-mono font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <button onClick={() => {
+                                                                handleHostAction();
+                                                                setIsHostMenuOpen(false); 
+                                                            }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-2xl uppercase font-black shadow-xl active:scale-95 flex items-center justify-center gap-4 transition-all mb-6">
+                                                                {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={28} />
+                                                            </button>
+
+                                                            <div className="flex-1 bg-gray-50 rounded-[2rem] border-2 border-gray-100 p-4 flex flex-col overflow-hidden">
+                                                                <h3 className="text-sm text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica Live</h3>
+                                                                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+                                                                    {displayedPlayers.slice(0, 15).map((p, i) => (
+                                                                        <div key={p.uid} className="flex justify-between items-center p-3 bg-white rounded-xl border font-black text-sm">
+                                                                            <span className="truncate max-w-[150px] uppercase">{!p.score ? "NC" : (i+1) + "."} {p.name}</span>
+                                                                            <span className="font-mono text-[#0054a6]">{p.score}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </Fragment>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                /* HOST: MODALITÀ CLASSICA (Escluso Lobby e Finished) */
+                                /* HOST: MODALITÀ CLASSICA (Escluso Finished) */
                                 <Fragment>
                                     <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black relative overflow-hidden">
                                         {gameState.status !== 'lobby' && (
@@ -772,7 +816,6 @@
                                 </div>
                             )}
 
-                            {/* Stato Sincronizzato con l'Host per evitare schermate vuote */}
                             {gameState.status === 'starting' && (
                                 <div className="flex-1 flex flex-col items-center justify-center animate-fade-in w-full text-center p-6">
                                     <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/50 mb-8" />
@@ -796,7 +839,6 @@
                                         <span className={`text-5xl font-mono ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
                                     </div>
                                     
-                                    {/* Testo Domanda in Mobile Mode */}
                                     {isMobileMode && (
                                         <div className="bg-white p-5 rounded-[2rem] shadow-sm border-2 border-gray-100 text-justify text-lg leading-tight text-[#0054a6]">
                                             {q.question}
@@ -842,7 +884,6 @@
                                             </div>
                                         ) : <div className="text-xl opacity-60 uppercase tracking-widest">0 PUNTI</div>}
                                         
-                                        {/* Spiegazione Risultato in Mobile Mode */}
                                         {isMobileMode && (
                                             <div className="w-full bg-black/15 rounded-[2rem] p-5 text-left border border-white/20 shadow-inner mt-4">
                                                 <p className="text-[10px] uppercase tracking-widest opacity-80 mb-2 font-bold">La Risposta Corretta Era:</p>
