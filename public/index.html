@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pride House Quiz - CIG Arcigay Milano</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-    <!-- React & Babel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -18,8 +15,13 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .animate-slide-in-right { animation: slideInRight 0.3s ease-out forwards; }
+
         body { -webkit-tap-highlight-color: transparent; }
         .text-justify { text-align: justify; text-justify: inter-word; }
 
@@ -50,21 +52,14 @@
 
         // --- CONFIGURAZIONE AUDIO ---
         const ANSWER_AUDIO_FILES = {
-            0: "SanFrancisco.mp3", 
-            1: "Freedom90.mp3",    
-            2: "RainOnMe.mp3",     
-            3: "StillStanding.mp3",
-            4: "TheMan.mp3",
-            5: "OneLove.mp3",
-            6: "WatermelonSugar.mp3",
-            7: "Euphoria.mp3",
-            8: "MysteryOfLove.mp3",
-            9: "TrueColors.mp3"
+            0: "SanFrancisco.mp3", 1: "Freedom90.mp3", 2: "RainOnMe.mp3", 3: "StillStanding.mp3",
+            4: "TheMan.mp3", 5: "OneLove.mp3", 6: "WatermelonSugar.mp3", 7: "Euphoria.mp3",
+            8: "MysteryOfLove.mp3", 9: "TrueColors.mp3"
         };
         const BG_MUSIC_FILE = "ok_prezzo_giusto.mp3";
         const FINISHED_MUSIC_FILE = "HigherLove.mp3";
 
-        // --- COMPONENTE GESTIONE AUDIO HOST (ISOLATO) ---
+        // --- COMPONENTE GESTIONE AUDIO HOST ---
         const HostAudioManager = ({ gameState, isIntermission }) => {
             const bgMusicRef = useRef(new Audio(BG_MUSIC_FILE));
             const answerAudioRef = useRef(new Audio());
@@ -73,123 +68,83 @@
             
             useEffect(() => {
                 const bg = bgMusicRef.current;
-                bg.loop = true;
-                bg.volume = 0.5;
-
+                bg.loop = true; bg.volume = 0.5;
                 const fin = finishedMusicRef.current;
-                fin.loop = true;
-                fin.volume = 0.5;
-                
+                fin.loop = true; fin.volume = 0.5;
                 return () => {
-                    bg.pause();
-                    answerAudioRef.current.pause();
-                    fin.pause();
+                    bg.pause(); answerAudioRef.current.pause(); fin.pause();
                     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
                 };
             }, []);
 
             const fadeAudioTo = (targetAudio, targetVolume, duration = 2000) => {
                 if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                
                 if (targetVolume > 0 && targetAudio.paused) {
                     targetAudio.volume = 0;
                     targetAudio.play().catch(e => console.log("Audio play prevented", e));
                 }
-
                 const stepTime = 50; 
                 const steps = duration / stepTime;
                 const volStep = (targetVolume - targetAudio.volume) / steps;
 
                 fadeIntervalRef.current = setInterval(() => {
                     let newVol = targetAudio.volume + volStep;
-                    if (newVol > 1) newVol = 1;
-                    if (newVol < 0) newVol = 0;
-                    
-                    const isFinished = (volStep > 0 && newVol >= targetVolume) || (volStep < 0 && newVol <= targetVolume);
-                    
-                    if (isFinished) {
+                    if (newVol > 1) newVol = 1; if (newVol < 0) newVol = 0;
+                    if ((volStep > 0 && newVol >= targetVolume) || (volStep < 0 && newVol <= targetVolume)) {
                         targetAudio.volume = targetVolume;
                         clearInterval(fadeIntervalRef.current);
-                        if (targetVolume === 0) {
-                            targetAudio.pause();
-                            targetAudio.currentTime = 0;
-                        }
-                    } else {
-                        targetAudio.volume = newVol;
-                    }
+                        if (targetVolume === 0) { targetAudio.pause(); targetAudio.currentTime = 0; }
+                    } else { targetAudio.volume = newVol; }
                 }, stepTime);
             };
 
-            // LOGICA: Musica di Sottofondo
             useEffect(() => {
                 const bgMusic = bgMusicRef.current;
                 const status = gameState?.status;
                 const showResults = gameState?.showResults;
-                
-                // Suona se siamo in Lobby OPPURE se stiamo giocando (NON risultati) E NON siamo in intermission E NON è finito
-                // NOTA: isIntermission serve a tenere spenta la BG music mentre sfuma la Answer Music
-                const shouldPlayBg = (status === 'lobby' || (status === 'playing' && !showResults && !isIntermission)) && status !== 'finished';
+                // Modifica: la musica di sottofondo suona anche durante i nuovi status 'starting'
+                const shouldPlayBg = (status === 'lobby' || status === 'starting' || (status === 'playing' && !showResults)) && status !== 'finished' && status !== 'intermission';
 
                 if (shouldPlayBg) {
-                    if (bgMusic.paused || (status === 'playing' && !showResults && !isIntermission && bgMusic.currentTime > 0)) {
-                         bgMusic.currentTime = 0;
-                         bgMusic.volume = 0.5;
+                    if (bgMusic.paused || (status === 'playing' && !showResults && bgMusic.currentTime > 0)) {
+                         bgMusic.currentTime = 0; bgMusic.volume = 0.5;
                          bgMusic.play().catch(e => console.warn("BG Play Error:", e));
                     }
-                } else {
-                    bgMusic.pause();
-                }
+                } else { bgMusic.pause(); }
             }, [gameState?.status, gameState?.showResults, isIntermission]);
 
-            // LOGICA: Musica Risposte
             useEffect(() => {
                 const answerAudio = answerAudioRef.current;
                 const isShowingResults = gameState?.status === 'playing' && gameState?.showResults;
                 
                 if (gameState?.status === 'finished') {
                     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                    answerAudio.pause();
-                    answerAudio.currentTime = 0;
-                    return;
+                    answerAudio.pause(); answerAudio.currentTime = 0; return;
                 }
 
-                // MODIFICA: Fade out di 3 secondi durante l'intermission (countdown cambio domanda)
-                if (isIntermission) {
-                    fadeAudioTo(answerAudio, 0, 3000); 
-                    return;
+                if (isIntermission || gameState?.status === 'intermission') {
+                    fadeAudioTo(answerAudio, 0, 3000); return;
                 }
 
                 if (isShowingResults) {
                     const trackName = ANSWER_AUDIO_FILES[gameState.currentQuestionIndex];
                     if (trackName) {
-                        if (!answerAudio.src.includes(trackName)) {
-                            answerAudio.src = trackName;
-                            answerAudio.loop = true;
-                        }
+                        if (!answerAudio.src.includes(trackName)) { answerAudio.src = trackName; answerAudio.loop = true; }
                         fadeAudioTo(answerAudio, 0.5, 2000);
                     }
                 } else {
-                    // Se non siamo in intermission e non stiamo mostrando i risultati, assicurati che sia spenta
-                    // (caso fallback se il fade non fosse finito)
-                    if (!answerAudio.paused && answerAudio.volume > 0) {
-                        fadeAudioTo(answerAudio, 0, 500); 
-                    }
+                    if (!answerAudio.paused && answerAudio.volume > 0) fadeAudioTo(answerAudio, 0, 500); 
                 }
             }, [gameState?.status, gameState?.showResults, gameState?.currentQuestionIndex, isIntermission]);
 
-            // LOGICA: Musica Finale (Podio)
             useEffect(() => {
                 const finMusic = finishedMusicRef.current;
                 if (gameState?.status === 'finished') {
                     if (finMusic.paused) {
-                        finMusic.currentTime = 0;
-                        finMusic.play().catch(e => console.log("Fin music err", e));
+                        finMusic.currentTime = 0; finMusic.play().catch(e => console.log("Fin music err", e));
                         fadeAudioTo(finMusic, 0.6, 2000);
                     }
-                } else {
-                    finMusic.pause();
-                    finMusic.currentTime = 0;
-                }
+                } else { finMusic.pause(); finMusic.currentTime = 0; }
             }, [gameState?.status]);
 
             return null;
@@ -198,21 +153,8 @@
         // --- COMPONENTE ICONE ---
         const Icon = ({ name, size = 24, className = "", style = {} }) => {
             const icons = {
-                trophy: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                         <path d="M8 21h8" /> 
-                         <path d="M12 13v8" /> 
-                         <path d="M8 3h8v6a4 4 0 0 1-8 0V3z" /> 
-                         <path d="M8 6H6a2 2 0 0 0 0 4h2" /> 
-                         <path d="M16 6h2a2 2 0 0 1 0 4h-2" /> 
-                    </g>
-                ),
-                coins: (
-                    <g fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8l1.5 3h3.5l-2.5 2 1 3.5-3.5-2-3.5 2 1-3.5-2.5-2h3.5z" />
-                    </g>
-                ),
+                trophy: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8" /><path d="M12 13v8" /><path d="M8 3h8v6a4 4 0 0 1-8 0V3z" /><path d="M8 6H6a2 2 0 0 0 0 4h2" /><path d="M16 6h2a2 2 0 0 1 0 4h-2" /></g>,
+                coins: <g fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 8l1.5 3h3.5l-2.5 2 1 3.5-3.5-2-3.5 2 1-3.5-2.5-2h3.5z" /></g>,
                 users: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></g>,
                 chevronRight: <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>,
                 checkCircle: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></g>,
@@ -223,199 +165,57 @@
                 qr: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/></g>,
                 loader2: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></g>,
                 play: <path d="m7 4 12 8-12 8V4z" fill="currentColor"/>,
-                checkSquare: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></g>
+                checkSquare: <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></g>,
+                menu: <path d="M3 12h18M3 6h18M3 18h18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>,
+                close: <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             };
-            return (
-                <svg viewBox="0 0 24 24" width={size} height={size} className={`${className} flex items-center justify-center shrink-0`} style={style}>
-                    {icons[name] || null}
-                </svg>
-            );
+            return <svg viewBox="0 0 24 24" width={size} height={size} className={`${className} flex items-center justify-center shrink-0`} style={style}>{icons[name] || null}</svg>;
         };
 
         const Confetti = () => {
             const pieces = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
-                id: i,
-                left: Math.random() * 100 + '%',
-                delay: Math.random() * 3 + 's',
+                id: i, left: Math.random() * 100 + '%', delay: Math.random() * 3 + 's',
                 color: ['#ffd700', '#c0c0c0', '#cd7f32', '#0054a6', '#e30613'][Math.floor(Math.random() * 5)],
                 size: Math.random() * 6 + 4 + 'px'
             })), []);
-            return (
-                <div className="confetti-container">
-                    {pieces.map(p => (
-                        <div key={p.id} className="confetti-piece" style={{
-                            left: p.left,
-                            backgroundColor: p.color,
-                            width: p.size,
-                            height: p.size,
-                            animationDelay: p.delay
-                        }} />
-                    ))}
-                </div>
-            );
+            return <div className="confetti-container">{pieces.map(p => <div key={p.id} className="confetti-piece" style={{left: p.left, backgroundColor: p.color, width: p.size, height: p.size, animationDelay: p.delay}} />)}</div>;
         };
 
-        const QuestionStatusBar = ({ history, total = 10, currentIndex = -1 }) => {
-            return (
-                <div className="flex justify-center gap-1.5 py-3 w-full max-w-sm mx-auto">
-                    {Array.from({ length: total }).map((_, i) => {
-                        let statusColor = "bg-gray-200 text-gray-400"; // Default: non risposto
-                        
-                        if (history && history[i] !== undefined) {
-                            statusColor = history[i] ? "bg-green-500 text-white shadow-sm" : "bg-red-500 text-white shadow-sm";
-                        } else if (i === currentIndex) {
-                            // Domanda in corso (risultato non ancora mostrato) -> Giallo
-                            statusColor = "bg-[#ffde00] text-[#0054a6] shadow-sm animate-pulse";
-                        }
-
-                        return (
-                            <div key={i} className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${statusColor}`}>
-                                {i + 1}
-                            </div>
-                        );
-                    })}
-                </div>
-            );
-        };
-
-        const LogoArcigay = ({ className }) => (
-            <img src="/logoCIG.png" alt="Logo CIG" className={className} style={{ width: 'auto' }} onError={(e) => {
-                e.target.onerror = null; 
-                e.target.src = "https://www.arcigaymilano.org/wp-content/themes/arcigay-milano/assets/images/logo.png";
-            }} />
+        const QuestionStatusBar = ({ history, total = 10, currentIndex = -1 }) => (
+            <div className="flex justify-center gap-1.5 py-3 w-full max-w-sm mx-auto">
+                {Array.from({ length: total }).map((_, i) => {
+                    let statusColor = "bg-gray-200 text-gray-400";
+                    if (history && history[i] !== undefined) statusColor = history[i] ? "bg-green-500 text-white shadow-sm" : "bg-red-500 text-white shadow-sm";
+                    else if (i === currentIndex) statusColor = "bg-[#ffde00] text-[#0054a6] shadow-sm animate-pulse";
+                    return <div key={i} className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${statusColor}`}>{i + 1}</div>;
+                })}
+            </div>
         );
 
-        const LogoPrideHouse = ({ className }) => (
-            <img src="/logo_ph.png" alt="Logo Pride House" className={className} />
-        );
+        const LogoArcigay = ({ className }) => <img src="/logoCIG.png" alt="Logo CIG" className={className} style={{ width: 'auto' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://www.arcigaymilano.org/wp-content/themes/arcigay-milano/assets/images/logo.png"; }} />;
+        const LogoPrideHouse = ({ className }) => <img src="/logo_ph.png" alt="Logo Pride House" className={className} />;
 
-        // --- CONFIGURAZIONE FIREBASE ADATTIVA ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "AIzaSyDOWS0ZMGxhj6ATL6FFycR-DATvuYug3WM",
-                authDomain: "quiz-live-sport-lgbt.firebaseapp.com",
-                projectId: "quiz-live-sport-lgbt",
-                storageBucket: "quiz-live-sport-lgbt.firebasestorage.app",
-                messagingSenderId: "741735100972",
-                appId: "1:741735100972:web:6040adbb5b040257931789",
-                measurementId: "G-47N6SFEWZG"
-            };
-
+        // --- CONFIGURAZIONE FIREBASE ---
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIzaSyDOWS0ZMGxhj6ATL6FFycR-DATvuYug3WM", authDomain: "quiz-live-sport-lgbt.firebaseapp.com", projectId: "quiz-live-sport-lgbt", storageBucket: "quiz-live-sport-lgbt.firebasestorage.app", messagingSenderId: "741735100972", appId: "1:741735100972:web:6040adbb5b040257931789", measurementId: "G-47N6SFEWZG" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        // Uso __app_id se disponibile per compatibilità con il sistema, altrimenti l'ID originale
+        const auth = firebase.auth(); const db = firebase.firestore();
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'quiz-lgbt-sport-2026';
         
-        // --- MODIFICA TIMER: 60 SECONDI ---
-        const TIMER_SECONDS = 60;
-        const BONUS_POINTS = 200; // Bonus per il più veloce
+        const TIMER_SECONDS = 60; const BONUS_POINTS = 200;
 
-        // --- DATI QUIZ RIEQUILIBRATI (3A, 3B, 2C, 2D) - ORDINE MIXATO ---
         const QUIZ_DATA = {
             title: "Sport e Inclusione: LGBTQIA+",
             questions: [
-                {
-                    id: 1, // Correct: C
-                    question: "In quale città e in quale anno si sono tenuti i primi Gay Games, l'evento multisportivo internazionale dedicato alla comunità LGBTQIA+?",
-                    options: [
-                        { text: "Amsterdam, 1998", rationale: "Amsterdam ha ospitato un'edizione molto famosa, ma non è stata la città d'esordio.", isCorrect: false },
-                        { text: "New York, 1969", rationale: "Il 1969 è l'anno dei moti di Stonewall, ma la prima manifestazione sportiva ufficiale arrivò oltre un decennio dopo.", isCorrect: false },
-                        { text: "San Francisco, 1982", rationale: "Fondati da Tom Waddell, l'obiettivo era promuovere lo spirito di inclusione e partecipazione attraverso lo sport.", isCorrect: true },
-                        { text: "Londra, 1975", rationale: "Sebbene Londra sia nota per l'attivismo, i primi giochi nacquero sulla costa occidentale degli Uniti.", isCorrect: false }
-                    ]
-                },
-                {
-                    id: 2, // Correct: B
-                    question: "Chi è stato il primo calciatore professionista in attività a fare coming out nel 1990?",
-                    options: [
-                        { text: "Thomas Hitzlsperger", rationale: "L'ex centrocampista della Lazio ha fatto coming out solo dopo il ritiro dall'attività agonistica.", isCorrect: false },
-                        { text: "Justin Fashanu", rationale: "Fu un pioniere assoluto nel calcio inglese, purtroppo affrontando enormi pregiudizi per la sua scelta di fare coming out.", isCorrect: true },
-                        { text: "Jakub Jankto", rationale: "Jakub Jankto è uno dei pochi calciatori moderni ad averlo fatto in attività, ma molti anni dopo il 1990.", isCorrect: false },
-                        { text: "Robbie Rogers", rationale: "Robbie Rogers fece coming out nel 2013, diventando un simbolo per la MLS americana.", isCorrect: false }
-                    ]
-                },
-                {
-                    id: 3, // Correct: A
-                    question: "L'atleta Laurel Hubbard ha segnato la storia delle Olimpiadi di Tokyo 2020 per quale motivo?",
-                    options: [
-                        { text: "È stata la prima donna transgender a competere in una gara individuale", rationale: "La sua partecipazione nel sollevamento pesi ha aperto un importante dibattito globale sull'inclusività e le regole sportive.", isCorrect: true },
-                        { text: "È stata la prima persona dichiaratamente non-binary a vincere una medaglia d'oro", rationale: "Nonostante il traguardo conseguito, non ha raggiunto il podio durante quell'edizione dei Giochi.", isCorrect: false },
-                        { text: "È stata la portabandiera della squadra dei rifugiati", rationale: "Questo ruolo è stato ricoperto da altri atleti; Laurel Hubbard rappresentava la Nuova Zelanda.", isCorrect: false },
-                        { text: "Ha stabilito un record mondiale nel lancio del disco", rationale: "Laurel Hubbard gareggiava nella categoria del sollevamento pesi, non nell'atletica leggera.", isCorrect: false }
-                    ]
-                },
-                {
-                    id: 4, // Correct: D
-                    question: "Quale icona del tennis mondiale ha vinto 18 titoli del Grande Slam ed è stata una delle prime atlete d'élite a vivere apertamente la propria omosessualità?",
-                    options: [
-                        { text: "Billie Jean King", rationale: "Anche lei è un'icona dei diritti, ma il suo coming out pubblico è avvenuto in circostanze diverse rispetto a Martina Navratilova.", isCorrect: false },
-                        { text: "Chris Evert", rationale: "Storica rivale di Martina Navratilova, Chris Evert non si ritiene appartenga alla comunità LGBTQIA+.", isCorrect: false },
-                        { text: "Steffi Graf", rationale: "La tennista tedesca ha dominato gli anni '90 ma non è nota per attivismo legato alla comunità LGBTQIA+.", isCorrect: false },
-                        { text: "Martina Navratilova", rationale: "Oltre ai successi in campo, è diventata una delle più influenti attiviste per i diritti LGBTQIA+ nel mondo dello sport.", isCorrect: true }
-                    ]
-                },
-                {
-                    id: 5, // Correct: B
-                    question: "La calciatrice Megan Rapinoe è famosa non solo per i suoi successi in campo, ma anche per il suo attivismo. Quale premio ha vinto nel 2019?",
-                    options: [
-                        { text: "Premio Oscar per il miglior documentario", rationale: "Sebbene sia apparsa in molti media, non ha mai vinto un premio dell'Academy cinematografica.", isCorrect: false },
-                        { text: "Pallone d'Oro femminile", rationale: "In quell'anno ha trascinato gli USA alla vittoria del Mondiale, diventando un simbolo globale di lotta per l'uguaglianza.", isCorrect: true },
-                        { text: "Medaglia d'oro nel nuoto sincronizzato", rationale: "Megan Rapinoe è esclusivamente una calciatrice professionista.", isCorrect: false },
-                        { text: "Premio Laureus come Sportiva dell'anno", rationale: "Sebbene sia stata nominata per questo premio nel 2020, il riconoscimento fu assegnato alla ginnasta Simone Biles.", isCorrect: false }
-                    ]
-                },
-                {
-                    id: 6, // Correct: A
-                    question: "Durante i Mondiali di calcio in Qatar 2022, quale simbolo di supporto alla comunità LGBTQIA+ è stato al centro di una disputa tra FIFA e diverse nazionali europee?",
-                    options: [
-                        { text: "La fascia da capitano 'OneLove'", rationale: "La FIFA proibì l'uso della fascia arcobaleno minacciando sanzioni sportive ai capitani che l'avessero indossata.", isCorrect: true },
-                        { text: "Le scarpe con i tacchetti glitterati", rationale: "Non c'è stata alcuna polemica specifica riguardante le calzature dei giocatori in quel senso.", isCorrect: false },
-                        { text: "Il fumo colorato arcobaleno negli stadi", rationale: "L'uso di fumogeni è vietato per motivi di sicurezza, indipendentemente dal colore.", isCorrect: false },
-                        { text: "L'illuminazione degli stadi con colori arcobaleno", rationale: "Questo tipo di protesta avvenne durante gli Europei 2021 a Monaco di Baviera.", isCorrect: false }
-                    ]
-                },
-                {
-                    id: 7, // Correct: B
-                    question: "Chi è il tuffatore britannico, oro olimpico a Tokyo 2020, che usa la sua visibilità per normalizzare il coming out e combattere l'omofobia?",
-                    options: [
-                        { text: "Matthew Mitcham", rationale: "Matthew Mitcham è australiano, primo atleta dichiaratamente gay a vincere una medaglia d'oro olimpica nei tuffi dalla piattaforma 10m nel 2008.", isCorrect: false },
-                        { text: "Tom Daley", rationale: "Oltre ai tuffi, è amatissimo per la sua passione per l'uncinetto e per il suo impegno costante nel sociale.", isCorrect: true },
-                        { text: "Greg Louganis", rationale: "Greg Louganis è una leggenda del passato (anni '80), mentre l'atleta in questione è contemporaneo.", isCorrect: false },
-                        { text: "Ian Thorpe", rationale: "Ian Thorpe è un nuotatore (non un tuffatore) e ha fatto coming out dopo la fine della carriera.", isCorrect: false }
-                    ]
-                },
-                {
-                    id: 8, // Correct: D
-                    question: "Quale di questi è lo scopo principale degli 'EuroGames'?",
-                    options: [
-                        { text: "Selezionare chi gareggerà per le prossime Olimpiadi", rationale: "Gli EuroGames non sono un evento di qualificazione olimpica ufficiale.", isCorrect: false },
-                        { text: "Limitare la partecipazione solo a persone della comunità LGBTQIA+", rationale: "Gli EuroGames sono un evento inclusivo aperto a tuttə, incluse le persone alleate.", isCorrect: false },
-                        { text: "Creare competizioni solo tra professionistə", rationale: "L'evento è aperto ad atletə di ogni livello.", isCorrect: false },
-                        { text: "Contrastare la discriminazione e sostenere l'integrazione LGBTQIA+ nello sport", rationale: "È un evento multisportivo aperto a tuttə, a prescidere da orientamento sessuale o identità di genere.", isCorrect: true }
-                    ]
-                },
-                {
-                    id: 9, // Correct: A
-                    question: "Nel 2018, lo sciatore Gus Kenworthy ha attirato l'attenzione mondiale per un gesto alle Olimpiadi Invernali di Pyeongchang. Di cosa si trattava?",
-                    options: [
-                        { text: "Un bacio in diretta TV al suo compagno", rationale: "È stato un momento storico di visibilità e spontaneità in un contesto sportivo globale molto seguito.", isCorrect: true },
-                        { text: "Ha gareggiato indossando un tutù arcobaleno", rationale: "Gus Kenworthy ha gareggiato con la divisa ufficiale della sua nazionale.", isCorrect: false },
-                        { text: "Ha rifiutato di ritirare la medaglia d'argento", rationale: "Non c'è stata alcun rifiuto della medaglia per motivi legati all'orientamento sessuale.", isCorrect: false },
-                        { text: "Ha portato un gatto randagio sul podio", rationale: "Gus Kenworthy è noto per aver salvato dei cani in Russia, ma il gesto simbolico del 2018 riguardava la sua vita affettiva.", isCorrect: false }
-                    ]
-                },
-                {
-                    id: 10, // Correct: C
-                    question: "Cosa rappresentano i 'Rainbow Laces' (lacci arcobaleno) spesso indossati dagli atleti in varie discipline?",
-                    options: [
-                        { text: "Un nuovo standard obbligatorio per le scarpe da corsa", rationale: "Non esiste alcun obbligo tecnico che imponga i colori arcobaleno per i lacci.", isCorrect: false },
-                        { text: "Il simbolo di chi ha vinto più di dieci medaglie", rationale: "Le medaglie e i lacci sono simboli completamente distinti.", isCorrect: false },
-                        { text: "Una campagna per l'inclusione della comunità LGBTQIA+ nello sport", rationale: "Nata nel Regno Unito, l'iniziativa invita chi compete a mostrare solidarietà attraverso questo piccolo ma visibile dettaglio.", isCorrect: true },
-                        { text: "Una decorazione usata solo durante il mese di giugno", rationale: "Sebbene siano più comuni durante i Pride Month, vengono usati tutto l'anno per diverse campagne di sensibilizzazione.", isCorrect: false }
-                    ]
-                }
+                { id: 1, question: "In quale città e in quale anno si sono tenuti i primi Gay Games, l'evento multisportivo internazionale dedicato alla comunità LGBTQIA+?", options: [ { text: "Amsterdam, 1998", rationale: "Amsterdam ha ospitato un'edizione molto famosa, ma non è stata la città d'esordio.", isCorrect: false }, { text: "New York, 1969", rationale: "Il 1969 è l'anno dei moti di Stonewall, ma la prima manifestazione sportiva ufficiale arrivò oltre un decennio dopo.", isCorrect: false }, { text: "San Francisco, 1982", rationale: "Fondati da Tom Waddell, l'obiettivo era promuovere lo spirito di inclusione e partecipazione attraverso lo sport.", isCorrect: true }, { text: "Londra, 1975", rationale: "Sebbene Londra sia nota per l'attivismo, i primi giochi nacquero sulla costa occidentale degli Uniti.", isCorrect: false } ] },
+                { id: 2, question: "Chi è stato il primo calciatore professionista in attività a fare coming out nel 1990?", options: [ { text: "Thomas Hitzlsperger", rationale: "L'ex centrocampista della Lazio ha fatto coming out solo dopo il ritiro dall'attività agonistica.", isCorrect: false }, { text: "Justin Fashanu", rationale: "Fu un pioniere assoluto nel calcio inglese, purtroppo affrontando enormi pregiudizi per la sua scelta di fare coming out.", isCorrect: true }, { text: "Jakub Jankto", rationale: "Jakub Jankto è uno dei pochi calciatori moderni ad averlo fatto in attività, ma molti anni dopo il 1990.", isCorrect: false }, { text: "Robbie Rogers", rationale: "Robbie Rogers fece coming out nel 2013, diventando un simbolo per la MLS americana.", isCorrect: false } ] },
+                { id: 3, question: "L'atleta Laurel Hubbard ha segnato la storia delle Olimpiadi di Tokyo 2020 per quale motivo?", options: [ { text: "Prima donna transgender a competere in una gara individuale", rationale: "La sua partecipazione nel sollevamento pesi ha aperto un importante dibattito globale sull'inclusività e le regole sportive.", isCorrect: true }, { text: "Prima persona non-binary a vincere un oro", rationale: "Nonostante il traguardo conseguito, non ha raggiunto il podio durante quell'edizione dei Giochi.", isCorrect: false }, { text: "È stata portabandiera della squadra dei rifugiati", rationale: "Questo ruolo è stato ricoperto da altri atleti; Laurel Hubbard rappresentava la Nuova Zelanda.", isCorrect: false }, { text: "Ha stabilito un record mondiale nel lancio del disco", rationale: "Laurel Hubbard gareggiava nella categoria del sollevamento pesi, non nell'atletica leggera.", isCorrect: false } ] },
+                { id: 4, question: "Quale icona del tennis mondiale ha vinto 18 titoli del Grande Slam ed è stata una delle prime atlete d'élite a vivere apertamente la propria omosessualità?", options: [ { text: "Billie Jean King", rationale: "Anche lei è un'icona dei diritti, ma il suo coming out pubblico è avvenuto in circostanze diverse rispetto a Martina Navratilova.", isCorrect: false }, { text: "Chris Evert", rationale: "Storica rivale di Martina Navratilova, Chris Evert non si ritiene appartenga alla comunità LGBTQIA+.", isCorrect: false }, { text: "Steffi Graf", rationale: "La tennista tedesca ha dominato gli anni '90 ma non è nota per attivismo legato alla comunità LGBTQIA+.", isCorrect: false }, { text: "Martina Navratilova", rationale: "Oltre ai successi in campo, è diventata una delle più influenti attiviste per i diritti LGBTQIA+ nel mondo dello sport.", isCorrect: true } ] },
+                { id: 5, question: "La calciatrice Megan Rapinoe è famosa non solo per i suoi successi in campo, ma anche per il suo attivismo. Quale premio ha vinto nel 2019?", options: [ { text: "Premio Oscar al miglior documentario", rationale: "Sebbene sia apparsa in molti media, non ha mai vinto un premio dell'Academy cinematografica.", isCorrect: false }, { text: "Pallone d'Oro femminile", rationale: "In quell'anno ha trascinato gli USA alla vittoria del Mondiale, diventando un simbolo globale di lotta per l'uguaglianza.", isCorrect: true }, { text: "Oro nel nuoto sincronizzato", rationale: "Megan Rapinoe è esclusivamente una calciatrice professionista.", isCorrect: false }, { text: "Premio Laureus Sportiva dell'anno", rationale: "Sebbene sia stata nominata per questo premio nel 2020, il riconoscimento fu assegnato alla ginnasta Simone Biles.", isCorrect: false } ] },
+                { id: 6, question: "Durante i Mondiali di calcio in Qatar 2022, quale simbolo di supporto alla comunità LGBTQIA+ è stato al centro di una disputa tra FIFA e diverse nazionali europee?", options: [ { text: "La fascia da capitano 'OneLove'", rationale: "La FIFA proibì l'uso della fascia arcobaleno minacciando sanzioni sportive ai capitani che l'avessero indossata.", isCorrect: true }, { text: "Scarpe con tacchetti glitterati", rationale: "Non c'è stata alcuna polemica specifica riguardante le calzature dei giocatori in quel senso.", isCorrect: false }, { text: "Fumo colorato arcobaleno negli stadi", rationale: "L'uso di fumogeni è vietato per motivi di sicurezza, indipendentemente dal colore.", isCorrect: false }, { text: "L'illuminazione arcobaleno degli stadi", rationale: "Questo tipo di protesta avvenne durante gli Europei 2021 a Monaco di Baviera.", isCorrect: false } ] },
+                { id: 7, question: "Chi è il tuffatore britannico, oro olimpico a Tokyo 2020, che usa la sua visibilità per normalizzare il coming out e combattere l'omofobia?", options: [ { text: "Matthew Mitcham", rationale: "Matthew Mitcham è australiano, primo atleta dichiaratamente gay a vincere una medaglia d'oro olimpica nei tuffi dalla piattaforma 10m nel 2008.", isCorrect: false }, { text: "Tom Daley", rationale: "Oltre ai tuffi, è amatissimo per la sua passione per l'uncinetto e per il suo impegno costante nel sociale.", isCorrect: true }, { text: "Greg Louganis", rationale: "Greg Louganis è una leggenda del passato (anni '80), mentre l'atleta in questione è contemporaneo.", isCorrect: false }, { text: "Ian Thorpe", rationale: "Ian Thorpe è un nuotatore (non un tuffatore) e ha fatto coming out dopo la fine della carriera.", isCorrect: false } ] },
+                { id: 8, question: "Quale di questi è lo scopo principale degli 'EuroGames'?", options: [ { text: "Selezionare chi gareggerà per le Olimpiadi", rationale: "Gli EuroGames non sono un evento di qualificazione olimpica ufficiale.", isCorrect: false }, { text: "Limitare la partecipazione a persone LGBTQIA+", rationale: "Gli EuroGames sono un evento inclusivo aperto a tuttə, incluse le persone alleate.", isCorrect: false }, { text: "Creare competizioni tra professionistə", rationale: "L'evento è aperto ad atletə di ogni livello.", isCorrect: false }, { text: "Contrastare la discriminazione nello sport", rationale: "È un evento multisportivo aperto a tuttə, a prescidere da orientamento sessuale o identità di genere.", isCorrect: true } ] },
+                { id: 9, question: "Nel 2018, lo sciatore Gus Kenworthy ha attirato l'attenzione mondiale per un gesto alle Olimpiadi Invernali di Pyeongchang. Di cosa si trattava?", options: [ { text: "Un bacio in diretta TV al suo compagno", rationale: "È stato un momento storico di visibilità e spontaneità in un contesto sportivo globale molto seguito.", isCorrect: true }, { text: "Ha gareggiato con un tutù arcobaleno", rationale: "Gus Kenworthy ha gareggiato con la divisa ufficiale della sua nazionale.", isCorrect: false }, { text: "Ha rifiutato la medaglia d'argento", rationale: "Non c'è stata alcun rifiuto della medaglia per motivi legati all'orientamento sessuale.", isCorrect: false }, { text: "Ha portato un gatto randagio sul podio", rationale: "Gus Kenworthy è noto per aver salvato dei cani in Russia, ma il gesto simbolico del 2018 riguardava la sua vita affettiva.", isCorrect: false } ] },
+                { id: 10, question: "Cosa rappresentano i 'Rainbow Laces' (lacci arcobaleno) spesso indossati dagli atleti in varie discipline?", options: [ { text: "Un nuovo standard obbligatorio", rationale: "Non esiste alcun obbligo tecnico che imponga i colori arcobaleno per i lacci.", isCorrect: false }, { text: "Il simbolo di chi ha vinto più di 10 medaglie", rationale: "Le medaglie e i lacci sono simboli completamente distinti.", isCorrect: false }, { text: "Una campagna per l'inclusione nello sport", rationale: "Nata nel Regno Unito, l'iniziativa invita chi compete a mostrare solidarietà attraverso questo piccolo ma visibile dettaglio.", isCorrect: true }, { text: "Una decorazione usata solo a giugno", rationale: "Sebbene siano più comuni durante i Pride Month, vengono usati tutto l'anno per diverse campagne di sensibilizzazione.", isCorrect: false } ] }
             ]
         };
 
@@ -428,7 +228,6 @@
             const [playerName, setName] = useState(() => sessionStorage.getItem('activePlayerName') || '');
             const [gameState, setGameState] = useState(null);
             const [players, setPlayers] = useState([]);
-            // NEW: Stato personale per il giocatore (per garantire consistenza dati)
             const [userData, setUserData] = useState(null); 
             const [displayedPlayers, setDisplayedPlayers] = useState([]);
             const [hasAnswered, setHasAnswered] = useState(false);
@@ -437,10 +236,15 @@
             const [errorMessage, setErrorMessage] = useState('');
             const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
             const [prevScore, setPrevScore] = useState(0);
+            
+            // Host state
             const [isIntermission, setIsIntermission] = useState(false);
             const [intermissionTime, setIntermissionTime] = useState(5);
             const [isStarting, setIsStarting] = useState(false);
             const [startingTime, setStartingTime] = useState(5);
+            const [isHostMenuOpen, setIsHostMenuOpen] = useState(false); // Nuovo stato Host per menu Mobile
+
+            const isMobileMode = gameState?.quizMode === 'mobile';
 
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
@@ -472,94 +276,57 @@
                 return () => unsub();
             }, [roomCode, playerName]);
 
-            // --- OPTIMIZATION START: Split Listeners ---
             useEffect(() => {
                 if (!user || !roomCode || !role) return;
                 const code = roomCode.trim().toUpperCase();
                 
-                // 1. Tutti ascoltano la stanza (per stato gioco e ORA ANCHE per classifica aggregata)
                 const unsubRoom = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).onSnapshot(s => {
                     if (s.exists) {
                         const data = s.data();
                         setGameState(data);
-                        // OPTIMIZATION: Se sono un giocatore, prendo la classifica dalla stanza, non scarico la collection players!
-                        if (role === 'player' && data.leaderboard) {
-                            setPlayers(data.leaderboard);
-                        }
+                        if (role === 'player' && data.leaderboard) setPlayers(data.leaderboard);
                     } else if (role === 'player') setErrorMessage("Stanza chiusa.");
                 });
 
-                let unsubPlayers = () => {};
-                let unsubMe = () => {};
-
+                let unsubPlayers = () => {}; let unsubMe = () => {};
                 if (role === 'host') {
-                    // HOST: Ascolta TUTTI i giocatori (costoso, ma lo fa solo lui)
                     unsubPlayers = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').onSnapshot(snap => {
                         const all = snap.docs.map(d => d.data()).filter(p => p.roomCode === code).sort((a,b) => b.score - a.score);
                         setPlayers(all);
                     });
                 } else if (role === 'player') {
-                    // PLAYER: Ascolta SOLO SE STESSO (per avere certezza del proprio punteggio/storico)
                     unsubMe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${code}_${user.uid}`).onSnapshot(snap => {
                         if (snap.exists) setUserData(snap.data());
                     });
                 }
-
                 return () => { unsubRoom(); unsubPlayers(); unsubMe(); };
             }, [user, roomCode, role]);
 
-            // --- OPTIMIZATION: Host Aggregator Debounce ---
             useEffect(() => {
-                // Solo l'host esegue questa logica
                 if (role === 'host' && players.length > 0) {
-                    // Debounce: Aspetta 1 secondo dopo l'ultimo aggiornamento dei player
                     const timer = setTimeout(() => {
-                        // Crea una versione leggera della classifica da scrivere nella stanza
                         const leaderboard = players.map(p => ({
-                            uid: p.uid,
-                            name: p.name,
-                            score: p.score,
-                            // Includiamo dati minimi per logica "Fastest Player" lato client
-                            lastAnswerIndex: p.lastAnswerIndex,
-                            lastQuestionIndexAnswered: p.lastQuestionIndexAnswered,
-                            lastAnsweredAt: p.lastAnsweredAt
-                            // ESCLUSO: answersHistory (pesante e inutile agli altri)
+                            uid: p.uid, name: p.name, score: p.score, lastAnswerIndex: p.lastAnswerIndex,
+                            lastQuestionIndexAnswered: p.lastQuestionIndexAnswered, lastAnsweredAt: p.lastAnsweredAt
                         }));
-                        
-                        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({
-                            leaderboard: leaderboard
-                        }).catch(err => console.error("Leaderboard update err", err));
-
-                    }, 1000); // 1 Secondo di ritardo
+                        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({ leaderboard: leaderboard }).catch(err => console.error(err));
+                    }, 1000);
                     return () => clearTimeout(timer);
                 }
             }, [players, role, roomCode]);
-            // --- OPTIMIZATION END ---
 
             useEffect(() => {
                 if (!gameState) return;
-                if (gameState.status === 'lobby' || gameState.showResults || gameState.status === 'finished') {
-                    setDisplayedPlayers(players);
-                }
+                if (gameState.status === 'lobby' || gameState.showResults || gameState.status === 'finished') setDisplayedPlayers(players);
             }, [players, gameState?.showResults, gameState?.status]);
 
-            // Aggiornamento prevScore ottimizzato: usa i dati personali live se disponibili
-            // MODIFICA ANTI-SPOILER: Aggiorna solo quando è "sicuro" farlo
             useEffect(() => {
                 let currentRealScore = 0;
-                
-                // 1. Recupera il punteggio reale attuale dal DB
-                if (userData) {
-                    currentRealScore = userData.score;
-                } else if (players.length > 0) {
+                if (userData) currentRealScore = userData.score;
+                else if (players.length > 0) {
                     const me = players.find(p => p.uid === user?.uid);
                     if (me) currentRealScore = me.score;
                 }
-
-                // 2. Logica condizionale per l'aggiornamento UI
-                // Aggiorna SEMPRE se siamo in Lobby o Finito
-                // Se stiamo giocando, aggiorna SOLO se i risultati sono visibili (showResults === true)
-                // Se stiamo giocando e NON ci sono risultati (!showResults), mantieni il vecchio valore (freeze)
                 if (!gameState || gameState.status === 'lobby' || gameState.status === 'finished' || (gameState.status === 'playing' && gameState.showResults)) {
                     setPrevScore(currentRealScore);
                 }
@@ -572,11 +339,8 @@
                         const elapsed = Math.floor((Date.now() - gameState.questionStartTime) / 1000);
                         const remaining = Math.max(0, TIMER_SECONDS - elapsed);
                         setTimeLeft(remaining);
-                        if (remaining === 0) {
-                            if (role === 'player' && !hasAnswered) setHasAnswered(true);
-                        } else {
-                            frame = requestAnimationFrame(updateTimer);
-                        }
+                        if (remaining === 0) { if (role === 'player' && !hasAnswered) setHasAnswered(true); } 
+                        else frame = requestAnimationFrame(updateTimer);
                     };
                     frame = requestAnimationFrame(updateTimer);
                     return () => cancelAnimationFrame(frame);
@@ -585,13 +349,11 @@
 
             useEffect(() => {
                 if (gameState && !gameState.showResults) {
-                    setHasAnswered(false);
-                    setLastAnswerCorrect(null);
-                    setLastPointsEarned(0);
-                    setTimeLeft(TIMER_SECONDS);
+                    setHasAnswered(false); setLastAnswerCorrect(null); setLastPointsEarned(0); setTimeLeft(TIMER_SECONDS);
                 }
             }, [gameState?.currentQuestionIndex, gameState?.showResults]);
 
+            // Host Countdown logiche aggiornate per scrivere nel DB
             useEffect(() => {
                 if (isIntermission) {
                     setIntermissionTime(5);
@@ -600,6 +362,7 @@
                             if (prev <= 1) {
                                 clearInterval(interval);
                                 db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({
+                                    status: 'playing',
                                     currentQuestionIndex: firebase.firestore.FieldValue.increment(1), 
                                     showResults: false, 
                                     questionStartTime: Date.now()
@@ -638,35 +401,69 @@
                 const isCorrect = QUIZ_DATA.questions[gameState.currentQuestionIndex].options[i].isCorrect;
                 const timeTaken = Math.max(0.1, (Date.now() - gameState.questionStartTime) / 1000);
                 const earned = isCorrect ? Math.floor(500 + (500 * (1 - Math.min(1, timeTaken/TIMER_SECONDS)))) : 0;
-                setHasAnswered(true);
-                setLastAnswerCorrect(isCorrect);
-                setLastPointsEarned(earned);
+                setHasAnswered(true); setLastAnswerCorrect(isCorrect); setLastPointsEarned(earned);
                 
-                // Aggiornamento con answersHistory
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${roomCode}_${user.uid}`).update({
                     score: firebase.firestore.FieldValue.increment(earned),
-                    lastAnswerIndex: i, 
-                    lastQuestionIndexAnswered: gameState.currentQuestionIndex, 
-                    lastAnsweredAt: Date.now(),
+                    lastAnswerIndex: i, lastQuestionIndexAnswered: gameState.currentQuestionIndex, lastAnsweredAt: Date.now(),
                     [`answersHistory.${gameState.currentQuestionIndex}`]: isCorrect
                 });
+            };
+
+            const handleHostAction = () => {
+                if (gameState.showResults) {
+                    if (gameState.currentQuestionIndex === 9) {
+                        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
+                    } else {
+                        // DB status intermission per i giocatori
+                        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'intermission'});
+                        setIsIntermission(true);
+                    }
+                } else {
+                    const currentIdx = gameState.currentQuestionIndex;
+                    const correctOptionIndex = QUIZ_DATA.questions[currentIdx].options.findIndex(o => o.isCorrect);
+                    const correctPlayers = players.filter(p => p.lastQuestionIndexAnswered === currentIdx && p.lastAnswerIndex === correctOptionIndex);
+                    
+                    if (correctPlayers.length > 0) {
+                        const minTime = Math.min(...correctPlayers.map(p => p.lastAnsweredAt));
+                        const winners = correctPlayers.filter(p => p.lastAnsweredAt === minTime);
+                        winners.forEach(w => {
+                            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${roomCode}_${w.uid}`).update({
+                                score: firebase.firestore.FieldValue.increment(BONUS_POINTS)
+                            });
+                        });
+                    }
+                    db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
+                }
+            };
+
+            const createHostRoom = async (mode) => {
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    await auth.signInWithPopup(provider);
+                    const myEmail = 'zappaind@gmail.com'; 
+                    if (auth.currentUser.email !== myEmail) {
+                        alert("Accesso negato: Questo account Google non è autorizzato a fare l'Host.");
+                        await auth.signOut(); return;
+                    }
+                    const code = Math.random().toString(36).substring(2,6).toUpperCase();
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
+                        code, status: 'lobby', currentQuestionIndex: 0, showResults: false,
+                        hostId: auth.currentUser.uid, hostEmail: auth.currentUser.email,
+                        createdAt: Date.now(), questionStartTime: 0, quizMode: mode
+                    });
+                    sessionStorage.setItem('activeRoom', code); sessionStorage.setItem('activeRole', 'host'); 
+                    setRoomCode(code); setRole('host');
+                } catch (e) { console.error(e); alert("Errore: " + e.message); }
             };
 
             const rankInfo = useMemo(() => {
                 const idx = displayedPlayers.findIndex(p => p.uid === user?.uid);
                 const me = displayedPlayers[idx];
-                
-                if (!me || !me.score) return { 
-                    label: "NC", 
-                    color: "text-[#0054a6]",
-                    icon: "coins", 
-                    colorHex: "#0054a6"
-                };
-
+                if (!me || !me.score) return { label: "NC", color: "text-[#0054a6]", icon: "coins", colorHex: "#0054a6" };
                 if (idx === 0) return { label: "1", color: "text-[#ffd700]", icon: "trophy", colorHex: "#ffd700" };
                 if (idx === 1) return { label: "2", color: "text-[#c0c0c0]", icon: "trophy", colorHex: "#c0c0c0" };
                 if (idx === 2) return { label: "3", color: "text-[#cd7f32]", icon: "trophy", colorHex: "#cd7f32" };
-                
                 return { label: (idx + 1).toString(), color: "text-[#0054a6]", icon: "coins", colorHex: "#0054a6" };
             }, [displayedPlayers, user]);
 
@@ -684,7 +481,6 @@
                 return displayedPlayers.findIndex(p => p.uid === user.uid);
             }, [displayedPlayers, user]);
             
-            // MODIFICATO: Usa userData se disponibile (perché 'players' scaricato dalla stanza non ha history)
             const myHistory = useMemo(() => {
                 if (userData) return userData.answersHistory || {};
                 if (!user || players.length === 0) return {};
@@ -695,14 +491,12 @@
             const visibleHistory = useMemo(() => {
                 if (!gameState || !myHistory) return {};
                 if (gameState.status === 'finished') return myHistory;
-                
                 const filtered = { ...myHistory };
-                if (!gameState.showResults) {
-                    delete filtered[gameState.currentQuestionIndex];
-                }
+                if (!gameState.showResults) delete filtered[gameState.currentQuestionIndex];
                 return filtered;
             }, [myHistory, gameState]);
 
+            // --- LOGIN SCHERMATA ---
             if (!role) return (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
@@ -714,12 +508,7 @@
                             <button onClick={async () => {
                                 const cleanName = playerName.trim(); const cleanCode = roomCode.trim().toUpperCase();
                                 if (!cleanName || !cleanCode) return;
-                                
-                                if (!user) {
-                                    alert("Attendi il caricamento...");
-                                    return;
-                                }
-                                
+                                if (!user) { alert("Attendi il caricamento..."); return; }
                                 try {
                                     const room = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(cleanCode).get();
                                     if (room.exists) {
@@ -728,68 +517,34 @@
                                         });
                                         sessionStorage.setItem('activeRoom', cleanCode); sessionStorage.setItem('activeRole', 'player'); sessionStorage.setItem('activePlayerName', cleanName);
                                         setRole('player');
-                                    } else {
-                                        alert("Stanza non trovata!");
-                                    }
-                                } catch (err) {
-                                    console.error("Errore di connessione:", err);
-                                    alert("Errore di connessione. Riprova.");
-                                }
+                                    } else alert("Stanza non trovata!");
+                                } catch (err) { alert("Errore di connessione. Riprova."); }
                             }} className="w-full bg-[#0054a6] text-white p-5 rounded-2xl uppercase text-xl active:scale-95 transition-all shadow-md">Partecipa</button>
-							<button onClick={async () => {
-								try {
-									// 1. Avvia il Login con Google (Popup)
-									const provider = new firebase.auth.GoogleAuthProvider();
-									await auth.signInWithPopup(provider);
-									
-									// 2. Controllo di sicurezza lato client (Opzionale ma utile per UX)
-									const myEmail = 'zappaind@gmail.com'; 
-									
-									if (auth.currentUser.email !== myEmail) {
-										alert("Accesso negato: Questo account Google non è autorizzato a fare l'Host.");
-										await auth.signOut();
-										return;
-									}
-
-									// 3. Se sei tu, crea la stanza
-									const code = Math.random().toString(36).substring(2,6).toUpperCase();
-									
-									await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(code).set({
-										code, 
-										status: 'lobby', 
-										currentQuestionIndex: 0, 
-										showResults: false, 
-										hostId: auth.currentUser.uid, // Ora salviamo il tuo UID reale di Google
-										hostEmail: auth.currentUser.email, // Utile per debug
-										createdAt: Date.now(), 
-										questionStartTime: 0
-									});
-
-									sessionStorage.setItem('activeRoom', code); 
-									sessionStorage.setItem('activeRole', 'host'); 
-									setRoomCode(code); 
-									setRole('host');
-
-								} catch (e) {
-									console.error(e);
-									alert("Errore durante il login: " + e.message);
-								}
-							}} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-sm uppercase font-black hover:bg-blue-50 transition-colors">
-								Crea Stanza Host (Login Google)
-							</button>
+                            
+                            <div className="pt-4 mt-6 border-t border-gray-200 grid gap-2">
+                                <button onClick={() => createHostRoom('classic')} className="w-full text-[#0054a6] border-2 border-[#0054a6] p-3 rounded-2xl text-xs uppercase font-black hover:bg-blue-50 transition-colors">
+                                    Crea Host (Schermo Condiviso)
+                                </button>
+                                <button onClick={() => createHostRoom('mobile')} className="w-full text-white bg-gray-800 border-2 border-gray-800 p-3 rounded-2xl text-xs uppercase font-black hover:bg-gray-900 transition-colors">
+                                    Crea Host (Solo Smartphone)
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             );
 
+            // --- SCHERMATA HOST ---
             if (role === 'host' && gameState) {
                 const q = QUIZ_DATA.questions[gameState.currentQuestionIndex];
                 const answersCount = players.filter(p => p.lastQuestionIndexAnswered === gameState.currentQuestionIndex).length;
+                
                 return (
                     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden font-black">
                         <HostAudioManager gameState={gameState} isIntermission={isIntermission} />
 
-                        {(isIntermission || isStarting) && (
+                        {/* Modale Host Countdown Classico */}
+                        {(isIntermission || isStarting) && !isMobileMode && (
                             <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center animate-fade-in">
                                 <h2 className="text-5xl md:text-7xl text-[#0054a6] uppercase font-black tracking-tighter mb-10 text-center px-4">
                                     {isStarting ? "PRIMA DOMANDA TRA..." : "PROSSIMA DOMANDA TRA..."}
@@ -812,166 +567,163 @@
                             </div>
                         </header>
                         
-                        <div className="flex-1 flex gap-6 p-6 overflow-hidden">
-                            <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black relative overflow-hidden">
-                                
-                                {gameState.status !== 'lobby' && (
-                                    <div 
-                                        className="absolute inset-0 z-0 opacity-50 pointer-events-none transition-all duration-1000"
-                                        style={{
-                                            backgroundImage: `url(squiggle_${(gameState.currentQuestionIndex % 6) + 1}.png)`,
-                                            backgroundSize: 'cover',
-                                            backgroundPosition: 'center',
-                                            backgroundRepeat: 'no-repeat'
-                                        }}
-                                    />
-                                )}
+                        <div className="flex-1 flex gap-6 p-6 overflow-hidden relative">
+                            {/* HOST: MODALITÀ MOBILE */}
+                            {isMobileMode && gameState.status !== 'lobby' && gameState.status !== 'finished' ? (
+                                <div className="flex-1 flex flex-col items-center justify-center w-full relative">
+                                    <h2 className="text-4xl text-[#0054a6] font-black uppercase mb-8 text-center max-w-4xl px-4 leading-tight">
+                                        {gameState.showResults ? "TEMPO SCADUTO! GUARDA IL TUO SMARTPHONE" : (gameState.status === 'starting' ? "INIZIO IMMINENTE" : "LEGGI LA DOMANDA SUL TUO SMARTPHONE")}
+                                    </h2>
+                                    <div className="p-8 bg-white rounded-[3rem] shadow-2xl border-4 border-gray-100 flex flex-col items-center">
+                                        <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} className="w-80 h-80 rounded-2xl mb-6" />
+                                        <p className="text-6xl text-[#0054a6] font-mono font-black tracking-widest">{roomCode}</p>
+                                    </div>
+                                    
+                                    {/* FAB Menu per Host Mobile */}
+                                    <button onClick={() => setIsHostMenuOpen(true)} className="absolute bottom-4 right-4 md:bottom-8 md:right-8 bg-[#0054a6] text-white p-6 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all z-40">
+                                        <Icon name="menu" size={32} />
+                                    </button>
 
-                                <div className="relative z-10 w-full flex flex-col items-center">
-                                    {gameState.status === 'lobby' ? (
-                                        <div className="flex flex-col items-center w-full h-full justify-center">
-                                            <h2 className="text-5xl md:text-6xl text-[#0054a6] uppercase tracking-tighter text-center leading-tight mb-12 max-w-5xl">
-                                                SCANSIONA IL QR CODE E GIOCA CON NOI!
-                                            </h2>
-                                            <div className="flex flex-col md:flex-row items-center justify-center gap-16 w-full max-w-6xl mb-12">
-                                                <div className="flex-1 flex justify-center md:justify-end">
-                                                    <LogoPrideHouse className="h-auto w-full max-w-md object-contain drop-shadow-lg" />
-                                                </div>
-                                                <div className="flex-1 flex justify-center md:justify-start">
-                                                    <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-sm shadow-inner transform rotate-1 hover:rotate-0 transition-transform duration-300">
-                                                        <div className="flex flex-col items-center font-black">
-                                                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} alt="QR" className="w-64 h-64 rounded-2xl mb-4" />
-                                                            <p className="text-5xl text-[#0054a6] font-mono tracking-widest leading-none font-black">{roomCode}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="w-full flex flex-col items-center gap-6">
-                                                <div className="flex flex-wrap gap-3 justify-center max-w-4xl min-h-[3rem]">
-                                                    {players.length === 0 ? (
-                                                        <p className="text-3xl text-gray-300 font-black animate-pulse uppercase tracking-widest text-center">In attesa di partecipanti...</p>
-                                                    ) : (
-                                                        players.map(p => (
-                                                            <div key={p.uid} className="bg-[#0054a6] text-white px-6 py-3 rounded-full text-xl font-bold animate-fade-in shadow-md">
-                                                                {p.name}
-                                                            </div>
-                                                        ))
-                                                    )}
-                                                </div>
-                                                <button 
-                                                    onClick={() => setIsStarting(true)} 
-                                                    className="bg-[#0054a6] text-white px-16 py-6 rounded-3xl text-3xl uppercase transition-all active:scale-95 shadow-xl font-black hover:bg-[#00428a] mt-4"
-                                                >
-                                                    Inizia Quiz
+                                    {/* Menu a comparsa Host Mobile */}
+                                    {isHostMenuOpen && (
+                                        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm">
+                                            <div className="w-full max-w-[400px] bg-white h-full shadow-2xl flex flex-col animate-slide-in-right relative">
+                                                <button onClick={() => setIsHostMenuOpen(false)} className="absolute top-6 left-6 p-2 text-gray-400 hover:text-black">
+                                                    <Icon name="close" size={32} />
                                                 </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="w-full max-w-5xl space-y-8 font-black">
-                                            <div className="flex justify-between items-center">
-                                                <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm shadow-md font-black">Domanda {gameState.currentQuestionIndex+1} / 10</span>
-                                                {!gameState.showResults && (
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="flex items-center gap-3 bg-blue-50 px-6 py-2 rounded-full border border-blue-100">
-                                                            <Icon name="checkSquare" size={24} className="text-[#0054a6]" />
-                                                            <span className="text-xl font-black text-[#0054a6]">{answersCount} / {players.length}</span>
+                                                <div className="p-6 pt-24 flex flex-col h-full overflow-hidden">
+                                                    
+                                                    {/* Statistiche Menu */}
+                                                    <div className="flex justify-between items-center bg-gray-100 p-5 rounded-2xl mb-6 shadow-inner">
+                                                        <div className="flex items-center gap-2">
+                                                            <Icon name="checkSquare" size={28} className="text-[#0054a6]" />
+                                                            <span className="text-3xl font-black text-[#0054a6]">{answersCount}/{players.length}</span>
                                                         </div>
-                                                        <div className="text-4xl font-mono bg-gray-900 text-white px-8 py-3 rounded-2xl shadow-lg font-black">{timeLeft}s</div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <h2 className={`text-[#0054a6] leading-tight tracking-tight text-justify ${gameState.showResults ? 'text-4xl' : 'text-7xl mt-10 mb-20'}`}>{q.question}</h2>
-                                            <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'}`}>
-                                                {q.options.map((o, i) => (
-                                                    <div key={i} className="flex flex-col gap-3 font-black">
-                                                        <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-4 transition-all font-black ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-30 grayscale border-gray-100') : 'bg-gray-50 border-transparent shadow-inner'}`}>
-                                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-2xl shadow-lg font-black`}>{String.fromCharCode(65+i)}</div>
-                                                            <span className="text-[#0054a6] text-2xl text-left font-bold leading-tight font-black">{o.text}</span>
-                                                            {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto" />}
+                                                        <div className="flex items-center gap-2">
+                                                            <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'} />
+                                                            <span className={`text-3xl font-mono font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
                                                         </div>
-                                                        {gameState.showResults && (
-                                                            <div className={`px-8 py-5 rounded-3xl text-xl text-justify font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
-                                                                <p className="font-bold leading-tight">{o.rationale}</p>
-                                                            </div>
-                                                        )}
                                                     </div>
-                                                ))}
+
+                                                    {/* Pulsante Azione */}
+                                                    <button onClick={() => {
+                                                        handleHostAction();
+                                                        setIsHostMenuOpen(false); // Chiudi il menu per pulizia
+                                                    }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-2xl uppercase font-black shadow-xl active:scale-95 flex items-center justify-center gap-4 transition-all mb-6">
+                                                        {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={28} />
+                                                    </button>
+
+                                                    {/* Classifica Host Rapida */}
+                                                    <div className="flex-1 bg-gray-50 rounded-[2rem] border-2 border-gray-100 p-4 flex flex-col overflow-hidden">
+                                                        <h3 className="text-sm text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica Live</h3>
+                                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+                                                            {displayedPlayers.slice(0, 15).map((p, i) => (
+                                                                <div key={p.uid} className="flex justify-between items-center p-3 bg-white rounded-xl border font-black text-sm">
+                                                                    <span className="truncate max-w-[150px] uppercase">{!p.score ? "NC" : (i+1) + "."} {p.name}</span>
+                                                                    <span className="font-mono text-[#0054a6]">{p.score}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <button onClick={() => {
-                                                if (gameState.showResults) {
-                                                    if (gameState.currentQuestionIndex === 9) {
-                                                        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({status:'finished'});
-                                                    } else {
-                                                        // ATTIVA INTERMISSION INVECE DI CAMBIARE SUBITO
-                                                        setIsIntermission(true);
-                                                    }
-                                                } else {
-                                                    // RIVELA RISPOSTE - E ORA: ASSEGNA BONUS AL PIÙ VELOCE!
-                                                    const currentIdx = gameState.currentQuestionIndex;
-                                                    const correctOptionIndex = QUIZ_DATA.questions[currentIdx].options.findIndex(o => o.isCorrect);
-                                                    
-                                                    // Trova tutti quelli che hanno risposto giusto a questa domanda
-                                                    const correctPlayers = players.filter(p => p.lastQuestionIndexAnswered === currentIdx && p.lastAnswerIndex === correctOptionIndex);
-                                                    
-                                                    if (correctPlayers.length > 0) {
-                                                        // Trova il tempo minimo (il più veloce)
-                                                        const minTime = Math.min(...correctPlayers.map(p => p.lastAnsweredAt));
-                                                        // Filtra chi ha fatto quel tempo (gestione ex-aequo)
-                                                        const winners = correctPlayers.filter(p => p.lastAnsweredAt === minTime);
-                                                        
-                                                        // Assegna bonus
-                                                        winners.forEach(w => {
-                                                            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(`${roomCode}_${w.uid}`).update({
-                                                                score: firebase.firestore.FieldValue.increment(BONUS_POINTS)
-                                                            });
-                                                        });
-                                                    }
-                                                    
-                                                    db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({showResults:true});
-                                                }
-                                            }} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all">
-                                                {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={32} />
-                                            </button>
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                            
-                            <div className="w-64 flex flex-col gap-4 font-black">
-                                <div className="bg-white p-4 rounded-[2rem] shadow-xl border flex flex-col items-center">
-                                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} alt="QR" className="w-full rounded-xl mb-2" />
-                                    <p className="text-xl font-mono text-[#0054a6] leading-none">{roomCode}</p>
-                                </div>
-                                {gameState.showResults && (
-                                    <div className="bg-white p-6 rounded-[2rem] shadow border flex-1 overflow-hidden flex flex-col font-black">
-                                        <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black font-black">Classifica</h3>
-                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 font-black">
-                                            {displayedPlayers.slice(0, 10).map((p, i) => {
-                                                let rowStyle = "bg-gray-50 border-gray-100 font-black";
-                                                let nameStyle = "text-xs font-black";
-                                                
-                                                // Logica NC per la sidebar Host
-                                                const isNC = !p.score;
-                                                
-                                                if (!isNC) {
-                                                    if (i === 0) { rowStyle = "bg-[#ffd700]/20 border-[#ffd700] shadow-md font-black"; nameStyle = "text-xs text-[#b8860b]"; }
-                                                    else if (i === 1) { rowStyle = "bg-[#c0c0c0]/20 border-[#c0c0c0] font-black"; nameStyle = "text-xs text-[#707070]"; }
-                                                    else if (i === 2) { rowStyle = "bg-[#cd7f32]/20 border-[#cd7f32] font-black"; nameStyle = "text-xs text-[#8b4513]"; }
-                                                }
+                            ) : (
+                                /* HOST: MODALITÀ CLASSICA (Escluso Lobby e Finished) */
+                                <Fragment>
+                                    <div className="flex-1 flex flex-col items-center justify-center text-center bg-white rounded-[3rem] shadow-xl border p-10 overflow-y-auto custom-scrollbar font-black relative overflow-hidden">
+                                        {gameState.status !== 'lobby' && (
+                                            <div className="absolute inset-0 z-0 opacity-50 pointer-events-none transition-all duration-1000" style={{ backgroundImage: `url(squiggle_${(gameState.currentQuestionIndex % 6) + 1}.png)`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />
+                                        )}
 
-                                                return (
-                                                    <div key={p.uid} className={`flex justify-between items-center p-3 rounded-xl border transition-all ${rowStyle}`}>
-                                                        <span className={`truncate max-w-[110px] font-black uppercase ${nameStyle}`}>
-                                                            {isNC ? "NC" : (i+1) + "."} {p.name}
-                                                        </span>
-                                                        <span className="font-mono font-bold text-sm">{p.score}</span>
+                                        <div className="relative z-10 w-full flex flex-col items-center">
+                                            {gameState.status === 'lobby' ? (
+                                                <div className="flex flex-col items-center w-full h-full justify-center">
+                                                    <h2 className="text-5xl md:text-6xl text-[#0054a6] uppercase tracking-tighter text-center leading-tight mb-12 max-w-5xl">SCANSIONA IL QR CODE E GIOCA CON NOI!</h2>
+                                                    <div className="flex flex-col md:flex-row items-center justify-center gap-16 w-full max-w-6xl mb-12">
+                                                        <div className="flex-1 flex justify-center md:justify-end"><LogoPrideHouse className="h-auto w-full max-w-md object-contain drop-shadow-lg" /></div>
+                                                        <div className="flex-1 flex justify-center md:justify-start">
+                                                            <div className="flex items-center justify-center p-8 bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-200 w-full max-w-sm shadow-inner transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                                                                <div className="flex flex-col items-center font-black">
+                                                                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} className="w-64 h-64 rounded-2xl mb-4" />
+                                                                    <p className="text-5xl text-[#0054a6] font-mono tracking-widest leading-none font-black">{roomCode}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                );
-                                            })}
+                                                    <div className="w-full flex flex-col items-center gap-6">
+                                                        <div className="flex flex-wrap gap-3 justify-center max-w-4xl min-h-[3rem]">
+                                                            {players.length === 0 ? <p className="text-3xl text-gray-300 font-black animate-pulse uppercase tracking-widest text-center">In attesa di partecipanti...</p> : players.map(p => <div key={p.uid} className="bg-[#0054a6] text-white px-6 py-3 rounded-full text-xl font-bold animate-fade-in shadow-md">{p.name}</div>)}
+                                                        </div>
+                                                        <button onClick={() => { db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomCode).update({ status: 'starting' }); setIsStarting(true); }} className="bg-[#0054a6] text-white px-16 py-6 rounded-3xl text-3xl uppercase transition-all active:scale-95 shadow-xl font-black hover:bg-[#00428a] mt-4">Inizia Quiz</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="w-full max-w-5xl space-y-8 font-black">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="bg-[#0054a6] text-white px-6 py-2 rounded-full uppercase text-sm shadow-md font-black">Domanda {gameState.currentQuestionIndex+1} / 10</span>
+                                                        {!gameState.showResults && (
+                                                            <div className="flex items-center gap-6">
+                                                                <div className="flex items-center gap-3 bg-blue-50 px-6 py-2 rounded-full border border-blue-100"><Icon name="checkSquare" size={24} className="text-[#0054a6]" /><span className="text-xl font-black text-[#0054a6]">{answersCount} / {players.length}</span></div>
+                                                                <div className="text-4xl font-mono bg-gray-900 text-white px-8 py-3 rounded-2xl shadow-lg font-black">{timeLeft}s</div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <h2 className={`text-[#0054a6] leading-tight tracking-tight text-justify ${gameState.showResults ? 'text-4xl' : 'text-7xl mt-10 mb-20'}`}>{q.question}</h2>
+                                                    <div className={`grid gap-4 ${gameState.showResults ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2'}`}>
+                                                        {q.options.map((o, i) => (
+                                                            <div key={i} className="flex flex-col gap-3 font-black">
+                                                                <div className={`p-6 rounded-[2rem] border-4 flex items-center gap-4 transition-all font-black ${gameState.showResults ? (o.isCorrect ? 'border-green-500 bg-green-50' : 'opacity-30 grayscale border-gray-100') : 'bg-gray-50 border-transparent shadow-inner'}`}>
+                                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${COLORS[i]} text-white text-2xl shadow-lg font-black`}>{String.fromCharCode(65+i)}</div>
+                                                                    <span className="text-[#0054a6] text-2xl text-left font-bold leading-tight font-black">{o.text}</span>
+                                                                    {gameState.showResults && o.isCorrect && <Icon name="checkCircle" size={32} className="text-green-500 ml-auto" />}
+                                                                </div>
+                                                                {gameState.showResults && (
+                                                                    <div className={`px-8 py-5 rounded-3xl text-xl text-justify font-black ${o.isCorrect ? 'bg-[#009640]/10 text-[#009640] border border-[#009640]/20' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}><p className="font-bold leading-tight">{o.rationale}</p></div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <button onClick={handleHostAction} className="w-full bg-[#0054a6] text-white py-5 rounded-2xl text-3xl uppercase font-black shadow-2xl active:scale-95 flex items-center justify-center gap-4 transition-all">
+                                                        {gameState.showResults ? (gameState.currentQuestionIndex === 9 ? "Podio Finale" : "Prossima Domanda") : "Rivela Risposte"} <Icon name="chevronRight" size={32} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                )}
-                            </div>
+                                    
+                                    {/* Sidebar Destra Host Classica */}
+                                    <div className="w-64 flex flex-col gap-4 font-black">
+                                        <div className="bg-white p-4 rounded-[2rem] shadow-xl border flex flex-col items-center">
+                                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomCode)}&bgcolor=ffffff&color=0054a6&margin=10`} className="w-full rounded-xl mb-2" />
+                                            <p className="text-xl font-mono text-[#0054a6] leading-none">{roomCode}</p>
+                                        </div>
+                                        {gameState.showResults && (
+                                            <div className="bg-white p-6 rounded-[2rem] shadow border flex-1 overflow-hidden flex flex-col font-black">
+                                                <h3 className="text-xs text-gray-400 uppercase mb-4 border-b pb-2 tracking-widest font-black">Classifica</h3>
+                                                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                                                    {displayedPlayers.slice(0, 10).map((p, i) => {
+                                                        let rowStyle = "bg-gray-50 border-gray-100", nameStyle = "text-xs";
+                                                        if (p.score) {
+                                                            if (i === 0) { rowStyle = "bg-[#ffd700]/20 border-[#ffd700] shadow-md"; nameStyle = "text-xs text-[#b8860b]"; }
+                                                            else if (i === 1) { rowStyle = "bg-[#c0c0c0]/20 border-[#c0c0c0]"; nameStyle = "text-xs text-[#707070]"; }
+                                                            else if (i === 2) { rowStyle = "bg-[#cd7f32]/20 border-[#cd7f32]"; nameStyle = "text-xs text-[#8b4513]"; }
+                                                        }
+                                                        return (
+                                                            <div key={p.uid} className={`flex justify-between items-center p-3 rounded-xl border transition-all font-black ${rowStyle}`}>
+                                                                <span className={`truncate max-w-[110px] uppercase font-black ${nameStyle}`}>{!p.score ? "NC" : (i+1) + "."} {p.name}</span>
+                                                                <span className="font-mono font-bold text-sm">{p.score}</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </Fragment>
+                            )}
                         </div>
 
                         {gameState.status === 'finished' && (
@@ -979,9 +731,9 @@
                                 <Icon name="crown" size={120} className="text-[#ffde00] mb-6 animate-bounce" />
                                 <h2 className="text-7xl text-[#0054a6] mb-12 uppercase italic tracking-tighter font-black">Podio Finale</h2>
                                 <div className="flex items-end gap-10 w-full max-w-4xl h-72">
-                                    {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl">2</div></div>}
-                                    {displayedPlayers[0] && <div className="flex-1 flex flex-col items-center font-black font-black"><p className="text-3xl mb-4 text-[#0054a6] font-black uppercase truncate w-full drop-shadow-md"> {displayedPlayers[0].name} </p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl font-black">1</div></div>}
-                                    {displayedPlayers[2] && <div className="flex-1 flex flex-col items-center font-black font-black"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full font-black"> {displayedPlayers[2].name} </p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-5xl text-orange-300 border-t-8 border-orange-200 shadow-xl font-black">3</div></div>}
+                                    {displayedPlayers[1] && <div className="flex-1 flex flex-col items-center"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full"> {displayedPlayers[1].name} </p><div className="w-full bg-gray-200 h-40 rounded-t-3xl flex items-center justify-center text-5xl text-gray-400 border-t-8 border-gray-300 shadow-xl">2</div></div>}
+                                    {displayedPlayers[0] && <div className="flex-1 flex flex-col items-center"><p className="text-3xl mb-4 text-[#0054a6] uppercase truncate w-full drop-shadow-md"> {displayedPlayers[0].name} </p><div className="w-full bg-gradient-to-b from-[#ffde00] to-[#e6c800] h-60 rounded-t-[3rem] flex items-center justify-center text-9xl text-[#0054a6] border-t-8 border-[#ffde00] shadow-2xl">1</div></div>}
+                                    {displayedPlayers[2] && <div className="flex-1 flex flex-col items-center"><p className="text-xl mb-2 text-[#0054a6] uppercase truncate w-full"> {displayedPlayers[2].name} </p><div className="w-full bg-orange-100 h-32 rounded-t-3xl flex items-center justify-center text-5xl text-orange-300 border-t-8 border-orange-200 shadow-xl">3</div></div>}
                                 </div>
                                 <button onClick={() => {sessionStorage.clear(); window.location.reload();}} className="mt-16 px-16 py-5 bg-gray-900 text-white rounded-full text-xl uppercase tracking-widest shadow-xl transition-all hover:bg-black font-black">Nuova Partita</button>
                             </div>
@@ -990,175 +742,158 @@
                 );
             }
 
-            // FIX SCHERMATA BIANCA PLAYER (se role c'è ma gameState non ancora caricato)
-            if (role === 'player' && !gameState) {
+            // --- SCHERMATE PLAYER ---
+            if (role === 'player' && !gameState) return <div className="min-h-screen flex flex-col items-center justify-center bg-white text-[#0054a6] font-black"><Icon name="loader2" size={64} className="animate-spin mb-4" /><p className="text-xl uppercase tracking-widest animate-pulse">Connessione in corso...</p></div>;
+
+            if (role === 'player' && gameState) {
+                const q = gameState.status === 'playing' ? QUIZ_DATA.questions[gameState.currentQuestionIndex] : null;
+
                 return (
-                    <div className="min-h-screen flex flex-col items-center justify-center bg-white text-[#0054a6] font-black">
-                        <Icon name="loader2" size={64} className="animate-spin mb-4" />
-                        <p className="text-xl uppercase tracking-widest animate-pulse">Connessione in corso...</p>
+                    <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
+                        <header className="bg-white border-b-4 border-[#ffde00] shadow-md flex flex-col z-10">
+                            <div className="p-4 flex justify-between items-center">
+                                <div className="flex items-center gap-2"><LogoArcigay className="h-8 object-contain" /><span className="text-[#0054a6] text-lg font-black">X</span><LogoPrideHouse className="h-10 object-contain" /></div>
+                                <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white shadow-sm font-black">
+                                    <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0"><Icon name={rankInfo.icon} size={18} className={rankInfo.icon === 'coins' ? 'text-white' : rankInfo.color} /></div>
+                                    <span className="text-xl font-mono leading-none">{prevScore}</span>
+                                </div>
+                            </div>
+                            <div className="bg-gray-100 text-[#0054a6] py-1 text-center text-sm font-black uppercase tracking-widest border-t border-gray-200">Player: <span className="text-black">{playerName}</span></div>
+                            <div className="bg-gray-50 border-b border-gray-200 py-1"><QuestionStatusBar history={visibleHistory} currentIndex={gameState.status === 'playing' ? gameState.currentQuestionIndex : -1} /></div>
+                        </header>
+
+                        <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black relative overflow-hidden">
+                            {gameState.status === 'finished' && myRankIndex >= 0 && myRankIndex <= 2 && <Confetti />}
+
+                            {gameState.status === 'lobby' && (
+                                <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center">
+                                    <LogoPrideHouse className="h-40 w-auto object-contain mx-auto mb-4" />
+                                    <h2 className="text-2xl uppercase tracking-tighter leading-tight">IL QUIZ STA PER INIZIARE!</h2>
+                                </div>
+                            )}
+
+                            {/* Stato Sincronizzato con l'Host per evitare schermate vuote */}
+                            {gameState.status === 'starting' && (
+                                <div className="flex-1 flex flex-col items-center justify-center animate-fade-in w-full text-center p-6">
+                                    <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/50 mb-8" />
+                                    <h2 className="text-4xl text-[#0054a6] font-black uppercase tracking-tighter mb-2">Preparati!</h2>
+                                    <p className="text-gray-500 uppercase tracking-widest text-sm">Il quiz sta per iniziare...</p>
+                                </div>
+                            )}
+
+                            {gameState.status === 'intermission' && (
+                                <div className="flex-1 flex flex-col items-center justify-center animate-fade-in w-full text-center p-6">
+                                    <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/50 mb-8" />
+                                    <h2 className="text-4xl text-[#0054a6] font-black uppercase tracking-tighter mb-2">Ottimo Lavoro!</h2>
+                                    <p className="text-gray-500 uppercase tracking-widest text-sm">In attesa della prossima domanda...</p>
+                                </div>
+                            )}
+
+                            {gameState.status === 'playing' && !gameState.showResults && (
+                                <div className="w-full max-w-md flex flex-col gap-4 h-full py-2">
+                                    <div className="flex items-center justify-center gap-3">
+                                        <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-[#0054a6]'} />
+                                        <span className={`text-5xl font-mono ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
+                                    </div>
+                                    
+                                    {/* Testo Domanda in Mobile Mode */}
+                                    {isMobileMode && (
+                                        <div className="bg-white p-5 rounded-[2rem] shadow-sm border-2 border-gray-100 text-justify text-lg leading-tight text-[#0054a6]">
+                                            {q.question}
+                                        </div>
+                                    )}
+
+                                    {hasAnswered ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10">
+                                            <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4" />
+                                            <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none">OK, CI SIAMO!</h2>
+                                            <p className="text-gray-400 mt-4 text-xs tracking-[0.2em] uppercase">A breve sveleremo la risposta</p>
+                                        </div>
+                                    ) : (
+                                        <div className={`grid gap-3 flex-1 ${isMobileMode ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                                            {q.options.map((o, i) => {
+                                                const isYellow = i === 3;
+                                                return (
+                                                    <button key={i} onClick={() => submitAnswer(i)} className={`w-full rounded-[2rem] ${COLORS[i]} shadow-xl border-b-8 border-black/20 active:translate-y-2 active:shadow-none transition-all flex ${isMobileMode ? 'items-center p-4 text-left' : 'items-center justify-center text-6xl'} ${isMobileMode && isYellow ? 'text-[#0054a6]' : 'text-white'}`}>
+                                                        <div className={`flex items-center justify-center shrink-0 ${isMobileMode ? 'w-12 h-12 rounded-xl bg-white/20 mr-4 text-2xl shadow-inner' : ''}`}>
+                                                            {String.fromCharCode(65 + i)}
+                                                        </div>
+                                                        {isMobileMode && <span className="text-base leading-tight font-bold">{o.text}</span>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {gameState.status === 'playing' && gameState.showResults && (
+                                <div className={`w-full max-w-[360px] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
+                                    <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-inner text-white shrink-0"><Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={40} /></div>
+                                    <h2 className="text-3xl uppercase mb-4 leading-none">
+                                        {lastAnswerCorrect === true ? 'RISPOSTA ESATTA 🎉' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO ⌛' : 'RISPOSTA ERRATA 🙁')}
+                                    </h2>
+                                    
+                                    <div className="w-full space-y-4">
+                                        {lastAnswerCorrect === true ? (
+                                            <div className="flex flex-col items-center gap-1">
+                                                <div className="flex items-center gap-3">{isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce" />}<span className="text-2xl font-black">+{lastPointsEarned} PT</span></div>
+                                                {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase animate-pulse tracking-[0.2em]">BONUS VELOCITÀ MASSIMA! +{BONUS_POINTS}</p>}
+                                            </div>
+                                        ) : <div className="text-xl opacity-60 uppercase tracking-widest">0 PUNTI</div>}
+                                        
+                                        {/* Spiegazione Risultato in Mobile Mode */}
+                                        {isMobileMode && (
+                                            <div className="w-full bg-black/15 rounded-[2rem] p-5 text-left border border-white/20 shadow-inner mt-4">
+                                                <p className="text-[10px] uppercase tracking-widest opacity-80 mb-2 font-bold">La Risposta Corretta Era:</p>
+                                                <p className="text-lg leading-tight mb-3 font-black">{q.options.find(o=>o.isCorrect).text}</p>
+                                                <p className="text-sm font-medium opacity-90 italic text-justify text-white/90 leading-snug">{q.options.find(o=>o.isCorrect).rationale}</p>
+                                            </div>
+                                        )}
+
+                                        <div className="border-t border-white/20 pt-4 mt-4">
+                                            <p className="text-xs text-white/70 mb-1 uppercase tracking-widest">Classifica attuale:</p>
+                                            <div className="flex items-center justify-center gap-2">
+                                                {myRankIndex >= 0 && myRankIndex <= 2 && rankInfo.label !== "NC" && <Icon name="crown" size={32} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
+                                                <p className="text-5xl font-black drop-shadow-md leading-none" style={{ color: (myRankIndex > 2 || rankInfo.label === "NC") ? '#ffffff' : rankInfo.colorHex, textShadow: '0px 2px 4px rgba(0,0,0,0.3)' }}>
+                                                    {rankInfo.label}{(rankInfo.label !== "NC" && rankInfo.label !== "-") ? "ᵃ" : ""}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {gameState.status === 'finished' && (
+                                <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] mx-auto text-center z-10">
+                                    <div className="w-20 h-20 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-4"><Icon name={rankInfo.icon} size={40} className={`drop-shadow-xl ${rankInfo.color}`} /></div>
+                                    {myRankIndex >= 0 && myRankIndex <= 2 && <p className={`text-2xl uppercase tracking-widest mb-1 drop-shadow-md animate-pulse`} style={{ color: rankInfo.colorHex }}>Complimenti!</p>}
+                                    <h2 className="text-4xl uppercase tracking-tighter leading-tight mb-2 text-[#0054a6]">QUIZ FINITO!</h2>
+                                    <p className="text-lg text-[#0054a6] uppercase tracking-widest mb-3">Risposte Esatte: {Object.values(myHistory).filter(v => v === true).length}/10</p>
+                                    <p className="text-lg text-gray-500 mb-1 font-bold">Grazie per aver giocato con noi ❤️</p>
+                                    <p className="text-lg text-gray-500 font-bold flex items-center flex-wrap gap-1 mb-3 justify-center">
+                                        Segui
+                                        <a href="https://www.instagram.com/prontocig/" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white hover:shadow-lg hover:shadow-pink-500/30 transition-all duration-300 hover:-translate-y-0.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-12 transition-transform duration-300"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                            prontocig
+                                        </a>
+                                        su Instagram!
+                                    </p>
+                                    <div className="bg-white p-4 rounded-[2rem] border-2 border-gray-100 shadow-2xl w-full text-center">
+                                        <div className="flex flex-col items-center justify-center gap-1">
+                                            <p className="text-xs text-gray-500 uppercase">Posizione finale:</p>
+                                            <div className="flex items-center justify-center gap-2">
+                                                {myRankIndex >= 0 && myRankIndex <= 2 && rankInfo.label !== "NC" && <Icon name="crown" size={32} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
+                                                <span className={`text-6xl drop-shadow-sm`} style={{ color: rankInfo.colorHex }}>{rankInfo.label}{(rankInfo.label !== "NC" && rankInfo.label !== "-") ? "ᵃ" : ""}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </main>
                     </div>
                 );
             }
-
-            // --- INTERFACCIA GIOCATORE ---
-            if (role === 'player' && gameState) return (
-                <div className="min-h-screen bg-white text-[#0054a6] flex flex-col font-black overflow-hidden animate-fade-in text-center">
-                    <header className="bg-white border-b-4 border-[#ffde00] shadow-md font-black flex flex-col">
-                        <div className="p-4 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <LogoArcigay className="h-8 object-contain font-black" />
-                                <span className="text-[#0054a6] text-lg font-black">X</span>
-                                <LogoPrideHouse className="h-10 object-contain font-black" />
-                            </div>
-                            <div className="bg-[#0054a6] px-4 py-1.5 rounded-full flex items-center gap-3 text-white font-black shadow-sm font-black font-black">
-                                <div className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-full shrink-0">
-                                    <Icon name={rankInfo.icon} size={18} className={rankInfo.icon === 'coins' ? 'text-white' : rankInfo.color} />
-                                </div>
-                                <span className="text-xl font-mono leading-none font-black font-black">{prevScore}</span>
-                            </div>
-                        </div>
-                        <div className="bg-gray-100 text-[#0054a6] py-1 text-center text-sm font-black uppercase tracking-widest border-t border-gray-200">
-                            Player: <span className="text-black">{playerName}</span>
-                        </div>
-                        {/* --- STATUS BAR AGGIUNTA NELL'HEADER --- */}
-                        <div className="bg-gray-50 border-b border-gray-200 py-1">
-                            <QuestionStatusBar 
-                                history={visibleHistory} 
-                                currentIndex={gameState.status === 'playing' ? gameState.currentQuestionIndex : -1} 
-                            />
-                        </div>
-                    </header>
-
-                    <main className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-50 font-black relative overflow-hidden">
-                        {gameState.status === 'finished' && myRankIndex >= 0 && myRankIndex <= 2 && <Confetti />}
-
-                        {gameState.status === 'lobby' && (
-                            <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center font-black font-black">
-                                <LogoPrideHouse className="h-40 w-auto object-contain mx-auto mb-4 font-black font-black" />
-                                <h2 className="text-2xl uppercase tracking-tighter leading-tight font-black font-black">IL QUIZ STA PER INIZIARE!</h2>
-                                <p className="text-gray-500 text-sm italic tracking-widest font-black font-black">Player: {playerName}</p>
-                            </div>
-                        )}
-
-                        {gameState.status === 'playing' && !gameState.showResults && (
-                            <div className="w-full max-w-sm flex flex-col gap-6 h-full py-4 font-black font-black">
-                                <div className="flex items-center justify-center gap-3 font-black">
-                                    <Icon name="clock" size={28} className={timeLeft < 10 ? 'text-red-500 animate-pulse font-black' : 'text-[#0054a6]'} />
-                                    <span className={`text-5xl font-mono font-black font-black ${timeLeft < 10 ? 'text-red-500' : 'text-[#0054a6]'}`}>{timeLeft}s</span>
-                                </div>
-                                {hasAnswered ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center bg-white border-4 border-dashed border-[#0054a6]/20 rounded-[3rem] shadow-inner animate-pulse p-10 font-black font-black">
-                                        <Icon name="loader2" size={64} className="animate-spin text-[#0054a6]/40 mb-4 font-black" />
-                                        <h2 className="text-4xl uppercase text-[#0054a6]/60 leading-none font-black font-black">OK, CI SIAMO!</h2>
-                                        <p className="text-gray-400 mt-4 text-sm tracking-[0.2em] uppercase font-black font-black">A breve sveleremo la risposta</p>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 gap-5 flex-1 font-black">
-                                        {COLORS.map((c, i) => (
-                                            <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-2xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black`}>
-                                                {String.fromCharCode(65 + i)}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {gameState.status === 'playing' && gameState.showResults && (
-                            <div className={`w-full max-w-[320px] p-6 rounded-[3.5rem] flex flex-col items-center justify-center text-center shadow-xl border-b-4 animate-in zoom-in text-white transition-colors duration-500 font-black font-black ${lastAnswerCorrect === true ? 'bg-[#009640] border-[#007030]' : 'bg-[#e30613] border-[#b0050f]'}`}>
-                                <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner text-white font-black shrink-0">
-                                    <Icon name={lastAnswerCorrect === true ? "checkCircle" : "xCircle"} size={48} />
-                                </div>
-                                <h2 className="text-3xl uppercase mb-4 leading-none font-black text-center font-black">
-                                    {lastAnswerCorrect === true ? 'RISPOSTA ESATTA 🎉' : (timeLeft === 0 && lastAnswerCorrect === null ? 'TEMPO SCADUTO ⌛' : 'RISPOSTA ERRATA 🙁')}
-                                </h2>
-                                <div className="w-full space-y-4 font-black">
-                                    {lastAnswerCorrect === true ? (
-                                        <div className="flex flex-col items-center gap-1 font-black font-black">
-                                            <div className="flex items-center gap-3">
-                                                {isFastestPlayer && <Icon name="zap" size={24} className="text-[#ffde00] fill-[#ffde00] animate-bounce font-black" />}
-                                                <span className="text-2xl font-black">+{lastPointsEarned} PT</span>
-                                            </div>
-                                            {isFastestPlayer && <p className="text-[10px] text-[#ffde00] uppercase font-black animate-pulse tracking-[0.2em] font-black">BONUS VELOCITÀ MASSIMA! +{BONUS_POINTS}</p>}
-                                        </div>
-                                    ) : <div className="text-xl font-black opacity-60 uppercase tracking-widest font-black font-black">0 PUNTI</div>}
-                                    <div className="border-t border-white/20 pt-4 font-black">
-                                        <p className="text-xs text-white/70 mb-1 uppercase tracking-widest font-black font-black">Classifica attuale:</p>
-                                        <div className="flex items-center justify-center gap-2">
-                                            {myRankIndex >= 0 && myRankIndex <= 2 && rankInfo.label !== "NC" && <Icon name="crown" size={40} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
-                                            <p className="text-6xl font-black drop-shadow-md leading-none" 
-                                               style={{ 
-                                                   color: (myRankIndex > 2 || rankInfo.label === "NC") ? '#ffffff' : rankInfo.colorHex, 
-                                                   textShadow: '0px 2px 4px rgba(0,0,0,0.3)' 
-                                               }}>
-                                                {rankInfo.label}{(rankInfo.label !== "NC" && rankInfo.label !== "-") ? "ᵃ" : ""}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {gameState.status === 'finished' && (
-                            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in max-w-[320px] font-black mx-auto text-center z-10">
-                                <div className="w-20 h-20 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-[#0054a6]/10 mb-4 font-black font-black">
-                                    <Icon name={rankInfo.icon} size={40} className={`drop-shadow-xl ${rankInfo.color}`} />
-                                </div>
-                                
-                                {myRankIndex >= 0 && myRankIndex <= 2 && (
-                                    <p className={`text-2xl uppercase tracking-widest font-black mb-1 drop-shadow-md animate-pulse font-black`} style={{ color: rankInfo.colorHex }}>Complimenti!</p>
-                                )}
-                                
-                                <h2 className="text-4xl uppercase tracking-tighter leading-tight font-black mb-2 font-black text-[#0054a6]">QUIZ FINITO!</h2>
-
-                                <p className="text-lg text-[#0054a6] font-black uppercase tracking-widest mb-3">
-                                    Risposte Esatte: {Object.values(myHistory).filter(v => v === true).length}/10
-                                </p>
-								
-								<p className="text-lg text-gray-500 mb-1 font-bold font-black">
-									Grazie per aver giocato con noi ❤️
-								</p>
-								
-								<p className="text-lg text-gray-500 font-bold flex items-center flex-wrap gap-1 mb-3">
-								Segui
-								<a href="https://www.instagram.com/prontocig/" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white font-black hover:shadow-lg hover:shadow-pink-500/30 transition-all duration-300 hover:-translate-y-0.5">
-								  <svg 
-									xmlns="http://www.w3.org/2000/svg" 
-									width="18" 
-									height="18" 
-									viewBox="0 0 24 24" 
-									fill="none" 
-									stroke="currentColor" 
-									strokeWidth="2" 
-									strokeLinecap="round" 
-									strokeLinejoin="round" 
-									className="group-hover:rotate-12 transition-transform duration-300"
-								  >
-									<rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-									<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-									<line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-								  </svg>
-								  prontocig
-								</a>
-								su Instagram!
-								</p>
-                                
-                                <div className="bg-white p-4 rounded-[2rem] border-2 border-gray-100 shadow-2xl w-full font-black text-center font-black font-black">
-                                    <div className="flex flex-col items-center justify-center gap-1 font-black font-black">
-                                        <p className="text-xs text-gray-500 uppercase font-black font-black font-black">Posizione finale:</p>
-                                        <div className="flex items-center justify-center gap-2">
-                                            {myRankIndex >= 0 && myRankIndex <= 2 && rankInfo.label !== "NC" && <Icon name="crown" size={32} className="drop-shadow-md" style={{color: rankInfo.colorHex}} />}
-                                            <span className={`text-6xl font-black drop-shadow-sm`} style={{ color: rankInfo.colorHex }}>
-                                                {rankInfo.label}{(rankInfo.label !== "NC" && rankInfo.label !== "-") ? "ᵃ" : ""}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </main>
-                </div>
-            );
 
             return null;
         }
