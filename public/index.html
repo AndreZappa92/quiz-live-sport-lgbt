@@ -4,10 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pride House Quiz - CIG Arcigay Milano</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- React & Babel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -251,7 +254,7 @@
 
             // Stati per Accessibilità
             const [isFullscreen, setIsFullscreen] = useState(false);
-            const [textSizeIdx, setTextSizeIdx] = useState(0); // 0: Normal, 1: Large, 2: X-Large
+            const [textSizeIdx, setTextSizeIdx] = useState(0); 
             const [isHighContrast, setIsHighContrast] = useState(false);
 
             const isMobileMode = gameState?.quizMode === 'mobile';
@@ -528,9 +531,10 @@
                 return filtered;
             }, [myHistory, gameState]);
 
-            const isPlayerAnsweringActive = role === 'player' && gameState?.status === 'playing' && !gameState?.showResults;
+            // L'header scompare SOLO nella versione Mobile-Only durante il gioco
+            const isPlayerAnsweringActive = isMobileMode && role === 'player' && gameState?.status === 'playing' && !gameState?.showResults;
 
-            // Renderizzazione Toolbar Accessibilità
+            // Renderizzazione Toolbar Accessibilità (Solo per Mobile-Only)
             const renderAccessibilityToolbar = () => (
                 <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full shadow-sm border ${isHighContrast ? 'bg-[#1a1a1a] border-[#333]' : 'bg-white/60 backdrop-blur border-gray-200'}`}>
                     <button onClick={toggleHighContrast} className={`p-1.5 rounded-full transition-colors ${isHighContrast ? 'bg-white text-black' : 'text-[#0054a6] hover:bg-gray-200'}`}>
@@ -837,20 +841,28 @@
                 return (
                     <div className={`min-h-screen flex flex-col font-black overflow-hidden animate-fade-in text-center ${isMobileMode && isHighContrast ? 'bg-[#121212] text-white' : 'bg-white text-[#0054a6]'}`}>
                         
-                        {!isPlayerAnsweringActive && (
+                        {/* Header Condizionale per Mobile Mode, Sempre visibile per Classic Mode */}
+                        {(!isPlayerAnsweringActive) && (
                             <header className={`${isMobileMode && isHighContrast ? 'bg-black border-white' : 'bg-white border-[#ffde00]'} border-b-4 shadow-md flex flex-col z-10 shrink-0`}>
-                                <div className="px-3 py-2 flex justify-between items-center">
+                                <div className={`${isMobileMode ? 'px-3 py-2' : 'p-4'} flex justify-between items-center`}>
                                     <div className="flex items-center gap-1.5">
-                                        {/* Il logo CIG viene invertito tramite CSS se c'è l'Alto Contrasto */}
                                         <LogoArcigay className={`h-5 object-contain ${isMobileMode && isHighContrast ? 'invert' : ''}`} />
                                         <span className={`${isMobileMode && isHighContrast ? 'text-white' : 'text-[#0054a6]'} text-sm font-black opacity-50`}>X</span>
                                         <LogoPrideHouse className="h-7 object-contain" />
                                     </div>
-                                    <div className={`${isMobileMode && isHighContrast ? 'bg-white text-black' : 'bg-[#0054a6] text-white'} px-3 py-1 rounded-full flex items-center gap-2 shadow-sm font-black`}>
-                                        <div className={`w-6 h-6 flex items-center justify-center rounded-full shrink-0 ${isMobileMode && isHighContrast ? 'bg-black/10' : 'bg-white/20'}`}>
-                                            <Icon name={rankInfo.icon} size={14} className={rankInfo.icon === 'coins' && (!isMobileMode || !isHighContrast) ? 'text-white' : rankInfo.color} />
+                                    <div className="flex items-center gap-2">
+                                        {/* Tasto Fullscreen visibile in Header solo per modalità classica */}
+                                        {!isMobileMode && (
+                                            <button onClick={toggleFullScreen} className="p-2 bg-gray-100 text-[#0054a6] rounded-xl active:scale-95 transition-all shadow-sm border border-gray-200">
+                                                <Icon name={isFullscreen ? "minimize" : "maximize"} size={20} />
+                                            </button>
+                                        )}
+                                        <div className={`${isMobileMode && isHighContrast ? 'bg-white text-black' : 'bg-[#0054a6] text-white'} ${isMobileMode ? 'px-3 py-1' : 'px-4 py-1.5'} rounded-full flex items-center gap-2 shadow-sm font-black`}>
+                                            <div className={`w-6 h-6 flex items-center justify-center rounded-full shrink-0 ${isMobileMode && isHighContrast ? 'bg-black/10' : 'bg-white/20'}`}>
+                                                <Icon name={rankInfo.icon} size={14} className={rankInfo.icon === 'coins' && (!isMobileMode || !isHighContrast) ? 'text-white' : rankInfo.color} />
+                                            </div>
+                                            <span className={`${isMobileMode ? 'text-lg' : 'text-xl'} font-mono leading-none`}>{prevScore}</span>
                                         </div>
-                                        <span className="text-lg font-mono leading-none">{prevScore}</span>
                                     </div>
                                 </div>
                                 <div className={`${isMobileMode && isHighContrast ? 'bg-[#1a1a1a] border-[#333] text-white' : 'bg-gray-100 border-gray-200 text-[#0054a6]'} py-1 text-center text-xs font-black uppercase tracking-widest border-t`}>
@@ -897,9 +909,17 @@
                                             </div>
                                         </Fragment>
                                     ) : (
-                                        <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center mx-auto mt-20">
+                                        <div className="space-y-6 animate-fade-in max-w-xs flex flex-col items-center mx-auto mt-10">
                                             <LogoPrideHouse className="h-40 w-auto object-contain mx-auto mb-4" />
                                             <h2 className="text-2xl uppercase tracking-tighter leading-tight text-[#0054a6]">IL QUIZ STA PER INIZIARE!</h2>
+                                            
+                                            {/* Messaggio Schermo Intero Classico */}
+                                            <div className="bg-[#0054a6]/10 p-4 rounded-[2rem] border-2 border-[#0054a6]/20 mt-4 text-center">
+                                                <Icon name="maximize" size={32} className="text-[#0054a6] mx-auto mb-2" />
+                                                <p className="text-sm text-[#0054a6] font-black leading-tight">
+                                                    💡 Per una migliore esperienza, attiva lo <span className="uppercase text-[#e30613]">Schermo Intero</span> con il tasto in alto a destra!
+                                                </p>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -960,29 +980,34 @@
                                             <p className={`mt-3 text-xs tracking-[0.2em] uppercase ${isMobileMode && isHighContrast ? 'text-gray-500' : 'text-gray-400'}`}>A breve sveleremo la risposta</p>
                                         </div>
                                     ) : (
-                                        <div className={`flex-1 ${isMobileMode ? 'flex flex-col gap-3' : 'grid grid-cols-2 gap-2'}`}>
-                                            {q.options.map((o, i) => {
-                                                const isYellow = i === 3;
-                                                const btnClass = isMobileMode 
-                                                    ? `items-center p-2 text-left ${isHighContrast ? 'bg-black border-2 border-white text-white' : `${COLORS[i]} border-b-4 border-black/20 ${isYellow ? 'text-[#0054a6]' : 'text-white'}`}`
-                                                    : `items-center justify-center text-5xl ${COLORS[i]} border-b-4 border-black/20 text-white`;
-                                                
-                                                const letterBoxClass = isMobileMode 
-                                                    ? `w-10 h-10 rounded-xl mr-3 text-xl shadow-inner font-black shrink-0 flex items-center justify-center ${isHighContrast ? `${COLORS[i]} ${isYellow ? 'text-[#0054a6]' : 'text-white'} border border-white` : 'bg-white/20'}`
-                                                    : '';
+                                        isMobileMode ? (
+                                            <div className="flex-1 flex flex-col gap-3">
+                                                {q.options.map((o, i) => {
+                                                    const isYellow = i === 3;
+                                                    const btnClass = `items-center p-2 text-left ${isHighContrast ? 'bg-black border-2 border-white text-white' : `${COLORS[i]} border-b-4 border-black/20 ${isYellow ? 'text-[#0054a6]' : 'text-white'}`}`;
+                                                    const letterBoxClass = `w-10 h-10 rounded-xl mr-3 text-xl shadow-inner font-black shrink-0 flex items-center justify-center ${isHighContrast ? `${COLORS[i]} ${isYellow ? 'text-[#0054a6]' : 'text-white'} border border-white` : 'bg-white/20'}`;
+                                                    const textSizeClass = textSizeIdx === 0 ? 'text-sm' : (textSizeIdx === 1 ? 'text-base' : 'text-lg');
 
-                                                const textSizeClass = textSizeIdx === 0 ? 'text-sm' : (textSizeIdx === 1 ? 'text-base' : 'text-lg');
-
-                                                return (
-                                                    <button key={i} onClick={() => submitAnswer(i)} className={`w-full rounded-2xl shadow-md active:translate-y-1 active:shadow-none transition-all flex ${btnClass}`}>
-                                                        <div className={letterBoxClass}>
-                                                            {String.fromCharCode(65 + i)}
-                                                        </div>
-                                                        {isMobileMode && <span className={`leading-tight font-bold ${textSizeClass}`}>{o.text}</span>}
+                                                    return (
+                                                        <button key={i} onClick={() => submitAnswer(i)} className={`w-full rounded-2xl shadow-md active:translate-y-1 active:shadow-none transition-all flex ${btnClass}`}>
+                                                            <div className={letterBoxClass}>
+                                                                {String.fromCharCode(65 + i)}
+                                                            </div>
+                                                            <span className={`leading-tight font-bold ${textSizeClass}`}>{o.text}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            /* Layout Originale Ripristinato per Modalità Classica */
+                                            <div className="grid grid-cols-1 gap-5 flex-1 font-black w-full pb-4 pt-2">
+                                                {COLORS.map((c, i) => (
+                                                    <button key={i} onClick={() => submitAnswer(i)} className={`flex-1 rounded-[2.5rem] ${c} shadow-2xl text-6xl text-white border-b-8 border-black/20 uppercase active:translate-y-2 active:shadow-none transition-all font-black flex items-center justify-center`}>
+                                                        {String.fromCharCode(65 + i)}
                                                     </button>
-                                                );
-                                            })}
-                                        </div>
+                                                ))}
+                                            </div>
+                                        )
                                     )}
                                 </div>
                             )}
