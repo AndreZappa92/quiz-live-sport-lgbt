@@ -192,7 +192,7 @@
         );
 
         const LogoArcigay = ({ className }) => <img src="/logoCIG.png" alt="Logo CIG" className={className} style={{ width: 'auto' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://www.arcigaymilano.org/wp-content/themes/arcigay-milano/assets/images/logo.png"; }} />;
-        const LogoPrideHouse = ({ className }) => <img src="/logo_ph.png" alt="Logo Pride House" className={className} />;
+        const LogoPrideHouse = ({ className }) => <img src="/logo_psa.png" alt="Logo Pride Sport Arena" className={className} />;
 
         // --- CONFIGURAZIONE FIREBASE ---
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIzaSyDOWS0ZMGxhj6ATL6FFycR-DATvuYug3WM", authDomain: "quiz-live-sport-lgbt.firebaseapp.com", projectId: "quiz-live-sport-lgbt", storageBucket: "quiz-live-sport-lgbt.firebasestorage.app", messagingSenderId: "741735100972", appId: "1:741735100972:web:6040adbb5b040257931789", measurementId: "G-47N6SFEWZG" };
@@ -498,7 +498,7 @@
                 <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 animate-fade-in text-center font-black">
                     <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
                         <LogoArcigay className="h-24 mx-auto mb-6 object-contain" />
-                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Queer Quiz con La Wanda!</h1>
+                        <h1 className="text-3xl text-[#0054a6] uppercase mb-10 leading-tight">Queer Quiz Pride Sport Arena</h1>
                         <div className="space-y-5">
                             <input type="text" placeholder="Nome" className="w-full border-2 p-4 rounded-2xl text-center text-xl font-bold" value={playerName} onChange={e => setName(e.target.value)} />
                             <input type="text" placeholder="Codice Stanza" className="w-full border-2 p-4 rounded-2xl text-center uppercase text-2xl font-mono" value={roomCode} onChange={e => setRoomCode(e.target.value)} />
